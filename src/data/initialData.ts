@@ -1,0 +1,468 @@
+import { Candidate, ElectionPosition, Voter, AuditLog, BMSDepartment } from '../types';
+
+export const INITIAL_POSITIONS: ElectionPosition[] = [
+  {
+    id: 'pos-pres',
+    title: 'President',
+    description: 'Executive Leader of BAMSSA, Chief Spokesperson and coordinator of association activities.',
+    order: 1,
+    maxSelections: 1,
+  },
+  {
+    id: 'pos-vp',
+    title: 'Vice President',
+    description: 'Head of Academic Affairs, Committee of Halls, and Deputy to the President.',
+    order: 2,
+    maxSelections: 1,
+  },
+  {
+    id: 'pos-sec-gen',
+    title: 'Secretary General',
+    description: 'Chief Administrative Officer, custodian of official records, Secretariat and correspondence.',
+    order: 3,
+    maxSelections: 1,
+  },
+  {
+    id: 'pos-fin-sec',
+    title: 'Financial Secretary',
+    description: 'Oversees financial books, dues reconciliation, and fiscal compliance with ELECO audits.',
+    order: 4,
+    maxSelections: 1,
+  },
+  {
+    id: 'pos-socials',
+    title: 'Director of Socials',
+    description: 'Plans BAMSSA Health Week, Medical Gala Night, cultural symposiums and student welfare events.',
+    order: 5,
+    maxSelections: 1,
+  },
+  {
+    id: 'pos-sports',
+    title: 'Director of Sports',
+    description: 'Coordinates inter-departmental Dean’s Cup, indoor games, and wellness tournaments.',
+    order: 6,
+    maxSelections: 1,
+  },
+  {
+    id: 'pos-pro',
+    title: 'Public Relations Officer (PRO)',
+    description: 'Information dissemination, media outreach, social channels and brand management.',
+    order: 7,
+    maxSelections: 1,
+  },
+  {
+    id: 'pos-welfare',
+    title: 'Welfare Officer',
+    description: 'Monitors lecture hall conditions, laboratory resources, and student emergency aid fund.',
+    order: 8,
+    maxSelections: 1,
+  },
+];
+
+export const INITIAL_CANDIDATES: Candidate[] = [
+  // President
+  {
+    id: 'cand-pres-1',
+    positionId: 'pos-pres',
+    fullName: 'Chidubem Emmanuel Okoye',
+    department: 'Human Anatomy',
+    level: '400L',
+    cgpaRange: '4.62 / 5.0 (First Class)',
+    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    tagline: '“Transforming BMS: Research Grants, Modern Cadaver Lab Equipment & Transparent Leadership”',
+    manifesto: [
+      'Establish the BAMSSA Undergraduate Research Innovation Fund in partnership with UniPort Alumni.',
+      'Refurbish departmental student study hubs with 24/7 power backup and high-speed Wi-Fi.',
+      'Quarterly town halls and open ledger publication of all association financial accounts.',
+      'Mandatory free academic mentorship bootcamps for 200L basic medical science inductees.'
+    ],
+    runningMate: {
+      name: 'Blessing Tariere George',
+      department: 'Medical Biochemistry',
+      level: '400L'
+    },
+    votesCount: 382,
+    approvedByEleco: true,
+  },
+  {
+    id: 'cand-pres-2',
+    positionId: 'pos-pres',
+    fullName: 'David Tamunotonye Briggs',
+    department: 'Human Physiology',
+    level: '400L',
+    cgpaRange: '4.55 / 5.0 (First Class)',
+    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+    tagline: '“Action Over Words: Practical Clinical Workshops, Lab Safety & Student Welfare”',
+    manifesto: [
+      'Procurement of modern digital ECG and Spirometry diagnostic kits for Physiology training.',
+      'Establishment of an emergency distress welfare fund for indigent medical science scholars.',
+      'Annual BAMSSA International Health Symposium connecting students to global residency programs.',
+      'Digitization of all BAMSSA departmental library archives for instant mobile access.'
+    ],
+    runningMate: {
+      name: 'Kelechi Stephanie Nwosu',
+      department: 'Pharmacology',
+      level: '400L'
+    },
+    votesCount: 341,
+    approvedByEleco: true,
+  },
+
+  // Vice President
+  {
+    id: 'cand-vp-1',
+    positionId: 'pos-vp',
+    fullName: 'Amina Zainab Bello',
+    department: 'Medical Biochemistry',
+    level: '300L',
+    cgpaRange: '4.48 / 5.0 (Second Class Upper)',
+    photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+    tagline: '“Bridging Academics and Practice: Mentorship, Reagents Availability & Career Guidance”',
+    manifesto: [
+      'Guaranteed subsidization of laboratory practical reagents through Faculty subventions.',
+      'Bi-monthly peer tutoring circles for high-difficulty courses (Metabolic Pathways, Neuroanatomy).',
+      'Career bridge webinars with pharmaceutical R&D firms and clinical biochemistry leaders.'
+    ],
+    votesCount: 420,
+    approvedByEleco: true,
+  },
+  {
+    id: 'cand-vp-2',
+    positionId: 'pos-vp',
+    fullName: 'Godswill Ebuka Nnamdi',
+    department: 'Pharmacology',
+    level: '400L',
+    cgpaRange: '4.35 / 5.0 (Second Class Upper)',
+    photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
+    tagline: '“Student-Centered Advocacy: Safe Study Spaces & Academic Resource Bank”',
+    manifesto: [
+      'Comprehensive digital past questions and validated marking schemes repository.',
+      'Advocacy with faculty board for humane continuous assessment and test timetables.',
+      'Inter-college quiz competitions with cash scholarships for top performers.'
+    ],
+    votesCount: 295,
+    approvedByEleco: true,
+  },
+
+  // Secretary General
+  {
+    id: 'cand-sec-1',
+    positionId: 'pos-sec-gen',
+    fullName: 'Faith Olamide Adeleke',
+    department: 'Human Physiology',
+    level: '300L',
+    cgpaRange: '4.68 / 5.0',
+    photoUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
+    tagline: '“Digital Secretariat: Instant Electronic Bulletins & Transparent Governance”',
+    manifesto: [
+      'Launch the BAMSSA WhatsApp & Telegram automated information bot for immediate departmental notices.',
+      'Publication of meeting minutes within 24 hours of executive sittings.',
+      'Seamless digital dues receipt and clearance verification system.'
+    ],
+    votesCount: 460,
+    approvedByEleco: true,
+  },
+  {
+    id: 'cand-sec-2',
+    positionId: 'pos-sec-gen',
+    fullName: 'Victor Somtochukwu Eze',
+    department: 'Human Anatomy',
+    level: '300L',
+    cgpaRange: '4.21 / 5.0',
+    photoUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80',
+    tagline: '“Accuracy, Efficiency, and Prompt Association Documentation”',
+    manifesto: [
+      'Modern physical archiving of BAMSSA historical records in the Faculty Library.',
+      'Structured feedback form system allowing students to directly query executive departments.',
+      'Timely accreditation processing for all university and regional conferences.'
+    ],
+    votesCount: 248,
+    approvedByEleco: true,
+  },
+
+  // Financial Secretary
+  {
+    id: 'cand-fin-1',
+    positionId: 'pos-fin-sec',
+    fullName: 'Precious Ijeoma Kalu',
+    department: 'Medical Biochemistry',
+    level: '300L',
+    cgpaRange: '4.71 / 5.0',
+    photoUrl: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&w=400&q=80',
+    tagline: '“Zero-Leakage Treasury: Real-Time Financial Dashboards & Audit Rigor”',
+    manifesto: [
+      'Live online income/expenditure dashboard open to all BAMSSA dues-paying members.',
+      'Strict adherence to budget ceilings with bi-weekly audit reports submitted to ELECO and Congress.',
+      'Multiple convenient digital payment gateways for seamless dues collection.'
+    ],
+    votesCount: 512,
+    approvedByEleco: true,
+  },
+
+  // Director of Socials
+  {
+    id: 'cand-soc-1',
+    positionId: 'pos-socials',
+    fullName: 'Favour Tonye West',
+    department: 'Pharmacology',
+    level: '300L',
+    cgpaRange: '4.15 / 5.0',
+    photoUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80',
+    tagline: '“Unforgettable Health Week: Premium Medical Gala, Cultural Night & Comedy Fest”',
+    manifesto: [
+      'Host the biggest BAMSSA Health Week in UNIPORT history with major pharmaceutical sponsors.',
+      'Reinvent the BMS Dinner & Awards Night with subsidized tickets for 200L students.',
+      'Stress-relief game nights and mental health decompression hubs during exam periods.'
+    ],
+    votesCount: 489,
+    approvedByEleco: true,
+  },
+  {
+    id: 'cand-soc-2',
+    positionId: 'pos-socials',
+    fullName: 'Onyedika Marvelous Igwe',
+    department: 'Human Anatomy',
+    level: '300L',
+    cgpaRange: '3.98 / 5.0',
+    photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
+    tagline: '“Inclusive Socials: Engaging Every Department & Celebrating Diversity”',
+    manifesto: [
+      'Departmental talent showcases and debate championships.',
+      'Collaborative social picnics with other medical colleges across the South-South region.',
+      'Affordable official BAMSSA branded medical scrubs and hoodies.'
+    ],
+    votesCount: 221,
+    approvedByEleco: true,
+  },
+
+  // Director of Sports
+  {
+    id: 'cand-spt-1',
+    positionId: 'pos-sports',
+    fullName: 'Segun Emmanuel Alabi',
+    department: 'Human Physiology',
+    level: '300L',
+    cgpaRange: '4.02 / 5.0',
+    photoUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80',
+    tagline: '“Reviving BMS Sports: New Football Pitch, Esports Championship & Female League”',
+    manifesto: [
+      'Launch the BAMSSA Dean’s Football Cup with professional refereeing and trophy medals.',
+      'Inaugurate the first-ever BMS Female Football and Volleyball League.',
+      'Esports (FIFA / Call of Duty) gaming tournament with cash prizes.'
+    ],
+    votesCount: 430,
+    approvedByEleco: true,
+  },
+
+  // PRO
+  {
+    id: 'cand-pro-1',
+    positionId: 'pos-pro',
+    fullName: 'Anita Chukwuebuka Obi',
+    department: 'Human Anatomy',
+    level: '200L',
+    cgpaRange: '4.50 / 5.0',
+    photoUrl: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=400&q=80',
+    tagline: '“The Voice of BAMSSA: Modern Branding, Real-Time Updates & Student Spotlight”',
+    manifesto: [
+      'Weekly BMS Student Spotlight celebrating high-achieving student researchers and creatives.',
+      'Sleek graphics and verified announcements on Instagram, TikTok, and X (@BAMSSA_Uniport).',
+      'Direct anonymous grievance box monitored 24/7 for prompt intervention.'
+    ],
+    votesCount: 504,
+    approvedByEleco: true,
+  },
+
+  // Welfare Officer
+  {
+    id: 'cand-wel-1',
+    positionId: 'pos-welfare',
+    fullName: 'Miracle Chiamaka Nwoye',
+    department: 'Medical Biochemistry',
+    level: '300L',
+    cgpaRange: '4.40 / 5.0',
+    photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
+    tagline: '“Student Welfare First: Lab Safety Gear, Emergency Support & Conducive Classrooms”',
+    manifesto: [
+      'Emergency medical first-aid kits in all departmental labs and lecture halls.',
+      'Negotiation for improved ventilation, public address systems, and whiteboard maintenance.',
+      'Sanitary hygiene product dispensers in BMS female restrooms.'
+    ],
+    votesCount: 478,
+    approvedByEleco: true,
+  }
+];
+
+export const INITIAL_VOTERS: Voter[] = [
+  {
+    id: 'voter-demo-doe',
+    matricNumber: 'U2021/5530001',
+    fullName: 'John Doe',
+    department: 'Human Anatomy',
+    level: '400L',
+    email: 'student@uniport.edu.ng',
+    phone: '+234 802 334 9901',
+    isEligible: true,
+    isAccredited: true,
+    hasVoted: false,
+    voterPin: '4021',
+    accreditationTime: '2026-08-20T08:00:00Z',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
+  },
+  {
+    id: 'voter-1',
+    matricNumber: 'U2022/5570012',
+    fullName: 'Chidera Somtochukwu Anyanwu',
+    department: 'Human Anatomy',
+    level: '300L',
+    email: 'chidera.anyanwu@uniport.edu.ng',
+    phone: '+234 814 552 8901',
+    isEligible: true,
+    isAccredited: true,
+    hasVoted: false,
+    voterPin: '4829',
+    accreditationTime: '2026-08-20T08:14:22Z',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
+  },
+  {
+    id: 'voter-2',
+    matricNumber: 'U2021/5568045',
+    fullName: 'Ibrahim Olanrewaju Musa',
+    department: 'Human Physiology',
+    level: '400L',
+    email: 'ibrahim.musa@uniport.edu.ng',
+    phone: '+234 803 112 4478',
+    isEligible: true,
+    isAccredited: true,
+    hasVoted: true,
+    voterPin: '7391',
+    accreditationTime: '2026-08-20T07:45:10Z',
+    votedTime: '2026-08-20T08:30:15Z',
+    ballotReceiptHash: '0x8F9C2B7A1E4D6380A91DFF7E2459',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'
+  },
+  {
+    id: 'voter-3',
+    matricNumber: 'U2023/5582099',
+    fullName: 'Tariere Deborah Briggs',
+    department: 'Medical Biochemistry',
+    level: '200L',
+    email: 'tariere.briggs@uniport.edu.ng',
+    phone: '+234 902 445 1209',
+    isEligible: true,
+    isAccredited: false,
+    hasVoted: false,
+    voterPin: '1904',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80'
+  },
+  {
+    id: 'voter-4',
+    matricNumber: 'U2021/5569103',
+    fullName: 'Emeka Divine Nwankwo',
+    department: 'Pharmacology',
+    level: '400L',
+    email: 'emeka.nwankwo@uniport.edu.ng',
+    phone: '+234 816 778 3341',
+    isEligible: true,
+    isAccredited: true,
+    hasVoted: false,
+    voterPin: '8215',
+    accreditationTime: '2026-08-20T08:22:00Z',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80'
+  },
+  {
+    id: 'voter-5',
+    matricNumber: 'U2022/5571144',
+    fullName: 'Folashade Esther Adeleke',
+    department: 'Human Physiology',
+    level: '300L',
+    email: 'folashade.adeleke@uniport.edu.ng',
+    phone: '+234 708 990 1234',
+    isEligible: true,
+    isAccredited: false,
+    hasVoted: false,
+    voterPin: '6038',
+    avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80'
+  },
+  {
+    id: 'voter-6',
+    matricNumber: 'U2020/5565011',
+    fullName: 'Osasere Harrison Ighodaro',
+    department: 'Human Anatomy',
+    level: '500L',
+    email: 'osasere.ighodaro@uniport.edu.ng',
+    phone: '+234 809 334 5567',
+    isEligible: true,
+    isAccredited: true,
+    hasVoted: true,
+    voterPin: '3319',
+    accreditationTime: '2026-08-20T07:10:05Z',
+    votedTime: '2026-08-20T08:05:44Z',
+    ballotReceiptHash: '0x3E1C89F70D421BA890EEA7B90412',
+    avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=150&q=80'
+  }
+];
+
+export const INITIAL_AUDIT_LOGS: AuditLog[] = [
+  {
+    id: 'log-1',
+    timestamp: '2026-08-20T07:00:00Z',
+    action: 'ELECO Commission System Initialization',
+    actor: 'ELECO Chief Returning Officer (Dr. A. B. Douglas)',
+    encryptedHash: '0x7F83B1657FF1FC53B92DC18148A1D65DFC',
+    category: 'SYSTEM',
+    details: 'Electoral system initialized and official security verification completed.'
+  },
+  {
+    id: 'log-2',
+    timestamp: '2026-08-20T07:15:00Z',
+    action: 'Voter Accreditation Gateway Opened',
+    actor: 'ELECO Technical Secretariat',
+    encryptedHash: '0x9E2D1837C091A4EF551BCA38012D99FF',
+    category: 'ACCREDITATION',
+    details: 'Biometric verification portal active for 2,450 registered basic medical science scholars.'
+  },
+  {
+    id: 'log-3',
+    timestamp: '2026-08-20T07:45:10Z',
+    action: 'Student Accreditation Verified',
+    actor: 'System (Matric: U2021/5568045)',
+    encryptedHash: '0x1C44A99F0B873210CDEF558902A38817',
+    category: 'ACCREDITATION',
+    details: 'Biometric 4-digit token matched academic record from Department of Human Physiology.'
+  },
+  {
+    id: 'log-4',
+    timestamp: '2026-08-20T08:05:44Z',
+    action: 'Confidential Ballot Cast',
+    actor: 'Anonymous Voter Session #3319',
+    encryptedHash: '0x3E1C89F70D421BA890EEA7B90412',
+    category: 'VOTE',
+    details: '1-Student-1-Ballot verified. Secure ballot recorded to official audit log.'
+  },
+  {
+    id: 'log-5',
+    timestamp: '2026-08-20T08:30:15Z',
+    action: 'Confidential Ballot Cast',
+    actor: 'Anonymous Voter Session #7391',
+    encryptedHash: '0x8F9C2B7A1E4D6380A91DFF7E2459',
+    category: 'VOTE',
+    details: '1-Student-1-Ballot verified. Secure ballot recorded to official audit log.'
+  },
+  {
+    id: 'log-6',
+    timestamp: '2026-08-20T08:45:00Z',
+    action: 'Security Audit Checkpoint Passed',
+    actor: 'ELECO Independent Observer Delegation',
+    encryptedHash: '0xAA82C1004E5F6119BBCC018742DE4430',
+    category: 'SECURITY',
+    details: 'Zero integrity deviations detected across all 4 BMS departments.'
+  }
+];
+
+export const DEPARTMENT_STATS: Record<BMSDepartment, { eligible: number; accredited: number; voted: number }> = {
+  'Human Anatomy': { eligible: 680, accredited: 410, voted: 285 },
+  'Human Physiology': { eligible: 640, accredited: 395, voted: 270 },
+  'Pharmacology': { eligible: 590, accredited: 360, voted: 235 },
+  'Medical Biochemistry': { eligible: 540, accredited: 340, voted: 215 },
+};
