@@ -24,6 +24,7 @@ import { VoterLoginView } from './views/VoterLoginView';
 import { ForgotPasswordView } from './views/ForgotPasswordView';
 import { VoterDashboardView } from './views/VoterDashboardView';
 import { AccreditationStatusView } from './views/AccreditationStatusView';
+import { AdminLoginView } from './views/AdminLoginView';
 
 function ElectionAppContent() {
   const { currentVoter, isAdminAuthenticated, logoutAdmin, loginVoter } = useElection();
@@ -51,24 +52,27 @@ function ElectionAppContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#faf8ff] text-[#131b2e] selection:bg-[#dae2fd] selection:text-[#003f93]">
-      {/* Universal Header */}
-      <Header
-        currentView={currentView}
-        setCurrentView={(view) => {
-          setCurrentView(view);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        onOpenEligibilityModal={() => setShowEligibilityModal(true)}
-        onOpenVoterModal={() => setShowVoterLoginModal(true)}
-        onOpenElecoModal={() => {
-          if (isAdminAuthenticated) {
-            setCurrentView('admin');
+      {/* Universal Header (Hidden when inside full Admin Console) */}
+      {currentView !== 'admin' && (
+        <Header
+          currentView={currentView}
+          setCurrentView={(view) => {
+            setCurrentView(view);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-          } else {
-            setShowElecoAdminModal(true);
-          }
-        }}
-      />
+          }}
+          onOpenEligibilityModal={() => setShowEligibilityModal(true)}
+          onOpenVoterModal={() => setShowVoterLoginModal(true)}
+          onOpenElecoModal={() => {
+            if (isAdminAuthenticated) {
+              setCurrentView('admin');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+              setCurrentView('admin-login');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+        />
+      )}
 
       {/* Main View Switcher */}
       <main className="flex-1">
@@ -262,6 +266,23 @@ function ElectionAppContent() {
           />
         )}
 
+        {currentView === 'admin-login' && (
+          <AdminLoginView
+            onSuccess={() => {
+              setCurrentView('admin');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onNavigateToVoterPortal={() => {
+              setCurrentView('login');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onNavigateToGuidelines={() => {
+              setCurrentView('guidelines');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
         {currentView === 'admin' && (
           <AdminPortalView
             onLogout={() => {
@@ -301,23 +322,26 @@ function ElectionAppContent() {
         )}
       </main>
 
-      {/* Universal Footer */}
-      <Footer
-        setCurrentView={(view) => {
-          setCurrentView(view);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        onOpenEligibility={() => setShowEligibilityModal(true)}
-        onOpenElecoModal={() => {
-          if (isAdminAuthenticated) {
-            setCurrentView('admin');
+      {/* Universal Footer (Hidden when inside full Admin Console) */}
+      {currentView !== 'admin' && (
+        <Footer
+          setCurrentView={(view) => {
+            setCurrentView(view);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-          } else {
-            setShowElecoAdminModal(true);
-          }
-        }}
-        onOpenVoterModal={() => setShowVoterLoginModal(true)}
-      />
+          }}
+          onOpenEligibility={() => setShowEligibilityModal(true)}
+          onOpenElecoModal={() => {
+            if (isAdminAuthenticated) {
+              setCurrentView('admin');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+              setCurrentView('admin-login');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+          onOpenVoterModal={() => setShowVoterLoginModal(true)}
+        />
+      )}
 
       {/* Global Modals */}
       <EligibilityModal
