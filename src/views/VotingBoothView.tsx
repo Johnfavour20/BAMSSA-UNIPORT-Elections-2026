@@ -67,6 +67,10 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
   const [submissionTime, setSubmissionTime] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Modal state for Submit Confirmation Dialog
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [confirmedAccuracy, setConfirmedAccuracy] = useState(false);
+
   // If current voter already voted, show receipt directly
   useEffect(() => {
     if (currentVoter?.hasVoted && currentVoter.ballotReceiptHash) {
@@ -378,143 +382,255 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
   // STEP 2: REVIEW & CONFIRMATION
   if (boothStep === 'CONFIRMATION') {
     return (
-      <div className="py-12 px-4 sm:px-6 lg:px-8 bg-[#faf8ff] min-h-[80vh] font-sans">
-        <div className="container mx-auto max-w-3xl">
-          <div className="bg-white border border-[#c2c6d5] rounded-2xl shadow-xl overflow-hidden">
-            {/* Header */}
-            <div className="bg-[#001944] text-white p-6">
-              <button
-                onClick={() => setBoothStep('VOTE_SELECTION')}
-                className="inline-flex items-center gap-1.5 text-xs text-white/80 hover:text-white mb-3 cursor-pointer"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Modify Ballot Choices</span>
-              </button>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Review &amp; Confirm Your 2026 Executive Ballot
-              </h2>
-              <p className="text-xs text-white/80 mt-1">
-                Please verify your selections carefully before final ballot submission.
-              </p>
-            </div>
-
-            {/* Voter Badge */}
-            <div className="bg-[#f2f3ff] border-b border-[#c2c6d5] p-4 px-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#0055c2] text-white flex items-center justify-center font-bold text-xs">
-                  <UserCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-[#131b2e]">{currentVoter.fullName}</div>
-                  <div className="text-[11px] text-[#424653] font-mono">{currentVoter.matricNumber} • {currentVoter.department}</div>
-                </div>
+      <div className="min-h-[calc(100vh-4rem)] bg-[#faf8ff] text-[#131b2e] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 font-sans">
+        <div className="max-w-[1280px] mx-auto space-y-6">
+          
+          {/* Header Section */}
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#131b2e] tracking-tight uppercase mb-1">
+                  Ballot Review
+                </h1>
+                <p className="text-sm sm:text-base text-[#424653]">
+                  Review your ballot carefully before submitting.
+                </p>
               </div>
-              <span className="bg-[#dbeafe] text-[#1e40af] text-[11px] font-bold px-2.5 py-1 rounded-md">
-                Accreditation Verified
-              </span>
+
+              {/* Not Yet Submitted Badge */}
+              <div className="inline-flex items-center gap-2 bg-[#f2f3ff] border border-[#c2c6d5] rounded-full px-4 py-1.5 self-start sm:self-auto shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-[#ba1a1a] animate-pulse"></span>
+                <span className="text-xs font-bold text-[#131b2e] uppercase tracking-wider">
+                  Not Yet Submitted
+                </span>
+              </div>
             </div>
 
-            {/* Ballot Choices Summary Table */}
-            <div className="p-6 sm:p-8 space-y-4">
-              <div className="space-y-3">
-                {positions.map((pos, idx) => {
-                  const chosenCandId = selectedVotes[pos.id];
-                  const chosenCand = candidates.find((c) => c.id === chosenCandId);
-                  const isAbstain = chosenCandId === 'ABSTAIN';
+            {/* Banner Card */}
+            <div className="bg-[#f2f3ff] p-4 sm:p-5 rounded-2xl border border-[#c2c6d5] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-xs">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-[#131b2e] mb-0.5">
+                  BAMSSA General Elections 2026
+                </h2>
+                <p className="text-xs sm:text-sm text-[#424653]">
+                  Verify your selections for all positions.
+                </p>
+              </div>
+              <div className="bg-[#0055c2] text-white text-xs font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-2xs">
+                {completedCount} of {totalPositions} Positions Completed
+              </div>
+            </div>
+          </div>
 
-                  return (
-                    <div
-                      key={pos.id}
-                      className="p-4 rounded-xl border border-[#c2c6d5] bg-[#faf8ff] flex items-center justify-between gap-4"
-                    >
-                      <div className="flex-1">
-                        <span className="text-[11px] font-bold text-[#737785] uppercase tracking-wider block">
-                          {String(idx + 1).padStart(2, '0')} {pos.title}
-                        </span>
-                        {isAbstain ? (
-                          <div className="flex items-center gap-2 mt-1">
-                            <Ban className="w-4 h-4 text-[#737785]" />
-                            <span className="text-sm font-semibold text-[#424653]">
-                              Abstained from voting
-                            </span>
-                          </div>
-                        ) : chosenCand ? (
-                          <div className="flex items-center gap-3 mt-1">
-                            <img
-                              src={chosenCand.photoUrl}
-                              alt={chosenCand.fullName}
-                              className="w-9 h-9 rounded-lg object-cover border border-[#c2c6d5]"
-                            />
-                            <div>
-                              <span className="text-sm font-bold text-[#131b2e] block">
-                                {chosenCand.fullName}
-                              </span>
-                              <span className="text-xs text-[#0055c2]">
-                                Dept. of {chosenCand.department} ({chosenCand.level})
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-xs font-semibold text-[#ba1a1a] mt-1 inline-block">
-                            (No Candidate Selected)
+          {/* Two Column Layout */}
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+            
+            {/* Left Sidebar (Navigator) */}
+            <aside className="w-full lg:w-1/3 xl:w-1/4 shrink-0">
+              <div className="bg-white border border-[#c2c6d5] rounded-2xl p-5 sticky top-24 shadow-xs">
+                <h3 className="text-base font-bold text-[#131b2e] mb-4 pb-2.5 border-b border-[#eaedff]">
+                  Your Ballot
+                </h3>
+                <ul className="space-y-2.5">
+                  {positions.map((pos, idx) => {
+                    const isFilled = selectedVotes[pos.id] !== undefined;
+                    const posNum = String(idx + 1).padStart(2, '0');
+
+                    return (
+                      <li key={pos.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActivePositionIndex(idx);
+                            setBoothStep('VOTE_SELECTION');
+                          }}
+                          className="w-full text-left flex items-center gap-2.5 text-[#003f93] hover:bg-[#f2f3ff] p-2 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-5 h-5 text-[#003f93] shrink-0 fill-[#003f93]/10" />
+                          <span className="text-sm font-bold truncate">
+                            {posNum} {pos.title}
                           </span>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          setActivePositionIndex(idx);
-                          setBoothStep('VOTE_SELECTION');
-                        }}
-                        className="text-xs font-bold text-[#0055c2] hover:underline cursor-pointer"
-                      >
-                        Change
-                      </button>
-                    </div>
-                  );
-                })}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
+            </aside>
 
-              {/* Warning Disclaimer */}
-              <div className="p-4 bg-[#fff8e6] border border-[#fde68a] rounded-xl flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-[#d97706] shrink-0 mt-0.5" />
-                <div className="text-xs text-[#92400e] leading-relaxed">
-                  <span className="font-bold">Irreversible Action:</span> Once confirmed, your ballot will be securely sealed and recorded to the ELECO audit log. You cannot vote again.
+            {/* Main Content (Ballot Review Cards) */}
+            <div className="w-full lg:w-2/3 xl:w-3/4 space-y-4">
+              {positions.map((pos, idx) => {
+                const chosenCandId = selectedVotes[pos.id];
+                const chosenCand = candidates.find((c) => c.id === chosenCandId);
+                const isAbstain = chosenCandId === 'ABSTAIN';
+                const posNum = String(idx + 1).padStart(2, '0');
+
+                return (
+                  <div
+                    key={pos.id}
+                    className="bg-white border border-[#c2c6d5] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors hover:bg-[#f2f3ff]/60 shadow-xs"
+                  >
+                    <div className="flex-grow min-w-0">
+                      <p className="text-xs font-bold text-[#424653] uppercase tracking-wider mb-2">
+                        {posNum} {pos.title}
+                      </p>
+
+                      {isAbstain ? (
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full border border-[#c2c6d5] flex items-center justify-center bg-[#f2f3ff] shrink-0">
+                            <Ban className="w-5 h-5 text-[#737785]" />
+                          </div>
+                          <div>
+                            <h4 className="text-base font-bold text-[#131b2e]">
+                              Abstain
+                            </h4>
+                            <p className="text-xs text-[#737785]">
+                              Chose not to vote for this position
+                            </p>
+                          </div>
+                        </div>
+                      ) : chosenCand ? (
+                        <div className="flex items-center gap-3">
+                          <img
+                            alt={chosenCand.fullName}
+                            src={chosenCand.photoUrl}
+                            className="w-12 h-12 rounded-full object-cover border border-[#c2c6d5] shrink-0 bg-[#eaedff]"
+                          />
+                          <div className="min-w-0">
+                            <h4 className="text-base sm:text-lg font-bold text-[#131b2e] truncate">
+                              {chosenCand.fullName}
+                            </h4>
+                            <p className="text-xs text-[#003f93] font-medium">
+                              Selected Candidate
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-xs font-semibold text-[#ba1a1a]">
+                          <AlertCircle className="w-4 h-4" />
+                          <span>No candidate selected</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActivePositionIndex(idx);
+                        setBoothStep('VOTE_SELECTION');
+                      }}
+                      className="text-xs font-bold text-[#003f93] hover:text-[#002f70] uppercase tracking-wider py-2 px-5 border border-[#c2c6d5] rounded-xl bg-[#faf8ff] hover:bg-[#dae2fd] transition-colors cursor-pointer shrink-0 self-end sm:self-center active:scale-98 shadow-2xs"
+                    >
+                      Change
+                    </button>
+                  </div>
+                );
+              })}
+
+              {/* Ready to Submit? Section */}
+              <div className="mt-8 pt-4">
+                <div className="bg-[#f2f3ff] rounded-2xl p-6 sm:p-8 border border-[#c2c6d5] text-center shadow-xs">
+                  <h3 className="text-xl sm:text-2xl font-bold text-[#131b2e] mb-2">
+                    Ready to Submit?
+                  </h3>
+                  <div className="flex items-center justify-center gap-2 text-[#ba1a1a] mb-6">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <p className="text-xs sm:text-sm font-semibold">
+                      Warning: Your selections cannot be changed after submission.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setBoothStep('VOTE_SELECTION')}
+                      className="w-full sm:w-auto text-xs font-bold text-[#131b2e] uppercase tracking-wider border border-[#c2c6d5] bg-white hover:bg-[#faf8ff] py-3.5 px-6 rounded-xl transition-colors cursor-pointer shadow-2xs active:scale-98"
+                    >
+                      Return to Voting
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setShowSubmitModal(true)}
+                      className="w-full sm:w-auto text-xs font-bold text-white uppercase tracking-wider bg-[#0055C2] hover:bg-[#003f93] py-3.5 px-8 rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                    >
+                      <span>Submit Ballot</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-[#c2c6d5]">
-                <button
-                  type="button"
-                  onClick={() => setBoothStep('VOTE_SELECTION')}
-                  className="px-6 py-3 border border-[#c2c6d5] text-[#424653] hover:bg-[#f2f3ff] rounded-xl text-sm font-semibold transition-colors cursor-pointer"
-                >
-                  Back to Ballot
-                </button>
+            </div>
+          </div>
 
+        </div>
+
+        {/* Confirmation Dialog Modal */}
+        {showSubmitModal && (
+          <div className="fixed inset-0 z-50 bg-[#131b2e]/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl border border-[#c2c6d5] shadow-2xl max-w-md w-full p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center gap-3 mb-4 text-[#003f93]">
+                <div className="w-10 h-10 rounded-full bg-[#f2f3ff] border border-[#c2c6d5] flex items-center justify-center text-[#003f93]">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-[#131b2e]">
+                  Submit your ballot?
+                </h3>
+              </div>
+
+              <p className="text-xs sm:text-sm text-[#424653] leading-relaxed mb-5">
+                By submitting this ballot, you confirm that your selections are final. This action is irreversible and tamper-proof recorded into the official ELECO tally.
+              </p>
+
+              <label className="flex items-start gap-3 mb-6 cursor-pointer bg-[#faf8ff] p-3 rounded-xl border border-[#c2c6d5]">
+                <input
+                  type="checkbox"
+                  checked={confirmedAccuracy}
+                  onChange={(e) => setConfirmedAccuracy(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-[#c2c6d5] text-[#0055c2] focus:ring-[#0055c2]"
+                />
+                <span className="text-xs font-semibold text-[#131b2e] leading-snug">
+                  I have reviewed my selections and confirm they are accurate.
+                </span>
+              </label>
+
+              <div className="flex justify-end items-center gap-3">
                 <button
                   type="button"
-                  onClick={handleSubmitBallot}
-                  disabled={submitting}
-                  className="flex-1 bg-[#0055c2] hover:bg-[#003f93] text-white font-semibold py-3 px-6 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                  onClick={() => setShowSubmitModal(false)}
+                  className="text-xs font-bold text-[#424653] uppercase tracking-wider border border-[#c2c6d5] bg-white hover:bg-[#f2f3ff] py-2.5 px-4 rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={!confirmedAccuracy || submitting}
+                  onClick={() => {
+                    setShowSubmitModal(false);
+                    handleSubmitBallot();
+                  }}
+                  className={`text-xs font-bold uppercase tracking-wider py-2.5 px-6 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer ${
+                    confirmedAccuracy && !submitting
+                      ? 'bg-[#0055C2] hover:bg-[#003f93] text-white active:scale-98'
+                      : 'bg-[#c2c6d5] text-[#737785] cursor-not-allowed'
+                  }`}
                 >
                   {submitting ? (
                     <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Submitting &amp; Sealing Ballot...</span>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Submitting...</span>
                     </>
                   ) : (
-                    <>
-                      <ShieldCheck className="w-4 h-4" />
-                      <span>Confirm &amp; Cast Confidential Ballot</span>
-                    </>
+                    <span>Submit Ballot</span>
                   )}
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        )}
+
       </div>
     );
   }
