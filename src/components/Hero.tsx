@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useElection } from '../context/ElectionContext';
 import { CheckCircle2, BarChart2, ShieldCheck, GraduationCap, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -40,94 +41,150 @@ export const Hero: React.FC<HeroProps> = ({
   }, []);
 
   return (
-    <section 
+    <motion.section
       id="bamssa-hero-section"
       className="relative w-full min-h-[600px] lg:h-[82vh] flex items-center justify-center overflow-hidden py-16"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.7, ease: 'easeOut' }}
     >
       {/* Full-bleed Carousel Backgrounds */}
       <div className="absolute inset-0 z-0 select-none overflow-hidden">
         {/* Layered dark blue gradient overlay for optimal text contrast */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#001944]/95 via-[#003f93]/70 to-[#001944]/65 z-10" />
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-t from-[#001944]/95 via-[#003f93]/70 to-[#001944]/65 z-10"
+          initial={{ opacity: 0.5 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        />
 
         {HERO_IMAGES.map((img, idx) => (
-          <div
+          <motion.div
             key={idx}
-            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 transform scale-105 ${
+            className={`absolute inset-0 bg-cover bg-center scale-105 ${
               idx === currentImageIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
             style={{
               backgroundImage: `url('${img.url}')`,
             }}
+            initial={{ scale: 1.08, opacity: 0 }}
+            animate={{
+              opacity: idx === currentImageIndex ? 1 : 0,
+              scale: 1.08,
+            }}
+            transition={{ duration: 1.1, ease: 'easeInOut' }}
           />
         ))}
       </div>
 
       {/* Hero Content Layered Directly Over */}
-      <div className="relative z-20 container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-4xl text-white">
+      <motion.div
+        className="relative z-20 container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-4xl text-white"
+        initial={{ y: 24, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
+      >
         {/* Sub-badge: KEEP rounded-full */}
-        <div className="inline-flex items-center gap-2.5 bg-white/15 backdrop-blur-md border border-white/25 px-4 py-2 rounded-full mb-6 text-xs font-semibold tracking-wider uppercase text-white shadow-xs">
+        <motion.div
+          className="inline-flex items-center gap-2.5 bg-white/15 backdrop-blur-md border border-white/25 px-4 py-2 rounded-full mb-6 text-xs font-semibold tracking-wider uppercase text-white shadow-xs"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           <span className="w-2.5 h-2.5 rounded-full bg-[#8ab0fe] animate-pulse" />
           <span>2026/2027 EXECUTIVE ELECTIONS</span>
-        </div>
+        </motion.div>
 
         {/* Display Headline */}
-        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[50px] font-extrabold tracking-tight mb-5 leading-tight uppercase font-sans text-white drop-shadow-md">
+        <motion.h2
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-[50px] font-extrabold tracking-tight mb-5 leading-tight uppercase font-sans text-white drop-shadow-md"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.25 }}
+        >
           YOUR VOICE. YOUR REPRESENTATIVES. YOUR BAMSSA.
-        </h2>
+        </motion.h2>
 
         {/* Sub-headline */}
-        <p className="text-base sm:text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto font-normal leading-relaxed">
+        <motion.p
+          className="text-base sm:text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto font-normal leading-relaxed"
+          initial={{ y: 16, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.35 }}
+        >
           The official, secure voting platform for Basic Medical Science students. Cast your confidential ballot and shape our association's future.
-        </p>
+        </motion.p>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-3.5 max-w-md mx-auto mb-8">
+        <motion.div
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-3.5 max-w-md mx-auto mb-8"
+          initial={{ y: 18, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.45 }}
+        >
           {status === 'LIVE' ? (
-            <button
+            <motion.button
               id="hero-vote-live-btn"
               onClick={onStartVoting}
               className="w-full sm:w-auto bg-[#2563eb] hover:bg-[#003f93] text-white font-medium text-sm px-5 py-2.5 rounded-none transition-all shadow-md flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
             >
               <span>{currentVoter ? 'Enter Ballot Booth' : 'Authenticate & Vote'}</span>
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </motion.button>
           ) : (
-            <button
+            <motion.button
               id="hero-check-eligibility-btn"
               onClick={onCheckEligibility}
               className="w-full sm:w-auto bg-[#2563eb] hover:bg-[#003f93] text-white font-medium text-sm px-5 py-2.5 rounded-none transition-all shadow-md flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Check My Eligibility</span>
-            </button>
+            </motion.button>
           )}
 
-          <button
+          <motion.button
             id="hero-view-monitor-btn"
             onClick={onViewLiveMonitor}
             className="w-full sm:w-auto bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-md font-medium text-sm px-5 py-2.5 rounded-none transition-all shadow-xs flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
           >
             <BarChart2 className="w-4 h-4" />
             <span>View Live Monitor</span>
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
 
         {/* Carousel indicators */}
-        <div className="flex items-center justify-center gap-2 mb-6">
+        <motion.div
+          className="flex items-center justify-center gap-2 mb-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.55 }}
+        >
           {HERO_IMAGES.map((_, idx) => (
-            <button
+            <motion.button
               key={idx}
               onClick={() => setCurrentImageIndex(idx)}
               className={`h-1.5 rounded-none transition-all cursor-pointer ${
                 idx === currentImageIndex ? 'w-8 bg-[#8ab0fe]' : 'w-2 bg-white/40 hover:bg-white/70'
               }`}
               aria-label={`Slide ${idx + 1}`}
+              whileHover={{ scale: 1.1 }}
             />
           ))}
-        </div>
+        </motion.div>
 
         {/* Quick status footnote */}
-        <div className="flex items-center justify-center gap-6 text-xs text-white/75 font-medium">
+        <motion.div
+          className="flex items-center justify-center gap-6 text-xs text-white/75 font-medium"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.6 }}
+        >
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-[#8ab0fe]" />
             <span>Zero-Compromise Ballot Secrecy</span>
@@ -136,8 +193,8 @@ export const Hero: React.FC<HeroProps> = ({
             <GraduationCap className="w-3.5 h-3.5 text-[#8ab0fe]" />
             <span>University of Port Harcourt Chapter</span>
           </div>
-        </div>
-      </div>
-    </section>
+        </motion.div>
+      </motion.div>
+    </motion.section>
   );
 };

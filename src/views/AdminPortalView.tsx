@@ -1976,88 +1976,248 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
             </div>
           )}
 
-          {/* TAB 10: SETTINGS */}
+          {/* TAB 10: SETTINGS / ELECTION SETUP */}
           {activeTab === 'settings' && (
-            <div className="bg-white border border-[#c2c6d5] rounded-2xl p-6 shadow-xs space-y-6">
-              <div>
-                <h3 className="text-xl font-bold text-[#131b2e]">
-                  Global Election Lifecycle Controller
-                </h3>
-                <p className="text-xs text-[#737785]">
-                  Configure active operational phases, voting windows, and database maintenance
-                </p>
+            <div className="space-y-6 max-w-[1280px] mx-auto pb-24">
+              {/* Page Header */}
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+                <div>
+                  <h1 className="text-3xl font-bold text-[#131b2e] mb-1">Election Management</h1>
+                  <p className="text-sm text-[#424653] max-w-2xl">Configure election details, schedule, participation rules, and election status.</p>
+                </div>
+                <div className="flex flex-col items-end">
+                  <div className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1 ${
+                    status === 'LIVE' ? 'bg-[#d9e2ff] text-[#003f93]' : 
+                    status === 'CLOSED' ? 'bg-[#e2e7ff] text-[#424653]' : 
+                    'bg-[#fef3c7] text-[#92400e]'
+                  }`}>
+                    {status === 'LIVE' ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                    {status}
+                  </div>
+                  <p className="text-[12px] text-[#424653] mt-1">
+                    {status === 'LIVE' ? 'Voting is currently active.' : 'Election has not opened for voting.'}
+                  </p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  {
-                    key: 'STANDBY',
-                    title: 'Standby / Warmup',
-                    desc: 'Pre-election mode. Voter verification lookup allowed, voting booth locked.',
-                  },
-                  {
-                    key: 'ACCREDITATION_OPEN',
-                    title: 'Accreditation Only',
-                    desc: 'Students can register & generate voter PINs.',
-                  },
-                  {
-                    key: 'LIVE',
-                    title: 'Polls Open (LIVE)',
-                    desc: 'Ballot booth active, real-time live vote counting stream enabled.',
-                  },
-                  {
-                    key: 'CLOSED',
-                    title: 'Polls Closed',
-                    desc: 'Voting concluded. Commission auditing tallies before certification.',
-                  },
-                ].map((s) => {
-                  const isCurrent = status === s.key;
-                  return (
-                    <div
-                      key={s.key}
-                      onClick={() => handleStatusChange(s.key as ElectionStatus)}
-                      className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                        isCurrent
-                          ? 'border-[#0055c2] bg-[#f2f3ff] shadow-sm ring-2 ring-[#0055c2]/20'
-                          : 'border-[#c2c6d5]/70 bg-white hover:border-[#8ab0fe]'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                            isCurrent ? 'bg-[#0055c2] text-white' : 'bg-[#eaedff] text-[#003f93]'
-                          }`}>
-                            {s.key}
-                          </span>
-                          {isCurrent && <CheckCircle2 className="w-4 h-4 text-[#0055c2]" />}
+              {/* Warning Banner */}
+              <div className="bg-[#fffbeb] border border-[#fef3c7] rounded-lg p-4 mb-8 flex gap-3 items-start">
+                <AlertTriangle className="w-5 h-5 text-[#92400e] shrink-0" />
+                <p className="text-sm text-[#92400e]">Changes to election settings may affect voter participation and election operations. Review carefully before saving.</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column (Wider) */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Election Information Section */}
+                  <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
+                    <h3 className="text-lg font-semibold text-[#131b2e] mb-5 flex items-center gap-2 border-b border-[#eaedff] pb-2">
+                      <Settings className="w-5 h-5 text-[#003f93]" />
+                      Election Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Election Name</label>
+                        <input className="w-full px-3 py-2 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden" type="text" defaultValue="BAMSSA UNIPORT Chapter General Election 2026" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Election Year</label>
+                        <input className="w-full px-3 py-2 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden" disabled type="text" defaultValue="2026" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Organization</label>
+                        <input className="w-full px-3 py-2 text-sm border border-[#c2c6d5] rounded-xl bg-[#f2f3ff] text-[#424653]" readOnly type="text" defaultValue="BAMSSA UNIPORT Chapter" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Election Reference (Read-only)</label>
+                        <div className="w-full px-3 py-2 bg-[#f2f3ff] border border-[#c2c6d5] rounded-xl text-sm text-[#424653] flex items-center justify-between">
+                          <span>BAMSSA-GEN-2026</span>
+                          <Lock className="w-4 h-4 text-[#737785]" />
                         </div>
-                        <h4 className="text-sm font-bold text-[#131b2e] mb-1">{s.title}</h4>
-                        <p className="text-xs text-[#424653] leading-relaxed">{s.desc}</p>
+                      </div>
+                      <div className="md:col-span-2 space-y-1">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Election Description</label>
+                        <textarea className="w-full px-3 py-2 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden h-24 resize-none" defaultValue="Annual general election for the Basic Medical Science Students Association to elect executive officers for the 2026 academic session."></textarea>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </section>
 
-              {/* Maintenance Tools */}
-              <div className="border-t border-[#eaedff] pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-sm font-bold text-[#131b2e]">Reset Election Database</h4>
-                  <p className="text-xs text-[#737785]">Clear all registered test votes and reset voter statuses</p>
+                  {/* Election Schedule Section */}
+                  <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
+                    <h3 className="text-lg font-semibold text-[#131b2e] mb-5 flex items-center gap-2 border-b border-[#eaedff] pb-2">
+                      <Calendar className="w-5 h-5 text-[#003f93]" />
+                      Election Schedule
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Voting Opens</label>
+                        <div className="relative">
+                          <input className="w-full px-3 py-2 pl-10 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden" type="datetime-local" defaultValue="2026-09-10T09:00" />
+                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737785]" />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Voting Closes</label>
+                        <div className="relative">
+                          <input className="w-full px-3 py-2 pl-10 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden" type="datetime-local" defaultValue="2026-09-10T17:00" />
+                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737785]" />
+                        </div>
+                      </div>
+                    </div>
+                    {/* Timeline Visual */}
+                    <div className="bg-[#f2f3ff] rounded-xl p-4 flex flex-col items-center justify-center">
+                      <div className="w-full max-w-md relative flex items-center justify-between before:content-[''] before:absolute before:top-1/2 before:left-0 before:w-full before:h-0.5 before:bg-[#c2c6d5] before:-z-10">
+                        <div className="flex flex-col items-center bg-[#f2f3ff] px-2 z-10">
+                          <div className="w-3 h-3 rounded-full bg-[#475569] mb-1"></div>
+                          <span className="text-[11px] font-bold text-[#424653]">09:00 AM</span>
+                        </div>
+                        <div className="bg-white px-3 py-1 rounded-full border border-[#c2c6d5] text-[12px] font-bold text-[#003f93] z-10">
+                          Duration: 8 Hours
+                        </div>
+                        <div className="flex flex-col items-center bg-[#f2f3ff] px-2 z-10">
+                          <div className="w-3 h-3 rounded-full bg-[#c2c6d5] mb-1"></div>
+                          <span className="text-[11px] font-bold text-[#424653]">05:00 PM</span>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to reset all votes and return to factory demo data?')) {
-                      resetElectionData();
-                    }
-                  }}
-                  className="bg-[#ffdad6] hover:bg-[#ffb4ab] text-[#93000a] font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer w-fit"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Reset Demo Data</span>
-                </button>
+                {/* Right Column (Sidebar) */}
+                <div className="space-y-6">
+                  {/* Election Status Section */}
+                  <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
+                    <h3 className="text-lg font-semibold text-[#131b2e] mb-5 flex items-center gap-2 border-b border-[#eaedff] pb-2">
+                      <Sliders className="w-5 h-5 text-[#003f93]" />
+                      Lifecycle Status
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="p-3 bg-[#f2f3ff] border border-[#c2c6d5] rounded-lg flex items-center justify-between">
+                        <span className="text-xs font-semibold text-[#131b2e] uppercase tracking-wide">Current State</span>
+                        <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
+                          status === 'LIVE' ? 'bg-[#d9e2ff] text-[#003f93]' : 
+                          status === 'CLOSED' ? 'bg-[#e2e7ff] text-[#424653]' : 
+                          'bg-[#fef3c7] text-[#92400e]'
+                        }`}>
+                          {status}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Election State Control</label>
+                        <select 
+                          className="w-full px-3 py-2 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden"
+                          value={status}
+                          onChange={(e) => handleStatusChange(e.target.value as ElectionStatus)}
+                        >
+                          <option value="STANDBY">Standby (Pre-Election)</option>
+                          <option value="ACCREDITATION_OPEN">Accreditation Only</option>
+                          <option value="LIVE">Live (Voting Active)</option>
+                          <option value="CLOSED">Concluded (Post-Election)</option>
+                        </select>
+                        <p className="text-[11px] text-[#737785] mt-1 leading-tight">Automatically follows the configured election schedule. Manual control should only be used when necessary.</p>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Voting Rules Section */}
+                  <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
+                    <h3 className="text-lg font-semibold text-[#131b2e] mb-5 flex items-center gap-2 border-b border-[#eaedff] pb-2">
+                      <Settings className="w-5 h-5 text-[#003f93]" />
+                      Voting Rules
+                    </h3>
+                    <div className="space-y-5">
+                      <div>
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block mb-2">Eligible Voter Levels</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {['100', '200', '300', '400', '500', '600'].map(level => (
+                            <label key={level} className="flex items-center gap-2 cursor-pointer">
+                              <input type="checkbox" defaultChecked className="rounded text-[#003f93] focus:ring-[#003f93] border-[#c2c6d5]" />
+                              <span className="text-sm">{level} Level</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t border-[#c2c6d5]">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="text-xs font-semibold uppercase tracking-wide text-[#131b2e]">Voting Attempts</h4>
+                            <p className="text-xs text-[#424653]">System enforced limit</p>
+                          </div>
+                          <span className="bg-[#f2f3ff] px-2 py-1 rounded text-xs font-bold text-[#003f93]">1 Ballot / Voter</span>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t border-[#c2c6d5]">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="text-xs font-semibold uppercase tracking-wide text-[#131b2e] flex items-center gap-1">
+                              Ballot Secrecy
+                              <ShieldCheck className="w-4 h-4 text-[#003f93]" />
+                            </h4>
+                            <p className="text-[11px] text-[#424653] mt-1 leading-tight">Enabled. Voter identities are digitally recorded but decoupled from ballot choices upon submission.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Participation Requirements */}
+                  <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
+                    <h3 className="text-lg font-semibold text-[#131b2e] mb-5 flex items-center gap-2 border-b border-[#eaedff] pb-2">
+                      <ListOrdered className="w-5 h-5 text-[#003f93]" />
+                      System Requirements
+                    </h3>
+                    <ul className="space-y-3">
+                      <li className="flex items-center gap-2 text-sm text-[#131b2e]">
+                        <CheckCircle2 className="w-5 h-5 text-[#003f93]" />
+                        Voter must be registered in BAMSSA DB
+                      </li>
+                      <li className="flex items-center gap-2 text-sm text-[#131b2e]">
+                        <CheckCircle2 className="w-5 h-5 text-[#003f93]" />
+                        Voter email must be verified
+                      </li>
+                      <li className="flex items-center gap-2 text-sm text-[#131b2e]">
+                        <CheckCircle2 className="w-5 h-5 text-[#003f93]" />
+                        Final accreditation required at login
+                      </li>
+                    </ul>
+                  </section>
+                  
+                  {/* Danger Zone */}
+                  <section className="bg-white border border-[#ffdad6] rounded-xl p-5 shadow-xs">
+                    <h3 className="text-lg font-semibold text-[#93000a] mb-3 flex items-center gap-2 border-b border-[#ffdad6] pb-2">
+                      <Trash2 className="w-5 h-5 text-[#93000a]" />
+                      Danger Zone
+                    </h3>
+                    <p className="text-[11px] text-[#424653] mb-3 leading-tight">Clear all registered test votes and reset voter statuses to factory demo data.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to reset all votes and return to factory demo data?')) {
+                          resetElectionData();
+                        }
+                      }}
+                      className="w-full bg-[#ffdad6] hover:bg-[#ffb4ab] text-[#93000a] font-bold text-xs px-4 py-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Reset Demo Data</span>
+                    </button>
+                  </section>
+                </div>
+              </div>
+
+              {/* Persistent Footer Actions */}
+              <div className="fixed bottom-0 left-0 lg:left-[270px] right-0 bg-white border-t border-[#c2c6d5] p-4 flex items-center justify-between z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <div className="text-sm text-[#424653] flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-[#737785]" />
+                  Last saved: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button className="bg-transparent hover:bg-[#f2f3ff] text-[#131b2e] border border-[#c2c6d5] px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer">Discard Changes</button>
+                  <button className="bg-[#0055c2] hover:bg-[#003f93] text-white px-6 py-2 text-xs font-bold rounded-lg flex items-center gap-2 transition-colors cursor-pointer" onClick={() => showToast('Election settings saved successfully.', 'success')}>
+                    <FileCheck2 className="w-4 h-4" />
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </div>
           )}
