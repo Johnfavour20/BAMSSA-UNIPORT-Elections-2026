@@ -43,7 +43,7 @@ export const Hero: React.FC<HeroProps> = ({
   return (
     <motion.section
       id="bamssa-hero-section"
-      className="relative w-full min-h-[600px] lg:h-[82vh] flex items-center justify-center overflow-hidden py-16"
+      className="relative flex min-h-[560px] w-full items-center justify-center overflow-hidden py-12 sm:py-16 lg:h-[82vh]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.7, ease: 'easeOut' }}
@@ -86,7 +86,7 @@ export const Hero: React.FC<HeroProps> = ({
       >
         {/* Sub-badge: KEEP rounded-full */}
         <motion.div
-          className="inline-flex items-center gap-2.5 bg-white/15 backdrop-blur-md border border-white/25 px-4 py-2 rounded-full mb-6 text-xs font-semibold tracking-wider uppercase text-white shadow-xs"
+          className="mb-5 inline-flex items-center gap-2.5 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-[10px] font-semibold tracking-[0.18em] uppercase text-white shadow-sm backdrop-blur-md sm:px-4 sm:text-[11px]"
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -97,7 +97,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Display Headline */}
         <motion.h2
-          className="text-3xl sm:text-4xl md:text-5xl lg:text-[50px] font-extrabold tracking-tight mb-5 leading-tight uppercase font-sans text-white drop-shadow-md"
+          className="mb-4 text-3xl font-extrabold uppercase leading-[1.08] tracking-[-0.04em] text-white drop-shadow-md sm:text-4xl md:text-5xl lg:text-[50px]"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.25 }}
@@ -107,7 +107,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Sub-headline */}
         <motion.p
-          className="text-base sm:text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto font-normal leading-relaxed"
+          className="mx-auto mb-8 max-w-2xl text-sm leading-relaxed text-white/90 sm:text-base md:text-lg"
           initial={{ y: 16, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.35 }}
@@ -117,7 +117,7 @@ export const Hero: React.FC<HeroProps> = ({
 
         {/* Action Buttons */}
         <motion.div
-          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-3.5 max-w-md mx-auto mb-8"
+          className="mx-auto mb-7 flex w-full max-w-md flex-col items-center justify-center gap-3 sm:max-w-lg sm:flex-row"
           initial={{ y: 18, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.45 }}
@@ -126,7 +126,7 @@ export const Hero: React.FC<HeroProps> = ({
             <motion.button
               id="hero-vote-live-btn"
               onClick={onStartVoting}
-              className="w-full sm:w-auto bg-[#2563eb] hover:bg-[#003f93] text-white font-medium text-sm px-5 py-2.5 rounded-none transition-all shadow-md flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563eb] px-5 py-2.75 text-sm font-semibold text-white shadow-lg shadow-[#003f93]/25 transition-all hover:bg-[#003f93] active:scale-[0.99] sm:w-auto"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -137,7 +137,7 @@ export const Hero: React.FC<HeroProps> = ({
             <motion.button
               id="hero-check-eligibility-btn"
               onClick={onCheckEligibility}
-              className="w-full sm:w-auto bg-[#2563eb] hover:bg-[#003f93] text-white font-medium text-sm px-5 py-2.5 rounded-none transition-all shadow-md flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563eb] px-5 py-2.75 text-sm font-semibold text-white shadow-lg shadow-[#003f93]/25 transition-all hover:bg-[#003f93] active:scale-[0.99] sm:w-auto"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -149,7 +149,7 @@ export const Hero: React.FC<HeroProps> = ({
           <motion.button
             id="hero-view-monitor-btn"
             onClick={onViewLiveMonitor}
-            className="w-full sm:w-auto bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-md font-medium text-sm px-5 py-2.5 rounded-none transition-all shadow-xs flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-2.75 text-sm font-semibold text-white backdrop-blur-md shadow-sm transition-all hover:bg-white/20 active:scale-[0.99] sm:w-auto"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}
           >

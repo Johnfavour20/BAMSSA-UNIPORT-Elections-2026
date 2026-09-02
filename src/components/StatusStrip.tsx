@@ -64,47 +64,42 @@ export const StatusStrip: React.FC<StatusStripProps> = () => {
   return (
     <section 
       id="bamssa-status-strip" 
-      className="bg-[#edf4fc] border-y border-[#d2d9f4] py-8 sm:py-10 px-4 sm:px-6 lg:px-8"
+      className="border-y border-[#d2d9f4] bg-[radial-gradient(circle_at_top,_#f4f8ff,_#edf4fc_50%,_#edf3ff)] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
     >
       <div className="container mx-auto max-w-[1280px]">
-        {/* 4 Clean Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {/* Card 1: Eligible Voters */}
-          <div className="bg-white border border-[#c2c6d5]/70 rounded-none py-8 px-6 text-center shadow-xs hover:border-[#0055c2]/40 transition-colors">
-            <div className="text-3xl sm:text-4xl md:text-[38px] font-bold text-[#003f93] tracking-tight leading-none mb-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+          <div className="rounded-2xl border border-[#c2c6d5]/70 bg-white px-5 py-7 text-center shadow-[0_12px_22px_rgba(15,23,42,0.04)] transition-colors hover:border-[#0055c2]/40 sm:px-6">
+            <div className="mb-3 text-3xl font-bold leading-none tracking-[-0.04em] text-[#003f93] sm:text-4xl md:text-[38px]">
               <AnimatedNumber value={eligibleTarget} />
             </div>
-            <div className="text-sm md:text-base font-normal text-[#424653]">
+            <div className="text-sm font-medium text-[#424653] md:text-base">
               Eligible Voters
             </div>
           </div>
 
-          {/* Card 2: Ballots Cast */}
-          <div className="bg-white border border-[#c2c6d5]/70 rounded-none py-8 px-6 text-center shadow-xs hover:border-[#0055c2]/40 transition-colors">
-            <div className="text-3xl sm:text-4xl md:text-[38px] font-bold text-[#003f93] tracking-tight leading-none mb-3">
+          <div className="rounded-2xl border border-[#c2c6d5]/70 bg-white px-5 py-7 text-center shadow-[0_12px_22px_rgba(15,23,42,0.04)] transition-colors hover:border-[#0055c2]/40 sm:px-6">
+            <div className="mb-3 text-3xl font-bold leading-none tracking-[-0.04em] text-[#003f93] sm:text-4xl md:text-[38px]">
               <AnimatedNumber value={ballotsTarget} />
             </div>
-            <div className="text-sm md:text-base font-normal text-[#424653]">
+            <div className="text-sm font-medium text-[#424653] md:text-base">
               Ballots Cast
             </div>
           </div>
 
-          {/* Card 3: Turnout */}
-          <div className="bg-white border border-[#c2c6d5]/70 rounded-none py-8 px-6 text-center shadow-xs hover:border-[#0055c2]/40 transition-colors">
-            <div className="text-3xl sm:text-4xl md:text-[38px] font-bold text-[#003f93] tracking-tight leading-none mb-3">
+          <div className="rounded-2xl border border-[#c2c6d5]/70 bg-white px-5 py-7 text-center shadow-[0_12px_22px_rgba(15,23,42,0.04)] transition-colors hover:border-[#0055c2]/40 sm:px-6">
+            <div className="mb-3 text-3xl font-bold leading-none tracking-[-0.04em] text-[#003f93] sm:text-4xl md:text-[38px]">
               <AnimatedNumber value={turnoutTarget} suffix="%" />
             </div>
-            <div className="text-sm md:text-base font-normal text-[#424653]">
+            <div className="text-sm font-medium text-[#424653] md:text-base">
               Turnout
             </div>
           </div>
 
-          {/* Card 4: Election Day */}
-          <div className="bg-white border border-[#c2c6d5]/70 rounded-none py-8 px-6 text-center shadow-xs hover:border-[#0055c2]/40 transition-colors">
-            <div className="text-2xl sm:text-3xl md:text-[32px] font-bold text-[#003f93] tracking-tight leading-none mb-3">
+          <div className="rounded-2xl border border-[#c2c6d5]/70 bg-white px-5 py-7 text-center shadow-[0_12px_22px_rgba(15,23,42,0.04)] transition-colors hover:border-[#0055c2]/40 sm:px-6">
+            <div className="mb-3 text-2xl font-bold leading-none tracking-[-0.04em] text-[#003f93] sm:text-3xl md:text-[32px]">
               20 Aug, 2026
             </div>
-            <div className="text-sm md:text-base font-normal text-[#424653]">
+            <div className="text-sm font-medium text-[#424653] md:text-base">
               Election Day
             </div>
           </div>

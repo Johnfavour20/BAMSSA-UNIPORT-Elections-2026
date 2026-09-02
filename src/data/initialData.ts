@@ -538,4 +538,5 @@ export const DEPARTMENT_STATS: Record<BMSDepartment, { eligible: number; accredi
   'Human Physiology': { eligible: 640, accredited: 395, voted: 270 },
   'Pharmacology': { eligible: 590, accredited: 360, voted: 235 },
   'Medical Biochemistry': { eligible: 540, accredited: 340, voted: 215 },
+  'Medicine & Surgery': { eligible: 760, accredited: 470, voted: 330 },
 };
