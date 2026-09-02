@@ -52,7 +52,8 @@ import {
   CheckSquare,
   GripVertical,
   MoreVertical,
-  ChevronLeft
+  ChevronLeft,
+  Info
 } from 'lucide-react';
 
 interface AdminPortalViewProps {
@@ -2160,395 +2161,784 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
 
           {/* TAB 7: RESULTS MANAGEMENT */}
           {activeTab === 'results' && (
-            <div className="bg-white border border-[#c2c6d5] rounded-2xl p-6 shadow-xs space-y-6">
-              <div className="flex justify-between items-center border-b border-[#eaedff] pb-4">
-                <div>
-                  <h3 className="text-xl font-bold text-[#131b2e]">
-                    Official Vote Tally &amp; Standing
-                  </h3>
-                  <p className="text-xs text-[#737785]">
-                    Decisive vote counts by position and candidate
-                  </p>
+            <div className="space-y-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-[#131b2e] tracking-tight">Results Management</h2>
+                  <span className="bg-[#F1F5F9] text-[#475569] px-2 py-0.5 rounded font-bold text-[10px] uppercase tracking-wider border border-[#E2E8F0]">STANDBY</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="bg-[#eaedff] hover:bg-[#dae2fd] text-[#003f93] font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Tally Sheet</span>
-                </button>
+                <div className="flex items-center gap-3 text-sm text-[#424653]">
+                  <span>Last updated: Just now</span>
+                  <button
+                    type="button"
+                    className="bg-white border border-[#c2c6d5] rounded-lg p-2 text-[#424653] hover:bg-[#f2f3ff] transition-colors cursor-pointer"
+                    title="Refresh"
+                  >
+                    <RotateCw className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
-              <div className="space-y-6">
-                {positions.map(pos => {
-                  const posCands = candidates
-                    .filter(c => c.positionId === pos.id)
-                    .sort((a, b) => b.votesCount - a.votesCount);
-                  const totalVotes = posCands.reduce((acc, c) => acc + c.votesCount, 0);
+              <div className="bg-[#f2f3ff] border border-[#c2c6d5] rounded-lg p-4 flex gap-3 items-start">
+                <Info className="w-5 h-5 text-[#003f93] mt-0.5 shrink-0" />
+                <div>
+                  <h4 className="text-sm font-bold text-[#003f93]">Administrative Notice</h4>
+                  <p className="text-sm text-[#424653] mt-1 leading-relaxed">
+                    Recorded ballot totals and administrative adjustments are maintained separately. Result adjustments require appropriate authorization, a documented reason, and are recorded in the audit log.
+                  </p>
+                </div>
+              </div>
 
-                  return (
-                    <div key={pos.id} className="border border-[#c2c6d5] rounded-xl overflow-hidden">
-                      <div className="bg-[#f2f3ff] px-4 py-2.5 font-bold text-xs text-[#131b2e] flex justify-between">
-                        <span>{pos.title.toUpperCase()}</span>
-                        <span>{totalVotes} Votes Cast</span>
-                      </div>
-                      <div className="p-4 divide-y divide-[#eaedff]">
-                        {posCands.map((c, i) => {
-                          const pct = totalVotes > 0 ? Math.round((c.votesCount / totalVotes) * 100) : 0;
-                          return (
-                            <div key={c.id} className="py-2 flex items-center justify-between text-xs">
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold">{i + 1}. {c.fullName}</span>
-                                {i === 0 && totalVotes > 0 && (
-                                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded">
-                                    ELECTED
-                                  </span>
-                                )}
-                              </div>
-                              <span className="font-mono font-bold text-[#003f93]">
-                                {c.votesCount} votes ({pct}%)
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
+              <div className="bg-white border border-[#c2c6d5] rounded-lg p-6 shadow-xs">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-xl font-bold text-[#131b2e] tracking-tight">BAMSSA 2026 GENERAL ELECTIONS</h3>
+                    <p className="text-sm text-[#424653] mt-1">
+                      Results Status: <span className="font-semibold">NOT YET AVAILABLE</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="relative pt-4 pb-2">
+                  <div className="absolute top-1/2 left-0 w-full h-[2px] bg-[#c2c6d5] -translate-y-1/2" />
+                  <div className="absolute top-1/2 left-0 w-1/4 h-[2px] bg-[#0055c2] -translate-y-1/2" />
+
+                  <div className="relative flex justify-between">
+                    {[
+                      'DRAFT',
+                      'SCHEDULED',
+                      'STANDBY',
+                      'LIVE',
+                      'CLOSED',
+                      'COUNTING',
+                      'CERTIFIED',
+                      'PUBLISHED',
+                    ].map((step, idx) => {
+                      const isComplete = idx < 2;
+                      const isActive = idx === 2;
+                      const isUpcoming = idx > 2;
+
+                      return (
+                        <div key={step} className="flex flex-col items-center">
+                          <div
+                            className={`w-4 h-4 rounded-full z-10 ${
+                              isComplete
+                                ? 'bg-[#0055c2]'
+                                : isActive
+                                  ? 'border-[3px] border-[#0055c2] bg-white ring-4 ring-[#d9e2ff]'
+                                  : 'bg-[#c2c6d5]'
+                            }`}
+                          />
+                          <span
+                            className={`mt-2 text-[10px] font-bold uppercase tracking-wider ${
+                              isActive ? 'text-[#003f93]' : isComplete ? 'text-[#424653]' : 'text-[#737785]'
+                            }`}
+                          >
+                            {step}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white border border-[#c2c6d5] rounded-lg p-5 shadow-xs">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#424653] mb-1">Positions</p>
+                  <p className="text-4xl font-extrabold text-[#131b2e]">12</p>
+                </div>
+                <div className="bg-white border border-[#c2c6d5] rounded-lg p-5 shadow-xs">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#424653] mb-1">Candidates</p>
+                  <p className="text-4xl font-extrabold text-[#131b2e]">36</p>
+                </div>
+                <div className="bg-white border border-[#c2c6d5] rounded-lg p-5 shadow-xs">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#424653] mb-1">Ballots Recorded</p>
+                  <p className="text-4xl font-extrabold text-[#737785]">—</p>
+                  <p className="text-[11px] text-[#424653] mt-1">Voting has not started</p>
+                </div>
+                <div className="bg-white border border-[#c2c6d5] rounded-lg p-5 shadow-xs">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#424653] mb-1">Adjusted Votes</p>
+                  <p className="text-4xl font-extrabold text-[#737785]">—</p>
+                  <p className="text-[11px] text-[#424653] mt-1">Voting has not started</p>
+                </div>
+              </div>
+
+              <div className="bg-white border border-[#c2c6d5] rounded-lg shadow-xs overflow-hidden">
+                <div className="p-5 border-b border-[#eaedff] bg-white">
+                  <h3 className="text-2xl font-bold text-[#131b2e]">Election Results</h3>
+                  <div className="mt-4 flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737785]" />
+                      <input
+                        type="text"
+                        placeholder="Search candidates..."
+                        className="w-full pl-10 pr-4 py-2 border border-[#c2c6d5] rounded-xl bg-[#f8fafc] text-[#131b2e] text-sm focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]"
+                      />
                     </div>
-                  );
-                })}
+                    <div className="flex gap-4">
+                      <select className="min-w-[160px] border border-[#c2c6d5] rounded-xl bg-[#f8fafc] px-4 py-2 text-sm text-[#131b2e] focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]">
+                        <option>All Positions</option>
+                        <option>President</option>
+                        <option>Vice President</option>
+                      </select>
+                      <select className="min-w-[160px] border border-[#c2c6d5] rounded-xl bg-[#f8fafc] px-4 py-2 text-sm text-[#131b2e] focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]">
+                        <option>All Results</option>
+                        <option>Leading</option>
+                        <option>Tied</option>
+                        <option>Awaiting Review</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-[#f2f3ff] border-b border-[#c2c6d5]">
+                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-left">Position</th>
+                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-left">Candidate</th>
+                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-right">Ballots Recorded</th>
+                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-right">+ Adjustments</th>
+                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-right">= Final Total</th>
+                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-center">Status</th>
+                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#eaedff]">
+                      {[
+                        { position: 'President', candidate: 'John Doe', status: 'Awaiting Results' },
+                        { position: 'President', candidate: 'Jane Smith', status: 'Awaiting Results' },
+                      ].map((row, index) => (
+                        <tr key={`${row.position}-${row.candidate}-${index}`} className="hover:bg-[#faf8ff] transition-colors">
+                          <td className="px-5 py-4 text-sm font-medium text-[#131b2e]">{row.position}</td>
+                          <td className="px-5 py-4 text-sm text-[#131b2e]">{row.candidate}</td>
+                          <td className="px-5 py-4 text-sm text-[#737785] text-right">—</td>
+                          <td className="px-5 py-4 text-sm text-[#737785] text-right">—</td>
+                          <td className="px-5 py-4 text-sm text-[#131b2e] font-semibold text-right bg-[#faf8ff]">—</td>
+                          <td className="px-5 py-4 text-center">
+                            <span className="inline-flex items-center justify-center rounded-full bg-[#f2f3ff] border border-[#c2c6d5] px-2.5 py-1 text-[11px] font-bold text-[#424653]">
+                              {row.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              <button type="button" className="p-1 text-[#424653] hover:text-[#003f93] transition-colors cursor-pointer" title="View Details">
+                                <Eye className="w-5 h-5" />
+                              </button>
+                              <button type="button" className="p-1 text-[#424653] hover:text-[#003f93] transition-colors cursor-pointer" title="Administrative Adjustment">
+                                <Sliders className="w-5 h-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="p-4 border-t border-[#eaedff] bg-white flex justify-between items-center text-sm text-[#424653]">
+                  <span>Showing 1 to 2 of 36 entries</span>
+                  <div className="flex gap-1">
+                    <button type="button" className="px-3 py-1 border border-[#c2c6d5] rounded bg-[#f8fafc] text-[#424653] opacity-50 cursor-not-allowed">Previous</button>
+                    <button type="button" className="px-3 py-1 border border-[#0055c2] rounded bg-[#0055c2] text-white">1</button>
+                    <button type="button" className="px-3 py-1 border border-[#c2c6d5] rounded bg-[#f8fafc] text-[#424653] hover:bg-[#f2f3ff]">2</button>
+                    <button type="button" className="px-3 py-1 border border-[#c2c6d5] rounded bg-[#f8fafc] text-[#424653] hover:bg-[#f2f3ff]">3</button>
+                    <button type="button" className="px-3 py-1 border border-[#c2c6d5] rounded bg-[#f8fafc] text-[#424653] hover:bg-[#f2f3ff]">Next</button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {/* TAB 8: CERTIFICATION */}
           {activeTab === 'certification' && (
-            <div className="bg-white border border-[#c2c6d5] rounded-2xl p-6 sm:p-8 shadow-xs space-y-6 text-center max-w-2xl mx-auto">
-              <Award className="w-14 h-14 text-[#003f93] mx-auto" />
-              <div>
-                <h3 className="text-2xl font-extrabold text-[#131b2e]">
-                  Official Election Certification
-                </h3>
-                <p className="text-xs text-[#737785] mt-1">
-                  BAMSSA UNIPORT Electoral Commission (ELECO 2026)
-                </p>
+            <div className="space-y-6">
+              <div className="flex justify-between items-end mb-2">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-[#131b2e] tracking-tight">Results Certification</h2>
+                  <p className="text-sm text-[#424653] mt-1">Review, verify, and formally certify election outcomes.</p>
+                </div>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#f2f3ff] text-[#003f93] border border-[#c2c6d5] rounded-xl text-xs font-bold shadow-xs hover:bg-[#eaedff] transition-colors cursor-pointer"
+                >
+                  <History className="w-4 h-4" />
+                  View Audit Logs
+                </button>
               </div>
 
-              <div className="p-6 bg-[#faf8ff] border border-[#c2c6d5] rounded-2xl text-left space-y-3 text-xs leading-relaxed text-[#424653]">
-                <p>
-                  This document certifies that the General Elections for the 2026/2027 Executive Council of the Basic Medical Science Students' Association (BAMSSA), University of Port Harcourt Chapter, have been conducted in accordance with the constitution.
-                </p>
-                <p>
-                  Total Ballots Audited: <strong>{totalBallotsCast}</strong> | Turnout Rate: <strong>{turnoutPercentage}%</strong>
-                </p>
-                <div className="pt-4 border-t border-[#c2c6d5] flex justify-between items-end">
-                  <div>
-                    <p className="font-bold text-[#131b2e]">Dr. ELECO Returning Officer</p>
-                    <p className="text-[10px] text-[#737785]">Chief Electoral Commissioner</p>
+              <div className="bg-white border border-[#c2c6d5] rounded-2xl p-6 shadow-xs relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#ffdad6] opacity-10 rounded-bl-full" />
+
+                <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center mb-6 pb-4 border-b border-[#eaedff]">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-[#ffdad6] text-[#93000a] flex items-center justify-center flex-shrink-0 mt-1">
+                      <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-extrabold text-[#131b2e] mb-1">NOT READY FOR CERTIFICATION</h3>
+                      <p className="text-sm text-[#424653] max-w-xl">
+                        The election is currently in Standby phase. Voting must conclude and results must be processed before certification.
+                      </p>
+                    </div>
                   </div>
-                  <span className="bg-[#eaedff] text-[#003f93] text-[10px] font-bold px-3 py-1 rounded-full border border-[#003f93]/20">
-                    SEALED &amp; RECORDED
-                  </span>
+
+                  <div className="bg-[#f2f3ff] px-4 py-2 rounded-lg border border-[#c2c6d5] flex items-center gap-2 text-xs font-bold text-[#424653]">
+                    <Lock className="w-4 h-4 text-[#737785]" />
+                    Certification Locked
+                  </div>
+                </div>
+
+                <div className="relative mt-6 mb-4">
+                  <div className="absolute top-4 left-4 right-4 h-1 bg-[#dae2fd] rounded-full" />
+                  <div className="absolute top-4 left-4 h-1 bg-[#0055c2] rounded-full" style={{ width: '25%' }} />
+
+                  <div className="flex justify-between relative z-10 px-1">
+                    {[
+                      { label: 'Draft', complete: true },
+                      { label: 'Scheduled', complete: true },
+                      { label: 'Standby', complete: true, active: true },
+                      { label: 'Live', complete: false },
+                      { label: 'Closed', complete: false },
+                      { label: 'Counting', complete: false },
+                      { label: 'Certified', complete: false },
+                      { label: 'Published', complete: false },
+                    ].map((step) => (
+                      <div key={step.label} className="flex flex-col items-center gap-2 w-24">
+                        <div
+                          className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                            step.complete
+                              ? 'bg-[#0055c2] border-[#0055c2] text-white'
+                              : step.active
+                                ? 'bg-white border-[#0055c2] text-[#0055c2]'
+                                : 'bg-[#f2f3ff] border-[#c2c6d5] text-[#737785]'
+                          }`}
+                        >
+                          {step.complete ? <Check className="w-4 h-4" /> : <span className="w-2.5 h-2.5 rounded-full bg-current" />}
+                        </div>
+                        <span
+                          className={`text-[10px] uppercase tracking-wider text-center font-bold ${
+                            step.complete || step.active ? 'text-[#003f93]' : 'text-[#737785]'
+                          }`}
+                        >
+                          {step.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="bg-[#0055c2] hover:bg-[#003f93] text-white font-bold text-xs px-6 py-3 rounded-xl transition-colors cursor-pointer inline-flex items-center gap-2"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Print Official Certificate</span>
-              </button>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-1 space-y-4">
+                  <h3 className="text-lg font-bold text-[#131b2e] px-1">Election Overview</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: 'Positions', value: '12', icon: ListOrdered },
+                      { label: 'Candidates', value: '36', icon: UserPlus },
+                      { label: 'Ballots Recorded', value: '—', icon: Vote, dim: true },
+                      { label: 'Reviewed', value: '0/12', icon: CheckCircle2, accent: 'text-[#93000a]' },
+                      { label: 'Adjustments', value: '—', icon: Sliders },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <div key={item.label} className="bg-white border border-[#c2c6d5] rounded-xl p-4 shadow-xs flex flex-col justify-between h-24">
+                          <div className="flex items-center gap-2 text-[11px] font-bold text-[#424653] uppercase tracking-wider">
+                            <Icon className={`w-4 h-4 ${item.accent || 'text-[#003f93]'}`} />
+                            <span>{item.label}</span>
+                          </div>
+                          <div className={`text-3xl font-extrabold ${item.dim ? 'text-[#737785]' : 'text-[#131b2e]'}`}>
+                            {item.value}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="lg:col-span-2 bg-white border border-[#c2c6d5] rounded-2xl p-5 shadow-xs">
+                  <div className="flex justify-between items-center pb-3 mb-3 border-b border-[#eaedff]">
+                    <h3 className="text-lg font-bold text-[#131b2e] flex items-center gap-2">
+                      <CheckSquare className="w-4 h-4 text-[#003f93]" />
+                      Certification Readiness
+                    </h3>
+                    <span className="text-[11px] font-bold text-[#424653] bg-[#f2f3ff] border border-[#c2c6d5] rounded-full px-2.5 py-1">0 / 8 Complete</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {[
+                      { label: 'Voting period officially closed', state: 'Pending' },
+                      { label: 'All cast ballots successfully processed', state: 'Pending' },
+                      { label: 'Results calculated and tabulated', state: 'Pending' },
+                      { label: 'Candidate and position structure verified', state: 'Verified' },
+                      { label: 'Administrative adjustments audited', state: 'Pending' },
+                      { label: 'Any result discrepancies resolved', state: 'Pending' },
+                      { label: 'Individual position results reviewed (0/12)', state: 'Not Ready' },
+                    ].map((item, idx) => (
+                      <div key={item.label} className="flex items-center justify-between gap-3 p-3 rounded-xl border border-[#c2c6d5] bg-[#faf8ff]">
+                        <div className="flex items-center gap-3 text-left">
+                          <span className={`w-5 h-5 flex items-center justify-center rounded-full ${
+                            item.state === 'Verified'
+                              ? 'bg-[#d9e2ff] text-[#003f93]'
+                              : item.state === 'Not Ready'
+                                ? 'bg-[#ffdad6] text-[#93000a]'
+                                : 'bg-[#f2f3ff] text-[#737785]'
+                          }`}>
+                            {item.state === 'Verified' ? <Check className="w-3.5 h-3.5" /> : item.state === 'Not Ready' ? <X className="w-3.5 h-3.5" /> : <span className="w-2 h-2 rounded-full bg-current" />}
+                          </span>
+                          <span className="text-sm text-[#131b2e]">{item.label}</span>
+                        </div>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider rounded px-2 py-1 border ${
+                            item.state === 'Verified'
+                              ? 'bg-[#d9e2ff] text-[#003f93] border-[#adc6ff]'
+                              : item.state === 'Not Ready'
+                                ? 'bg-[#ffdad6] text-[#93000a] border-[#ffb4ab]'
+                                : 'bg-[#f2f3ff] text-[#737785] border-[#c2c6d5]'
+                          }`}
+                        >
+                          {item.state}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-[#c2c6d5] rounded-2xl overflow-hidden shadow-xs">
+                <div className="p-4 border-b border-[#eaedff] bg-[#faf8ff] flex justify-between items-center">
+                  <div>
+                    <h3 className="text-xl font-bold text-[#131b2e]">Position Results Review</h3>
+                    <p className="text-sm text-[#424653]">All positions must be individually reviewed before final certification.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#c2c6d5] bg-white px-3 py-2 text-xs font-bold text-[#424653] hover:bg-[#eaedff] transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Return to Results Management
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-[#f2f3ff] text-[11px] font-bold uppercase tracking-wider text-[#424653]">
+                        <th className="px-4 py-3">Position</th>
+                        <th className="px-4 py-3">Candidates</th>
+                        <th className="px-4 py-3">Total Votes</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { pos: 'President', candidates: 4, votes: '—', state: 'Awaiting Data' },
+                        { pos: 'Vice President', candidates: 3, votes: '—', state: 'Awaiting Data' },
+                        { pos: 'General Secretary', candidates: 2, votes: '—', state: 'Awaiting Data' },
+                      ].map((item) => (
+                        <tr key={item.pos} className="border-t border-[#eaedff] bg-white text-sm">
+                          <td className="px-4 py-4 font-bold text-[#131b2e]">{item.pos}</td>
+                          <td className="px-4 py-4 text-[#424653]">{item.candidates}</td>
+                          <td className="px-4 py-4 text-[#424653]">{item.votes}</td>
+                          <td className="px-4 py-4">
+                            <span className="inline-flex items-center gap-1 rounded border border-[#c2c6d5] bg-[#f2f3ff] text-[#424653] text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+                              <Clock className="w-3.5 h-3.5" />
+                              {item.state}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            <button
+                              type="button"
+                              disabled
+                              className="inline-flex items-center gap-1 text-[#737785] text-xs font-bold cursor-not-allowed opacity-60"
+                            >
+                              View Result
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr>
+                        <td colSpan={5} className="px-4 py-3 text-center text-sm text-[#737785] italic border-t border-[#eaedff] bg-[#faf8ff]">
+                          ... 9 more positions hidden
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white border border-[#c2c6d5] rounded-2xl p-5 shadow-xs">
+                  <h3 className="text-lg font-bold text-[#131b2e] flex items-center gap-2 border-b border-[#eaedff] pb-3 mb-4">
+                    <Sliders className="w-4 h-4 text-[#003f93]" />
+                    Administrative Adjustments
+                  </h3>
+                  <div className="bg-[#f2f3ff] border border-dashed border-[#c2c6d5] rounded-xl p-6 flex flex-col items-center justify-center text-center h-32">
+                    <div className="w-10 h-10 rounded-full bg-[#eaedff] text-[#003f93] flex items-center justify-center mb-2">
+                      <Info className="w-5 h-5" />
+                    </div>
+                    <p className="text-sm text-[#424653]">No administrative adjustments recorded.</p>
+                  </div>
+                  <div className="mt-4 text-[11px] text-[#424653] flex justify-between gap-4 flex-wrap">
+                    <span>Formula audit:</span>
+                    <span className="font-mono bg-[#f2f3ff] px-2 py-1 rounded border border-[#c2c6d5] text-[#131b2e]">
+                      Recorded Ballots (0) + Adjustments (0) = Final (0)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-[#c2c6d5] rounded-2xl p-5 shadow-xs">
+                  <h3 className="text-lg font-bold text-[#131b2e] flex items-center gap-2 border-b border-[#eaedff] pb-3 mb-4">
+                    <ShieldCheck className="w-4 h-4 text-[#003f93]" />
+                    Certification Authority
+                  </h3>
+                  <div className="flex items-center gap-3 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl p-3">
+                    <div className="w-12 h-12 rounded-full bg-[#d9e2ff] text-[#003f93] flex items-center justify-center text-lg font-extrabold">EA</div>
+                    <div>
+                      <div className="text-sm font-bold text-[#131b2e]">ELECO Administrator (You)</div>
+                      <div className="text-xs text-[#424653] flex items-center gap-1 mt-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#003f93]" />
+                        Authorized Signatory
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-start gap-2 bg-[#f2f3ff] border border-[#c2c6d5] rounded-xl p-3 text-xs text-[#424653]">
+                    <ShieldCheck className="w-4 h-4 text-[#003f93] mt-0.5 shrink-0" />
+                    <p>Actions performed here are permanently logged in the immutable audit trail associated with your administrative identity.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border-2 border-dashed border-[#c2c6d5] rounded-2xl p-6 shadow-xs text-center">
+                <div className="w-16 h-16 rounded-full bg-[#f2f3ff] border border-[#c2c6d5] text-[#737785] flex items-center justify-center mx-auto mb-4">
+                  <Lock className="w-8 h-8" />
+                </div>
+                <h2 className="text-2xl font-extrabold text-[#131b2e]">Formal Election Certification</h2>
+                <p className="max-w-2xl mx-auto mt-4 text-sm text-[#424653] italic border-l-4 border-[#c2c6d5] bg-[#faf8ff] p-3 rounded-r text-left">
+                  “I hereby declare that I have rigorously reviewed the tabulated results for this election. I confirm that the election was conducted in accordance with BAMSSA regulations, all ballots have been accounted for, and I authorize these results as the official and final outcome.”
+                </p>
+                <div className="mt-6 flex items-center justify-center gap-2 text-xs font-bold text-[#424653]">
+                  <input type="checkbox" className="h-4 w-4 rounded border-[#c2c6d5] text-[#0055c2]" disabled />
+                  <label>I confirm that I have reviewed the election results and authorize certification.</label>
+                </div>
+                <button
+                  type="button"
+                  disabled
+                  className="mt-6 inline-flex items-center justify-center gap-2 bg-[#f2f3ff] text-[#737785] border border-[#c2c6d5] rounded-xl px-6 py-3 text-xs font-bold cursor-not-allowed"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Certify Election Results
+                </button>
+                <p className="mt-3 text-[11px] text-[#93000a] flex items-center justify-center gap-1">
+                  <Info className="w-3.5 h-3.5" />
+                  All checklist items must be completed before certification is unlocked.
+                </p>
+              </div>
+
+              <div className="flex justify-end">
+                <div className="bg-white border border-[#c2c6d5] rounded-xl p-3 flex items-center gap-3 shadow-xs opacity-70">
+                  <div className="text-right text-xs">
+                    <div className="font-bold text-[#131b2e]">Post-Certification Publication</div>
+                    <div className="text-[#737785] uppercase tracking-wider">Status: Not Published</div>
+                  </div>
+                  <div className="w-px h-10 bg-[#c2c6d5]" />
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[#c2c6d5] bg-[#f2f3ff] text-[#737785] text-xs font-bold cursor-not-allowed"
+                  >
+                    <Award className="w-4 h-4" />
+                    Publish Certified Results
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
           {/* TAB 9: AUDIT LOGS */}
           {activeTab === 'audit' && (
-            <div className="bg-white border border-[#c2c6d5] rounded-2xl p-6 shadow-xs space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#eaedff] pb-4">
+            <div className="space-y-6 max-w-[1280px] mx-auto pb-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[#131b2e]">
-                    Tamper-Proof Audit Trail Feed ({auditLogs.length})
-                  </h3>
-                  <p className="text-xs text-[#737785]">
-                    Immutable verification records of all ballots, voter authentications, and admin actions
+                  <h1 className="text-4xl sm:text-5xl font-extrabold text-[#131b2e] tracking-tight">Audit Logs</h1>
+                  <p className="mt-2 text-base text-[#424653] max-w-2xl">
+                    Review administrative and system activity recorded throughout the election. All events are time-stamped and securely appended.
                   </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={exportAuditCSV}
-                  className="bg-[#eaedff] hover:bg-[#dae2fd] text-[#003f93] font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-[#c2c6d5] rounded-lg text-[#131b2e] font-bold text-sm hover:bg-[#f2f3ff] transition-colors cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Export CSV Log</span>
+                  Export Audit Logs
                 </button>
               </div>
 
-              <div className="space-y-3">
-                {auditLogs.slice(0, 50).map((log) => (
-                  <div key={log.id} className="p-3.5 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                {[
+                  { label: 'Total Events', value: '1,284', icon: ListOrdered, iconColor: 'text-[#003f93]' },
+                  { label: 'Today', value: '46', icon: Calendar, iconColor: 'text-[#335da5]' },
+                  { label: 'Admin Actions', value: '32', icon: UserCheck, iconColor: 'text-[#003ba1]' },
+                  { label: 'Security Events', value: '4', icon: ShieldCheck, iconColor: 'text-[#93000a]' },
+                ].map(({ label, value, icon: Icon, iconColor }) => (
+                  <div key={label} className="bg-white border border-[#c2c6d5] rounded-xl p-4 flex items-center justify-between shadow-[0_2px_6px_rgba(15,23,42,0.03)]">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-[#131b2e]">{log.action}</span>
-                        <span className="bg-[#eaedff] text-[#003f93] text-[10px] font-bold px-2 py-0.5 rounded">
-                          {log.category}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[#737785] mt-0.5">
-                        Actor: <strong>{log.actor}</strong> • {log.details}
-                      </p>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#424653] mb-2">{label}</p>
+                      <p className="text-[28px] font-extrabold text-[#131b2e] leading-none">{value}</p>
                     </div>
-                    <div className="text-right font-mono text-[10px] text-[#737785]">
-                      <span>{log.timestamp}</span>
+                    <div className="w-10 h-10 rounded-full bg-[#f2f3ff] border border-[#dfe5ff] flex items-center justify-center">
+                      <Icon className={`w-5 h-5 ${iconColor}`} />
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="bg-white border border-[#c2c6d5] rounded-xl overflow-hidden shadow-[0_2px_6px_rgba(15,23,42,0.03)]">
+                <div className="p-4 border-b border-[#eaedff] bg-white flex flex-col xl:flex-row gap-4 xl:items-center">
+                  <div className="relative flex-1 w-full xl:w-auto">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737785]" />
+                    <input
+                      type="text"
+                      placeholder="Search activity, administrator, candidate, or reference ID"
+                      className="w-full pl-10 pr-4 py-2 border border-[#c2c6d5] rounded-lg bg-[#fafbff] text-[#131b2e] text-sm focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    {['Any Date', 'All Admins', 'All Actions', 'All Severities'].map((option, idx) => (
+                      <select
+                        key={option}
+                        className="min-w-[140px] px-3 py-2 border border-[#c2c6d5] rounded-lg bg-[#fafbff] text-[#131b2e] text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]"
+                        defaultValue={option}
+                      >
+                        <option>{option}</option>
+                        {idx === 0 && <option>Today</option>}
+                        {idx === 0 && <option>Last 7 Days</option>}
+                        {idx === 1 && <option>Election Administrator</option>}
+                        {idx === 2 && <option>Result Adjustment</option>}
+                        {idx === 2 && <option>Results Reviewed</option>}
+                        {idx === 3 && <option>Information</option>}
+                        {idx === 3 && <option>Warning</option>}
+                        {idx === 3 && <option>Critical</option>}
+                      </select>
+                    ))}
+                    <button type="button" className="px-4 py-2 text-[#424653] hover:text-[#131b2e] text-sm font-bold transition-colors cursor-pointer">
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-[#f2f3ff] border-b border-[#c2c6d5]">
+                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-[#424653] whitespace-nowrap">Timestamp</th>
+                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-[#424653] whitespace-nowrap">Administrator</th>
+                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-[#424653] whitespace-nowrap">Action</th>
+                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-[#424653] whitespace-nowrap">Target</th>
+                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-[#424653] hidden md:table-cell">Details</th>
+                        <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-[#424653] whitespace-nowrap">Severity</th>
+                        <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-[0.12em] text-[#424653] whitespace-nowrap">Reference</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#eaedff]">
+                      {[
+                        { timestamp: 'Oct 24, 2025 14:32:05', admin: 'Election Administrator', action: 'Result Adjustment', target: 'John Doe (President)', details: '+1', severity: 'Information', ref: 'AUD-2026-00482' },
+                        { timestamp: 'Oct 24, 2025 14:30:12', admin: 'ELECO Chair', action: 'Results Reviewed', target: 'President', details: 'Results reviewed and marked ready for certification', severity: 'Information', ref: 'AUD-2026-00481' },
+                        { timestamp: 'Oct 24, 2025 14:15:45', admin: 'Election Administrator', action: 'Candidate Status Changed', target: 'Jane Smith', details: 'Pending Review -> Approved', severity: 'Information', ref: 'AUD-2026-00480' },
+                        { timestamp: 'Oct 24, 2025 13:42:01', admin: 'Verification Officer', action: 'Voter Approved', target: 'U2022/5530042', details: 'Voter eligibility approved', severity: 'Information', ref: 'AUD-2026-00479' },
+                      ].map((row) => (
+                        <tr key={row.ref} className="hover:bg-[#faf8ff] transition-colors">
+                          <td className="px-4 py-3 text-sm text-[#424653] whitespace-nowrap">{row.timestamp}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-[#131b2e] whitespace-nowrap">{row.admin}</td>
+                          <td className="px-4 py-3 text-sm text-[#131b2e] whitespace-nowrap">{row.action}</td>
+                          <td className="px-4 py-3 text-sm text-[#131b2e] whitespace-nowrap">{row.target}</td>
+                          <td className="px-4 py-3 text-sm text-[#424653] hidden md:table-cell max-w-[220px] truncate">{row.details}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[12px] font-bold bg-[#dbeafe] text-[#1e40af] border border-[#bfdbfe]">
+                              {row.severity}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="font-mono text-[13px] text-[#737785]">{row.ref}</span>
+                              <button type="button" className="p-1.5 rounded text-[#737785] hover:bg-[#f2f3ff] hover:text-[#003f93] transition-colors cursor-pointer" aria-label="View audit details">
+                                <ArrowRight className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="p-4 border-t border-[#eaedff] bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <p className="text-[12px] text-[#424653]">
+                    Showing <span className="font-bold text-[#131b2e]">1-25</span> of <span className="font-bold text-[#131b2e]">1,284</span> events
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded border border-[#c2c6d5] bg-[#f8fafc] text-[#737785] cursor-not-allowed opacity-50" aria-label="Previous page">
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded bg-[#0055c2] text-white font-bold text-sm">1</button>
+                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded border border-[#c2c6d5] bg-[#f8fafc] text-[#131b2e] text-sm">2</button>
+                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded border border-[#c2c6d5] bg-[#f8fafc] text-[#131b2e] text-sm">3</button>
+                    <span className="px-1 text-[#424653]">...</span>
+                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded border border-[#c2c6d5] bg-[#f8fafc] text-[#737785]" aria-label="Next page">
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 bg-white border border-[#c2c6d5] rounded-xl">
+                <Info className="w-5 h-5 text-[#737785] mt-0.5 shrink-0" />
+                <p className="text-base text-[#424653] leading-relaxed">
+                  Audit logs provide a chronological record of important election-system activity. Records are retained for accountability and review. <span className="font-bold text-[#131b2e]">Append-only record.</span>
+                </p>
               </div>
             </div>
           )}
 
           {/* TAB 10: SETTINGS / ELECTION SETUP */}
           {activeTab === 'settings' && (
-            <div className="space-y-6 max-w-[1280px] mx-auto pb-24">
-              {/* Page Header */}
-              <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-[#131b2e] mb-1">Election Management</h1>
-                  <p className="text-sm text-[#424653] max-w-2xl">Configure election details, schedule, participation rules, and election status.</p>
-                </div>
-                <div className="flex flex-col items-end">
-                  <div className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1 ${
-                    status === 'LIVE' ? 'bg-[#d9e2ff] text-[#003f93]' : 
-                    status === 'CLOSED' ? 'bg-[#e2e7ff] text-[#424653]' : 
-                    'bg-[#fef3c7] text-[#92400e]'
-                  }`}>
-                    {status === 'LIVE' ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-                    {status}
+            <div className="w-full max-w-[1280px] mx-auto pb-10">
+              <header className="flex items-center justify-between py-4 px-2 border-b border-[#c9d2ef] bg-transparent">
+                <div className="text-[#1f3f7a] text-3xl sm:text-4xl font-extrabold tracking-tight">Admin Settings</div>
+
+                <div className="flex items-center gap-4">
+                  <div className="hidden md:flex items-center gap-2 bg-[#eef2ff] border border-[#c7d4f7] rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#3d4f68]">
+                    <span className="w-2 h-2 rounded-full bg-[#5d6f8d] inline-block" />
+                    Standby
                   </div>
-                  <p className="text-[12px] text-[#424653] mt-1">
-                    {status === 'LIVE' ? 'Voting is currently active.' : 'Election has not opened for voting.'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Warning Banner */}
-              <div className="bg-[#fffbeb] border border-[#fef3c7] rounded-lg p-4 mb-8 flex gap-3 items-start">
-                <AlertTriangle className="w-5 h-5 text-[#92400e] shrink-0" />
-                <p className="text-sm text-[#92400e]">Changes to election settings may affect voter participation and election operations. Review carefully before saving.</p>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column (Wider) */}
-                <div className="lg:col-span-2 space-y-6">
-                  {/* Election Information Section */}
-                  <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
-                    <h3 className="text-lg font-semibold text-[#131b2e] mb-5 flex items-center gap-2 border-b border-[#eaedff] pb-2">
-                      <Settings className="w-5 h-5 text-[#003f93]" />
-                      Election Information
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Election Name</label>
-                        <input className="w-full px-3 py-2 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden" type="text" defaultValue="BAMSSA UNIPORT Chapter General Election 2026" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Election Year</label>
-                        <input className="w-full px-3 py-2 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden" disabled type="text" defaultValue="2026" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Organization</label>
-                        <input className="w-full px-3 py-2 text-sm border border-[#c2c6d5] rounded-xl bg-[#f2f3ff] text-[#424653]" readOnly type="text" defaultValue="BAMSSA UNIPORT Chapter" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Election Reference (Read-only)</label>
-                        <div className="w-full px-3 py-2 bg-[#f2f3ff] border border-[#c2c6d5] rounded-xl text-sm text-[#424653] flex items-center justify-between">
-                          <span>BAMSSA-GEN-2026</span>
-                          <Lock className="w-4 h-4 text-[#737785]" />
-                        </div>
-                      </div>
-                      <div className="md:col-span-2 space-y-1">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Election Description</label>
-                        <textarea className="w-full px-3 py-2 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden h-24 resize-none" defaultValue="Annual general election for the Basic Medical Science Students Association to elect executive officers for the 2026 academic session."></textarea>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Election Schedule Section */}
-                  <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
-                    <h3 className="text-lg font-semibold text-[#131b2e] mb-5 flex items-center gap-2 border-b border-[#eaedff] pb-2">
-                      <Calendar className="w-5 h-5 text-[#003f93]" />
-                      Election Schedule
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Voting Opens</label>
-                        <div className="relative">
-                          <input className="w-full px-3 py-2 pl-10 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden" type="datetime-local" defaultValue="2026-09-10T09:00" />
-                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737785]" />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Voting Closes</label>
-                        <div className="relative">
-                          <input className="w-full px-3 py-2 pl-10 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden" type="datetime-local" defaultValue="2026-09-10T17:00" />
-                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737785]" />
-                        </div>
-                      </div>
-                    </div>
-                    {/* Timeline Visual */}
-                    <div className="bg-[#f2f3ff] rounded-xl p-4 flex flex-col items-center justify-center">
-                      <div className="w-full max-w-md relative flex items-center justify-between before:content-[''] before:absolute before:top-1/2 before:left-0 before:w-full before:h-0.5 before:bg-[#c2c6d5] before:-z-10">
-                        <div className="flex flex-col items-center bg-[#f2f3ff] px-2 z-10">
-                          <div className="w-3 h-3 rounded-full bg-[#475569] mb-1"></div>
-                          <span className="text-[11px] font-bold text-[#424653]">09:00 AM</span>
-                        </div>
-                        <div className="bg-white px-3 py-1 rounded-full border border-[#c2c6d5] text-[12px] font-bold text-[#003f93] z-10">
-                          Duration: 8 Hours
-                        </div>
-                        <div className="flex flex-col items-center bg-[#f2f3ff] px-2 z-10">
-                          <div className="w-3 h-3 rounded-full bg-[#c2c6d5] mb-1"></div>
-                          <span className="text-[11px] font-bold text-[#424653]">05:00 PM</span>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-
-                {/* Right Column (Sidebar) */}
-                <div className="space-y-6">
-                  {/* Election Status Section */}
-                  <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
-                    <h3 className="text-lg font-semibold text-[#131b2e] mb-5 flex items-center gap-2 border-b border-[#eaedff] pb-2">
-                      <Sliders className="w-5 h-5 text-[#003f93]" />
-                      Lifecycle Status
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="p-3 bg-[#f2f3ff] border border-[#c2c6d5] rounded-lg flex items-center justify-between">
-                        <span className="text-xs font-semibold text-[#131b2e] uppercase tracking-wide">Current State</span>
-                        <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
-                          status === 'LIVE' ? 'bg-[#d9e2ff] text-[#003f93]' : 
-                          status === 'CLOSED' ? 'bg-[#e2e7ff] text-[#424653]' : 
-                          'bg-[#fef3c7] text-[#92400e]'
-                        }`}>
-                          {status}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block">Election State Control</label>
-                        <select 
-                          className="w-full px-3 py-2 text-sm border border-[#c2c6d5] rounded-xl bg-white focus:border-[#0055c2] focus:ring-1 focus:ring-[#0055c2] outline-hidden"
-                          value={status}
-                          onChange={(e) => handleStatusChange(e.target.value as ElectionStatus)}
-                        >
-                          <option value="STANDBY">Standby (Pre-Election)</option>
-                          <option value="ACCREDITATION_OPEN">Accreditation Only</option>
-                          <option value="LIVE">Live (Voting Active)</option>
-                          <option value="CLOSED">Concluded (Post-Election)</option>
-                        </select>
-                        <p className="text-[11px] text-[#737785] mt-1 leading-tight">Automatically follows the configured election schedule. Manual control should only be used when necessary.</p>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Voting Rules Section */}
-                  <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
-                    <h3 className="text-lg font-semibold text-[#131b2e] mb-5 flex items-center gap-2 border-b border-[#eaedff] pb-2">
-                      <Settings className="w-5 h-5 text-[#003f93]" />
-                      Voting Rules
-                    </h3>
-                    <div className="space-y-5">
-                      <div>
-                        <label className="text-xs font-semibold uppercase tracking-wide text-[#424653] block mb-2">Eligible Voter Levels</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {['100', '200', '300', '400', '500', '600'].map(level => (
-                            <label key={level} className="flex items-center gap-2 cursor-pointer">
-                              <input type="checkbox" defaultChecked className="rounded text-[#003f93] focus:ring-[#003f93] border-[#c2c6d5]" />
-                              <span className="text-sm">{level} Level</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="pt-4 border-t border-[#c2c6d5]">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="text-xs font-semibold uppercase tracking-wide text-[#131b2e]">Voting Attempts</h4>
-                            <p className="text-xs text-[#424653]">System enforced limit</p>
-                          </div>
-                          <span className="bg-[#f2f3ff] px-2 py-1 rounded text-xs font-bold text-[#003f93]">1 Ballot / Voter</span>
-                        </div>
-                      </div>
-                      <div className="pt-4 border-t border-[#c2c6d5]">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="text-xs font-semibold uppercase tracking-wide text-[#131b2e] flex items-center gap-1">
-                              Ballot Secrecy
-                              <ShieldCheck className="w-4 h-4 text-[#003f93]" />
-                            </h4>
-                            <p className="text-[11px] text-[#424653] mt-1 leading-tight">Enabled. Voter identities are digitally recorded but decoupled from ballot choices upon submission.</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Participation Requirements */}
-                  <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
-                    <h3 className="text-lg font-semibold text-[#131b2e] mb-5 flex items-center gap-2 border-b border-[#eaedff] pb-2">
-                      <ListOrdered className="w-5 h-5 text-[#003f93]" />
-                      System Requirements
-                    </h3>
-                    <ul className="space-y-3">
-                      <li className="flex items-center gap-2 text-sm text-[#131b2e]">
-                        <CheckCircle2 className="w-5 h-5 text-[#003f93]" />
-                        Voter must be registered in BAMSSA DB
-                      </li>
-                      <li className="flex items-center gap-2 text-sm text-[#131b2e]">
-                        <CheckCircle2 className="w-5 h-5 text-[#003f93]" />
-                        Voter email must be verified
-                      </li>
-                      <li className="flex items-center gap-2 text-sm text-[#131b2e]">
-                        <CheckCircle2 className="w-5 h-5 text-[#003f93]" />
-                        Final accreditation required at login
-                      </li>
-                    </ul>
-                  </section>
-                  
-                  {/* Danger Zone */}
-                  <section className="bg-white border border-[#ffdad6] rounded-xl p-5 shadow-xs">
-                    <h3 className="text-lg font-semibold text-[#93000a] mb-3 flex items-center gap-2 border-b border-[#ffdad6] pb-2">
-                      <Trash2 className="w-5 h-5 text-[#93000a]" />
-                      Danger Zone
-                    </h3>
-                    <p className="text-[11px] text-[#424653] mb-3 leading-tight">Clear all registered test votes and reset voter statuses to factory demo data.</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm('Are you sure you want to reset all votes and return to factory demo data?')) {
-                          resetElectionData();
-                        }
-                      }}
-                      className="w-full bg-[#ffdad6] hover:bg-[#ffb4ab] text-[#93000a] font-bold text-xs px-4 py-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Reset Demo Data</span>
-                    </button>
-                  </section>
-                </div>
-              </div>
-
-              {/* Persistent Footer Actions */}
-              <div className={`fixed bottom-0 left-0 ${isSidebarCollapsed ? 'lg:left-[80px]' : 'lg:left-[270px]'} right-0 bg-white border-t border-[#c2c6d5] p-4 flex items-center justify-between z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] transition-all duration-300`}>
-                <div className="text-sm text-[#424653] flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-[#737785]" />
-                  Last saved: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                </div>
-                <div className="flex items-center gap-3">
-                  <button className="bg-transparent hover:bg-[#f2f3ff] text-[#131b2e] border border-[#c2c6d5] px-4 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer">Discard Changes</button>
-                  <button className="bg-[#0055c2] hover:bg-[#003f93] text-white px-6 py-2 text-xs font-bold rounded-lg flex items-center gap-2 transition-colors cursor-pointer" onClick={() => showToast('Election settings saved successfully.', 'success')}>
-                    <FileCheck2 className="w-4 h-4" />
-                    Save Changes
+                  <button type="button" className="flex items-center justify-center w-10 h-10 rounded-full bg-transparent text-[#3d4f68] hover:bg-[#eef2ff] transition-colors cursor-pointer" aria-label="Notifications">
+                    <Bell className="w-5 h-5" />
                   </button>
+                  <button type="button" className="flex items-center justify-center w-10 h-10 rounded-full bg-transparent text-[#3d4f68] hover:bg-[#eef2ff] transition-colors cursor-pointer" aria-label="Help">
+                    <HelpCircle className="w-5 h-5" />
+                  </button>
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-[#c7d4f7] bg-[#dfe8ff]">
+                    <img
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4T_ycLwD7VbJrZ6Ec1wy_4WU_zPGqRkhUsli689vGlUn_rvx0aTEPKEzpuWAgiF3Vv47abbxl4SjEtXyX_bSQJYft3qQmq_YQeglfMb3Xh50cwlHccBPikQbzoBY3qpThEnb9TfURd2CqbsKcHDXzu81g2LE6olMtL1XsSUhS7mm9uosYuO3bcTk-GDwpmfszznRuTwDKcT1iUdsNUK8axyP96ztEalL9Zn_7KrmGc66-HQexnXmw"
+                      alt="Admin profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              </header>
+
+              <div className="mt-8 bg-[#dfe6ff] rounded-[22px] border border-[#c7d4f7] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] p-5 sm:p-6">
+                <div className="mb-8">
+                  <h2 className="text-4xl sm:text-5xl font-extrabold text-[#1b2d4d] tracking-tight">Admin Settings</h2>
+                  <p className="mt-2 text-lg text-[#4a5a73]">Manage your administrator account, preferences, notifications, and access settings.</p>
+                </div>
+
+                <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
+                  <aside className="w-full lg:w-[260px] flex-shrink-0">
+                    <nav className="flex flex-col gap-2 pt-1">
+                      {[
+                        { label: 'Profile', icon: User, active: true },
+                        { label: 'Security', icon: ShieldCheck },
+                        { label: 'Notifications', icon: Bell },
+                        { label: 'Admin Preferences', icon: Settings },
+                        { label: 'System Information', icon: Info }
+                      ].map(({ label, icon: Icon, active }) => (
+                        <button
+                          key={label}
+                          type="button"
+                          className={`group flex items-center justify-between w-full rounded-xl border px-4 py-3 text-left transition-all ${
+                            active
+                              ? 'bg-white border-[#c9d2ef] text-[#1b2d4d] shadow-sm'
+                              : 'border-transparent text-[#46576f] hover:bg-white hover:border-[#c9d2ef]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Icon className={`w-5 h-5 ${active ? 'text-[#0b59c6]' : 'text-[#445872]'}`} />
+                            <span className="text-base font-medium">{label}</span>
+                          </div>
+                          <ChevronRight className={`w-4 h-4 transition-opacity ${active ? 'opacity-100 text-[#0b59c6]' : 'opacity-0 group-hover:opacity-100 text-[#445872]'}`} />
+                        </button>
+                      ))}
+                    </nav>
+                  </aside>
+
+                  <section className="flex-1 bg-white rounded-[20px] border border-[#d5dcee] shadow-sm p-5 sm:p-6">
+                    <h3 className="text-[22px] font-bold text-[#1c2945] pb-4 border-b border-[#e7ebf7]">Profile Information</h3>
+
+                    <div className="mt-6 flex flex-col md:flex-row gap-8 md:items-start">
+                      <div className="flex justify-center md:justify-start">
+                        <div className="relative w-32 h-32 rounded-full overflow-hidden border-[3px] border-[#dfe8ff] bg-[#e7ebff]">
+                          <img
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBld01zp49OdHRGNHJ3_-kZDsyOmrn8wDUKxG1_ItOPwX2OAPU2fd6GBflxUcWA9R-AS28wzVSz7TtLTZRLmkhTv1E1YV8dV87sUE1cCuuG_91bt_6pBGLcd7BZJL2lFAoL2Vsi7x4bz6_s3ksdfT-s-sG-PtYJ7b31i0Mz_g3KXoi8uRaiVEvWp6DwdVLptsQunr4v6bHHylirI73BENitqgjupZRfwwSi9aGh29C177qWr-JJIOU"
+                            alt="Admin profile"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex-1 space-y-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#4a5a73] mb-2">Full Name</label>
+                            <div className="rounded-xl border border-[#d5dcee] bg-[#f8faff] px-4 py-3 text-base font-medium text-[#1c2945] min-h-[48px] flex items-center">
+                              Election Administrator
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#4a5a73] mb-2">Email Address</label>
+                            <div className="rounded-xl border border-[#d5dcee] bg-[#f8faff] px-4 py-3 text-base font-medium text-[#1c2945] min-h-[48px] flex items-center">
+                              admin@example.com
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#4a5a73] mb-2">Role</label>
+                            <div className="rounded-xl border border-[#d5dcee] bg-[#eef2ff] px-4 py-3 text-base font-medium text-[#1c2945] min-h-[48px] flex items-center justify-between gap-3 opacity-90">
+                              <span>Election Administrator</span>
+                              <Lock className="w-4 h-4 text-[#5d6f8d]" />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#4a5a73] mb-2">Status</label>
+                            <div className="mt-2 flex items-center gap-2">
+                              <span className="inline-flex items-center gap-2 rounded-full bg-[#dbeafe] text-[#1e40af] border border-[#bfdbfe] px-3 py-1 text-[12px] font-bold">
+                                <span className="w-2 h-2 rounded-full bg-[#1e40af]" />
+                                Active
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-3 rounded-xl border border-[#d5dcee] bg-[#f7f9ff] px-4 py-3 text-[#4a5a73]">
+                          <Info className="w-5 h-5 mt-0.5 text-[#0b59c6] shrink-0" />
+                          <p className="text-base leading-relaxed">
+                            Role and permissions are managed by an authorized administrator. Contact IT support for changes.
+                          </p>
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#0b59c6] hover:bg-[#0a4ea8] text-white px-5 py-3 text-sm font-bold shadow-sm transition-colors cursor-pointer"
+                          >
+                            <Settings className="w-4 h-4" />
+                            Edit Profile
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
                 </div>
               </div>
             </div>
