@@ -27,6 +27,7 @@ interface ElectionContextType {
   // Admin Controls
   addCandidate: (candidate: Omit<Candidate, 'id' | 'votesCount' | 'approvedByEleco'>) => void;
   updateCandidate: (id: string, updates: Partial<Candidate>) => void;
+  adjustCandidateVotes: (id: string, delta: number) => void;
   deleteCandidate: (id: string) => void;
   resetElectionData: () => void;
   simulateVotes: (count: number) => void;
@@ -425,6 +426,25 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
   };
 
+  const adjustCandidateVotes = (id: string, delta: number) => {
+    const candidate = candidates.find((c) => c.id === id);
+    if (!candidate) return;
+
+    const safeDelta = Number.isFinite(delta) ? delta : 0;
+    const nextValue = Math.max(0, candidate.votesCount + safeDelta);
+
+    setCandidates((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, votesCount: nextValue } : c))
+    );
+
+    addAuditLog(
+      `Candidate Vote Count Adjusted: ${candidate.fullName}`,
+      'ELECO Administrator',
+      'ADMIN',
+      `Votes changed by ${safeDelta >= 0 ? '+' : ''}${safeDelta}. New total: ${nextValue}.`
+    );
+  };
+
   const deleteCandidate = (id: string) => {
     const cand = candidates.find((c) => c.id === id);
     setCandidates((prev) => prev.filter((c) => c.id !== id));
@@ -505,6 +525,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         castBallot,
         addCandidate,
         updateCandidate,
+        adjustCandidateVotes,
         deleteCandidate,
         resetElectionData,
         simulateVotes,

@@ -88,6 +88,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
     registerVoter,
     accreditVoter,
     rejectVoter,
+    adjustCandidateVotes,
     resetElectionData,
     simulateVotes,
   } = useElection();
@@ -99,6 +100,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
   const [showAddCandidate, setShowAddCandidate] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [resultSearch, setResultSearch] = useState('');
+  const [resultPositionFilter, setResultPositionFilter] = useState('ALL');
 
   // Voter Verification Specific State
   const [verifActiveTab, setVerifActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
@@ -2165,7 +2168,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <h2 className="text-3xl sm:text-4xl font-extrabold text-[#131b2e] tracking-tight">Results Management</h2>
-                  <span className="bg-[#F1F5F9] text-[#475569] px-2 py-0.5 rounded font-bold text-[10px] uppercase tracking-wider border border-[#E2E8F0]">STANDBY</span>
+                  <span className="bg-[#F1F5F9] text-[#475569] px-2 py-0.5 rounded font-bold text-[10px] uppercase tracking-wider border border-[#E2E8F0]">{status}</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-[#424653]">
                   <span>Last updated: Just now</span>
@@ -2184,83 +2187,29 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                 <div>
                   <h4 className="text-sm font-bold text-[#003f93]">Administrative Notice</h4>
                   <p className="text-sm text-[#424653] mt-1 leading-relaxed">
-                    Recorded ballot totals and administrative adjustments are maintained separately. Result adjustments require appropriate authorization, a documented reason, and are recorded in the audit log.
+                    You can increase or reduce each candidate’s vote total directly from this table. Every manual change is recorded in the audit log so the election remains under your control.
                   </p>
-                </div>
-              </div>
-
-              <div className="bg-white border border-[#c2c6d5] rounded-lg p-6 shadow-xs">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h3 className="text-xl font-bold text-[#131b2e] tracking-tight">BAMSSA 2026 GENERAL ELECTIONS</h3>
-                    <p className="text-sm text-[#424653] mt-1">
-                      Results Status: <span className="font-semibold">NOT YET AVAILABLE</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="relative pt-4 pb-2">
-                  <div className="absolute top-1/2 left-0 w-full h-[2px] bg-[#c2c6d5] -translate-y-1/2" />
-                  <div className="absolute top-1/2 left-0 w-1/4 h-[2px] bg-[#0055c2] -translate-y-1/2" />
-
-                  <div className="relative flex justify-between">
-                    {[
-                      'DRAFT',
-                      'SCHEDULED',
-                      'STANDBY',
-                      'LIVE',
-                      'CLOSED',
-                      'COUNTING',
-                      'CERTIFIED',
-                      'PUBLISHED',
-                    ].map((step, idx) => {
-                      const isComplete = idx < 2;
-                      const isActive = idx === 2;
-                      const isUpcoming = idx > 2;
-
-                      return (
-                        <div key={step} className="flex flex-col items-center">
-                          <div
-                            className={`w-4 h-4 rounded-full z-10 ${
-                              isComplete
-                                ? 'bg-[#0055c2]'
-                                : isActive
-                                  ? 'border-[3px] border-[#0055c2] bg-white ring-4 ring-[#d9e2ff]'
-                                  : 'bg-[#c2c6d5]'
-                            }`}
-                          />
-                          <span
-                            className={`mt-2 text-[10px] font-bold uppercase tracking-wider ${
-                              isActive ? 'text-[#003f93]' : isComplete ? 'text-[#424653]' : 'text-[#737785]'
-                            }`}
-                          >
-                            {step}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white border border-[#c2c6d5] rounded-lg p-5 shadow-xs">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[#424653] mb-1">Positions</p>
-                  <p className="text-4xl font-extrabold text-[#131b2e]">12</p>
+                  <p className="text-4xl font-extrabold text-[#131b2e]">{positions.length}</p>
                 </div>
                 <div className="bg-white border border-[#c2c6d5] rounded-lg p-5 shadow-xs">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[#424653] mb-1">Candidates</p>
-                  <p className="text-4xl font-extrabold text-[#131b2e]">36</p>
+                  <p className="text-4xl font-extrabold text-[#131b2e]">{candidates.length}</p>
                 </div>
                 <div className="bg-white border border-[#c2c6d5] rounded-lg p-5 shadow-xs">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[#424653] mb-1">Ballots Recorded</p>
-                  <p className="text-4xl font-extrabold text-[#737785]">—</p>
-                  <p className="text-[11px] text-[#424653] mt-1">Voting has not started</p>
+                  <p className="text-4xl font-extrabold text-[#131b2e]">{candidates.reduce((sum, c) => sum + c.votesCount, 0)}</p>
+                  <p className="text-[11px] text-[#424653] mt-1">Live tally</p>
                 </div>
                 <div className="bg-white border border-[#c2c6d5] rounded-lg p-5 shadow-xs">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#424653] mb-1">Adjusted Votes</p>
-                  <p className="text-4xl font-extrabold text-[#737785]">—</p>
-                  <p className="text-[11px] text-[#424653] mt-1">Voting has not started</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#424653] mb-1">Admin Adjustments</p>
+                  <p className="text-4xl font-extrabold text-[#131b2e]">{auditLogs.filter((log) => log.action.toLowerCase().includes('vote count adjusted')).length}</p>
+                  <p className="text-[11px] text-[#424653] mt-1">Logged actions</p>
                 </div>
               </div>
 
@@ -2272,21 +2221,22 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737785]" />
                       <input
                         type="text"
+                        value={resultSearch}
+                        onChange={(e) => setResultSearch(e.target.value)}
                         placeholder="Search candidates..."
                         className="w-full pl-10 pr-4 py-2 border border-[#c2c6d5] rounded-xl bg-[#f8fafc] text-[#131b2e] text-sm focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]"
                       />
                     </div>
                     <div className="flex gap-4">
-                      <select className="min-w-[160px] border border-[#c2c6d5] rounded-xl bg-[#f8fafc] px-4 py-2 text-sm text-[#131b2e] focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]">
-                        <option>All Positions</option>
-                        <option>President</option>
-                        <option>Vice President</option>
-                      </select>
-                      <select className="min-w-[160px] border border-[#c2c6d5] rounded-xl bg-[#f8fafc] px-4 py-2 text-sm text-[#131b2e] focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]">
-                        <option>All Results</option>
-                        <option>Leading</option>
-                        <option>Tied</option>
-                        <option>Awaiting Review</option>
+                      <select
+                        value={resultPositionFilter}
+                        onChange={(e) => setResultPositionFilter(e.target.value)}
+                        className="min-w-[160px] border border-[#c2c6d5] rounded-xl bg-[#f8fafc] px-4 py-2 text-sm text-[#131b2e] focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]"
+                      >
+                        <option value="ALL">All Positions</option>
+                        {positions.map((position) => (
+                          <option key={position.id} value={position.id}>{position.title}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -2298,52 +2248,101 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                       <tr className="bg-[#f2f3ff] border-b border-[#c2c6d5]">
                         <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-left">Position</th>
                         <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-left">Candidate</th>
-                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-right">Ballots Recorded</th>
-                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-right">+ Adjustments</th>
-                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-right">= Final Total</th>
+                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-right">Recorded Votes</th>
+                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-center">Admin Control</th>
                         <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-center">Status</th>
-                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#eaedff]">
-                      {[
-                        { position: 'President', candidate: 'John Doe', status: 'Awaiting Results' },
-                        { position: 'President', candidate: 'Jane Smith', status: 'Awaiting Results' },
-                      ].map((row, index) => (
-                        <tr key={`${row.position}-${row.candidate}-${index}`} className="hover:bg-[#faf8ff] transition-colors">
-                          <td className="px-5 py-4 text-sm font-medium text-[#131b2e]">{row.position}</td>
-                          <td className="px-5 py-4 text-sm text-[#131b2e]">{row.candidate}</td>
-                          <td className="px-5 py-4 text-sm text-[#737785] text-right">—</td>
-                          <td className="px-5 py-4 text-sm text-[#737785] text-right">—</td>
-                          <td className="px-5 py-4 text-sm text-[#131b2e] font-semibold text-right bg-[#faf8ff]">—</td>
-                          <td className="px-5 py-4 text-center">
-                            <span className="inline-flex items-center justify-center rounded-full bg-[#f2f3ff] border border-[#c2c6d5] px-2.5 py-1 text-[11px] font-bold text-[#424653]">
-                              {row.status}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4 text-right">
-                            <div className="flex justify-end gap-2">
-                              <button type="button" className="p-1 text-[#424653] hover:text-[#003f93] transition-colors cursor-pointer" title="View Details">
-                                <Eye className="w-5 h-5" />
-                              </button>
-                              <button type="button" className="p-1 text-[#424653] hover:text-[#003f93] transition-colors cursor-pointer" title="Administrative Adjustment">
-                                <Sliders className="w-5 h-5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {positions
+                        .map((position) => {
+                          const posCandidates = candidates
+                            .filter((candidate) => candidate.positionId === position.id)
+                            .sort((a, b) => b.votesCount - a.votesCount);
+
+                          return posCandidates.map((candidate) => {
+                            const matchedSearch = `${candidate.fullName} ${position.title}`
+                              .toLowerCase()
+                              .includes(resultSearch.toLowerCase());
+                            const matchesFilter = resultPositionFilter === 'ALL' || candidate.positionId === resultPositionFilter;
+
+                            if (!matchedSearch || !matchesFilter) return null;
+
+                            const totalVotesInPosition = posCandidates.reduce((sum, item) => sum + item.votesCount, 0);
+                            const percentage = totalVotesInPosition > 0 ? Math.round((candidate.votesCount / totalVotesInPosition) * 100) : 0;
+
+                            return (
+                              <tr key={candidate.id} className="hover:bg-[#faf8ff] transition-colors">
+                                <td className="px-5 py-4 text-sm font-medium text-[#131b2e]">{position.title}</td>
+                                <td className="px-5 py-4 text-sm text-[#131b2e]">
+                                  <div className="flex items-center gap-3">
+                                    <span className="font-semibold">{candidate.fullName}</span>
+                                    {candidate.votesCount === Math.max(...posCandidates.map((item) => item.votesCount)) && candidate.votesCount > 0 && (
+                                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded">LEADING</span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-5 py-4 text-right text-sm font-semibold text-[#003f93]">
+                                  <div>{candidate.votesCount}</div>
+                                  <div className="text-[10px] text-[#424653]">{percentage}% of position</div>
+                                </td>
+                                <td className="px-5 py-4 text-center">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => adjustCandidateVotes(candidate.id, -1)}
+                                      className="w-8 h-8 rounded-lg border border-[#c2c6d5] bg-[#f8fafc] text-[#131b2e] hover:bg-[#eaedff] transition-colors cursor-pointer"
+                                      aria-label={`Decrease votes for ${candidate.fullName}`}
+                                    >
+                                      −
+                                    </button>
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      value={candidate.votesCount}
+                                      onChange={(e) => {
+                                        const nextValue = Number(e.target.value);
+                                        if (Number.isNaN(nextValue)) return;
+                                        adjustCandidateVotes(candidate.id, Math.max(0, nextValue) - candidate.votesCount);
+                                      }}
+                                      className="w-20 border border-[#c2c6d5] rounded-lg px-2 py-1.5 text-center text-sm font-semibold text-[#131b2e] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => adjustCandidateVotes(candidate.id, 1)}
+                                      className="w-8 h-8 rounded-lg border border-[#c2c6d5] bg-[#f8fafc] text-[#131b2e] hover:bg-[#eaedff] transition-colors cursor-pointer"
+                                      aria-label={`Increase votes for ${candidate.fullName}`}
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                </td>
+                                <td className="px-5 py-4 text-center">
+                                  <span className="inline-flex items-center justify-center rounded-full bg-[#f2f3ff] border border-[#c2c6d5] px-2.5 py-1 text-[11px] font-bold text-[#424653]">
+                                    {candidate.votesCount > 0 ? 'ACTIVE' : 'ZERO'}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          });
+                        })
+                        .flat()
+                        .filter(Boolean)}
                     </tbody>
                   </table>
                 </div>
 
                 <div className="p-4 border-t border-[#eaedff] bg-white flex justify-between items-center text-sm text-[#424653]">
-                  <span>Showing 1 to 2 of 36 entries</span>
+                  <span>
+                    Showing {positions.flatMap((position) => candidates.filter((candidate) => candidate.positionId === position.id)).filter((candidate) => {
+                      return `${candidate.fullName} ${positions.find((position) => position.id === candidate.positionId)?.title || ''}`
+                        .toLowerCase()
+                        .includes(resultSearch.toLowerCase()) && (resultPositionFilter === 'ALL' || candidate.positionId === resultPositionFilter);
+                    }).length} candidate(s)
+                  </span>
                   <div className="flex gap-1">
                     <button type="button" className="px-3 py-1 border border-[#c2c6d5] rounded bg-[#f8fafc] text-[#424653] opacity-50 cursor-not-allowed">Previous</button>
                     <button type="button" className="px-3 py-1 border border-[#0055c2] rounded bg-[#0055c2] text-white">1</button>
-                    <button type="button" className="px-3 py-1 border border-[#c2c6d5] rounded bg-[#f8fafc] text-[#424653] hover:bg-[#f2f3ff]">2</button>
-                    <button type="button" className="px-3 py-1 border border-[#c2c6d5] rounded bg-[#f8fafc] text-[#424653] hover:bg-[#f2f3ff]">3</button>
                     <button type="button" className="px-3 py-1 border border-[#c2c6d5] rounded bg-[#f8fafc] text-[#424653] hover:bg-[#f2f3ff]">Next</button>
                   </div>
                 </div>
