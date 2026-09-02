@@ -1,12 +1,65 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useElection } from '../context/ElectionContext';
 
 interface StatusStripProps {
   onOpenAdminPrompt?: () => void;
 }
 
+const AnimatedNumber = ({
+  value,
+  suffix = '',
+  duration = 1400,
+}: {
+  value: number;
+  suffix?: string;
+  duration?: number;
+}) => {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let animationFrame = 0;
+    let startTime: number | null = null;
+
+    const tick = (timestamp: number) => {
+      if (startTime === null) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      setDisplayValue(value * eased);
+
+      if (progress < 1) {
+        animationFrame = window.requestAnimationFrame(tick);
+      } else {
+        setDisplayValue(value);
+      }
+    };
+
+    animationFrame = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [duration, value]);
+
+  const formattedValue =
+    Number.isInteger(value)
+      ? Math.round(displayValue).toLocaleString()
+      : displayValue.toFixed(1).replace(/\.0$/, '');
+
+  return (
+    <span>
+      {formattedValue}
+      {suffix}
+    </span>
+  );
+};
+
 export const StatusStrip: React.FC<StatusStripProps> = () => {
   const { totalEligible, totalBallotsCast, turnoutPercentage } = useElection();
+
+  const eligibleTarget = totalEligible > 0 ? totalEligible : 2450;
+  const ballotsTarget = totalBallotsCast > 0 ? totalBallotsCast : 1005;
+  const turnoutTarget = turnoutPercentage > 0 ? turnoutPercentage : 41;
 
   return (
     <section 
@@ -19,7 +72,7 @@ export const StatusStrip: React.FC<StatusStripProps> = () => {
           {/* Card 1: Eligible Voters */}
           <div className="bg-white border border-[#c2c6d5]/70 rounded-none py-8 px-6 text-center shadow-xs hover:border-[#0055c2]/40 transition-colors">
             <div className="text-3xl sm:text-4xl md:text-[38px] font-bold text-[#003f93] tracking-tight leading-none mb-3">
-              {totalEligible > 0 ? totalEligible.toLocaleString() : '2,450'}
+              <AnimatedNumber value={eligibleTarget} />
             </div>
             <div className="text-sm md:text-base font-normal text-[#424653]">
               Eligible Voters
@@ -29,7 +82,7 @@ export const StatusStrip: React.FC<StatusStripProps> = () => {
           {/* Card 2: Ballots Cast */}
           <div className="bg-white border border-[#c2c6d5]/70 rounded-none py-8 px-6 text-center shadow-xs hover:border-[#0055c2]/40 transition-colors">
             <div className="text-3xl sm:text-4xl md:text-[38px] font-bold text-[#003f93] tracking-tight leading-none mb-3">
-              {totalBallotsCast > 0 ? totalBallotsCast.toLocaleString() : '1,005'}
+              <AnimatedNumber value={ballotsTarget} />
             </div>
             <div className="text-sm md:text-base font-normal text-[#424653]">
               Ballots Cast
@@ -39,7 +92,7 @@ export const StatusStrip: React.FC<StatusStripProps> = () => {
           {/* Card 3: Turnout */}
           <div className="bg-white border border-[#c2c6d5]/70 rounded-none py-8 px-6 text-center shadow-xs hover:border-[#0055c2]/40 transition-colors">
             <div className="text-3xl sm:text-4xl md:text-[38px] font-bold text-[#003f93] tracking-tight leading-none mb-3">
-              {turnoutPercentage}%
+              <AnimatedNumber value={turnoutTarget} suffix="%" />
             </div>
             <div className="text-sm md:text-base font-normal text-[#424653]">
               Turnout

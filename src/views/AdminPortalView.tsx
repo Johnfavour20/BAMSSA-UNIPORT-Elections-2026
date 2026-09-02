@@ -49,7 +49,10 @@ import {
   ArrowLeft,
   Edit3,
   User,
-  CheckSquare
+  CheckSquare,
+  GripVertical,
+  MoreVertical,
+  ChevronLeft
 } from 'lucide-react';
 
 interface AdminPortalViewProps {
@@ -94,6 +97,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
   const [showAddVoter, setShowAddVoter] = useState(false);
   const [showAddCandidate, setShowAddCandidate] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Voter Verification Specific State
   const [verifActiveTab, setVerifActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
@@ -333,24 +337,26 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
       
       {/* SideNavBar (Desktop & Mobile Drawer) */}
       <aside 
-        className={`w-[270px] bg-[#faf8ff] border-r border-[#c2c6d5] flex flex-col py-5 px-3 fixed left-0 top-0 h-screen z-50 transition-transform duration-200 lg:translate-x-0 ${
+        className={`${isSidebarCollapsed ? 'w-[80px]' : 'w-[270px]'} bg-[#faf8ff] border-r border-[#c2c6d5] flex flex-col py-5 px-3 fixed left-0 top-0 h-screen z-50 transition-all duration-300 lg:translate-x-0 ${
           mobileNavOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
         {/* Brand Header */}
-        <div className="mb-6 px-3">
+        <div className={`mb-6 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between px-3'}`}>
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-[#003f93] text-white flex items-center justify-center shrink-0 shadow-xs">
               <ShieldCheck className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <h1 className="text-base font-extrabold text-[#003f93] tracking-tight leading-tight">
-                BAMSSA ELECO
-              </h1>
-              <p className="text-[11px] font-semibold text-[#424653] uppercase tracking-wider">
-                Administrative Portal
-              </p>
-            </div>
+            {!isSidebarCollapsed && (
+              <div>
+                <h1 className="text-base font-extrabold text-[#003f93] tracking-tight leading-tight whitespace-nowrap">
+                  BAMSSA ELECO
+                </h1>
+                <p className="text-[11px] font-semibold text-[#424653] uppercase tracking-wider whitespace-nowrap">
+                  Administrative Portal
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -368,14 +374,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                     setActiveTab(item.id);
                     setMobileNavOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                  className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'} rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                     isActive
                       ? 'bg-[#d9e2ff] text-[#003f93] shadow-xs'
                       : 'text-[#424653] hover:bg-[#eaedff] hover:text-[#131b2e]'
                   }`}
+                  title={isSidebarCollapsed ? item.label : undefined}
                 >
                   <Icon className={`w-4 h-4 ${isActive ? 'text-[#003f93]' : 'text-[#737785]'}`} />
-                  <span>{item.label}</span>
+                  {!isSidebarCollapsed && <span>{item.label}</span>}
                 </button>
               </li>
             );
@@ -383,7 +390,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
         </ul>
 
         {/* Destructive CTA & Bottom Menu Items */}
-        <div className="mt-auto border-t border-[#c2c6d5] pt-3 space-y-2">
+        <div className={`mt-auto border-t border-[#c2c6d5] pt-3 space-y-2 ${isSidebarCollapsed ? 'px-0' : ''}`}>
           {/* Destructive Reset Election CTA */}
           <button
             type="button"
@@ -393,10 +400,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                 showToast('Election system reset successfully.', 'info');
               }
             }}
-            className="w-full bg-[#DC2626] hover:bg-red-700 text-white text-xs font-bold py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
+            className={`w-full bg-[#DC2626] hover:bg-red-700 text-white text-xs font-bold py-2.5 ${isSidebarCollapsed ? 'px-0 justify-center' : 'px-3 justify-center'} rounded-lg flex items-center gap-2 transition-colors cursor-pointer shadow-xs`}
+            title={isSidebarCollapsed ? 'Reset Election' : undefined}
           >
             <AlertTriangle className="w-4 h-4 text-white" />
-            <span>Reset Election</span>
+            {!isSidebarCollapsed && <span>Reset Election</span>}
           </button>
 
           <button
@@ -405,23 +413,35 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
               setActiveTab('settings');
               setMobileNavOpen(false);
             }}
-            className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition-colors text-left cursor-pointer ${
+            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center p-2' : 'gap-3 px-3.5 py-2'} rounded-xl text-xs font-bold transition-colors text-left cursor-pointer ${
               activeTab === 'settings'
                 ? 'bg-[#d9e2ff] text-[#003f93]'
                 : 'text-[#424653] hover:bg-[#eaedff]'
             }`}
+            title={isSidebarCollapsed ? 'Settings' : undefined}
           >
             <Settings className="w-4 h-4 text-[#737785]" />
-            <span>Settings</span>
+            {!isSidebarCollapsed && <span>Settings</span>}
           </button>
 
           <button
             type="button"
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold text-[#ba1a1a] hover:bg-[#ffdad6] transition-colors text-left cursor-pointer"
+            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center p-2' : 'gap-3 px-3.5 py-2'} rounded-xl text-xs font-bold text-[#ba1a1a] hover:bg-[#ffdad6] transition-colors text-left cursor-pointer`}
+            title={isSidebarCollapsed ? 'Logout' : undefined}
           >
             <LogOut className="w-4 h-4" />
-            <span>Logout</span>
+            {!isSidebarCollapsed && <span>Logout</span>}
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className={`w-full hidden lg:flex items-center ${isSidebarCollapsed ? 'justify-center p-2' : 'gap-3 px-3.5 py-2'} rounded-xl text-xs font-bold text-[#424653] hover:bg-[#eaedff] transition-colors text-left cursor-pointer mt-2`}
+            title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          >
+            {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            {!isSidebarCollapsed && <span>Collapse Sidebar</span>}
           </button>
         </div>
       </aside>
@@ -435,7 +455,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 lg:ml-[270px] min-h-screen flex flex-col">
+      <div className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-[80px]' : 'lg:ml-[270px]'}`}>
         
         {/* TopAppBar */}
         <header className="bg-white border-b border-[#c2c6d5] sticky top-0 z-30 flex justify-between items-center px-4 sm:px-6 py-3 shadow-2xs">
@@ -1595,233 +1615,545 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
 
           {/* TAB 4: POSITIONS */}
           {activeTab === 'positions' && (
-            <div className="bg-white border border-[#c2c6d5] rounded-2xl p-6 shadow-xs space-y-6">
-              <div className="flex justify-between items-center border-b border-[#eaedff] pb-4">
+            <div className="space-y-6 max-w-[1280px] mx-auto pb-24">
+              {/* Header Section */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[#131b2e]">
-                    Configured Executive Positions ({positions.length})
-                  </h3>
-                  <p className="text-xs text-[#737785]">
-                    Constitutional executive offices for BAMSSA 2026/2027 administration
-                  </p>
+                  <h2 className="text-3xl font-bold text-[#131b2e]">Positions</h2>
+                  <p className="text-sm text-[#424653] mt-1 max-w-[600px]">Manage the offices contested in the BAMSSA UNIPORT Chapter General Election 2026.</p>
+                </div>
+                <button className="bg-[#0055c2] hover:bg-[#00429a] text-white px-5 py-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer">
+                  <Plus className="w-[18px] h-[18px]" />
+                  Add Position
+                </button>
+              </div>
+
+              {/* Context Bar */}
+              <div className="bg-[#faf8ff] border border-[#c2c6d5] rounded-lg p-3 flex flex-wrap gap-8 mb-8 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-[#737785]" />
+                  <span className="text-sm text-[#424653]">Election: <strong className="text-[#131b2e]">BAMSSA UNIPORT Chapter General Election 2026</strong></span>
+                </div>
+                <div className="w-[1px] h-[20px] bg-[#c2c6d5] hidden sm:block"></div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-[#737785]" />
+                  <span className="text-sm text-[#424653]">Status: </span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                    status === 'LIVE' ? 'bg-[#d9e2ff] text-[#003f93]' : 
+                    status === 'CLOSED' ? 'bg-[#e2e7ff] text-[#424653]' : 
+                    'bg-[#f1f5f9] text-[#475569]'
+                  }`}>{status}</span>
+                </div>
+                <div className="w-[1px] h-[20px] bg-[#c2c6d5] hidden md:block"></div>
+                <div className="flex items-center gap-3">
+                  <ListOrdered className="w-5 h-5 text-[#737785]" />
+                  <span className="text-sm text-[#424653]">Configured Positions: <strong className="text-[#131b2e]">{positions.length}</strong></span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {positions.map((pos, idx) => {
-                  const posCands = candidates.filter(c => c.positionId === pos.id);
-                  return (
-                    <div key={pos.id} className="p-5 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl space-y-2">
-                      <div className="flex justify-between items-start">
-                        <span className="text-xs font-bold text-[#003f93] bg-[#eaedff] px-2 py-0.5 rounded">
-                          0{idx + 1}
-                        </span>
-                        <span className="text-xs font-semibold text-[#424653]">
-                          {posCands.length} Candidate{posCands.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      <h4 className="text-base font-bold text-[#131b2e]">{pos.title}</h4>
-                      <p className="text-xs text-[#424653] leading-relaxed">{pos.description}</p>
-                    </div>
-                  );
-                })}
+              {/* Warning Note */}
+              <div className="flex items-center gap-3 mb-5 px-2 text-[#424653]">
+                <AlertCircle className="w-[18px] h-[18px]" />
+                <span className="text-xs font-bold uppercase tracking-wide">Position order determines the order in which offices appear on the ballot. Drag to reorder.</span>
+              </div>
+
+              {/* Data Table Container */}
+              <div className="bg-[#faf8ff] border border-[#c2c6d5] rounded-lg shadow-xs overflow-hidden">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left border-collapse min-w-[900px]">
+                    <thead>
+                      <tr className="bg-[#f1f5f9] border-b border-[#c2c6d5]">
+                        <th className="p-5 text-xs font-bold uppercase tracking-wide text-[#424653] w-[80px]">Order</th>
+                        <th className="p-5 text-xs font-bold uppercase tracking-wide text-[#424653]">Position</th>
+                        <th className="p-5 text-xs font-bold uppercase tracking-wide text-[#424653] hidden lg:table-cell">Description</th>
+                        <th className="p-5 text-xs font-bold uppercase tracking-wide text-[#424653]">Election Type</th>
+                        <th className="p-5 text-xs font-bold uppercase tracking-wide text-[#424653]">Candidates</th>
+                        <th className="p-5 text-xs font-bold uppercase tracking-wide text-[#424653]">Status</th>
+                        <th className="p-5 text-xs font-bold uppercase tracking-wide text-[#424653] text-right w-[80px]">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#c2c6d5]">
+                      {positions.map((pos, idx) => {
+                        const posCands = candidates.filter(c => c.positionId === pos.id);
+                        return (
+                          <tr key={pos.id} className="hover:bg-[#f8fafc] transition-colors group">
+                            <td className="p-5 align-middle">
+                              <div className="flex items-center gap-3">
+                                <GripVertical className="w-5 h-5 text-[#c2c6d5] cursor-grab active:cursor-grabbing" />
+                                <span className="text-sm font-medium text-[#131b2e]">0{idx + 1}</span>
+                              </div>
+                            </td>
+                            <td className="p-5 align-middle text-lg font-semibold text-[#131b2e]">{pos.title}</td>
+                            <td className="p-5 align-middle text-sm text-[#424653] hidden lg:table-cell truncate max-w-[250px]" title={pos.description}>
+                              {pos.description}
+                            </td>
+                            <td className="p-5 align-middle">
+                              <span className="bg-[#dbeafe] text-[#1e40af] px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide whitespace-nowrap border border-[#bfdbfe]">
+                                Contested
+                              </span>
+                            </td>
+                            <td className="p-5 align-middle text-sm text-[#424653]">
+                              {posCands.length === 0 ? (
+                                <span className="text-[#93000a] font-bold">0 candidates</span>
+                              ) : (
+                                <span>{posCands.length} candidate{posCands.length !== 1 ? 's' : ''}</span>
+                              )}
+                            </td>
+                            <td className="p-5 align-middle">
+                              {posCands.length === 0 ? (
+                                <span className="bg-[#fef3c7] text-[#92400e] px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide whitespace-nowrap border border-[#fde68a]">
+                                  Draft
+                                </span>
+                              ) : (
+                                <span className="bg-[#003b82] text-white px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide whitespace-nowrap border border-[#003b82]">
+                                  Active
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-5 align-middle text-right">
+                              <button className="text-[#424653] hover:text-[#003f93] transition-colors p-2 rounded-full hover:bg-[#eaedff] cursor-pointer">
+                                <MoreVertical className="w-5 h-5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="mt-5 text-center">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#424653]">
+                  Position changes are recorded in the Audit Log. <button type="button" onClick={() => setActiveTab('audit')} className="text-[#003f93] hover:underline cursor-pointer">View Audit Log</button>
+                </p>
+              </div>
+
+              {/* Sticky Bottom Action Bar (Simulated Unsaved Changes State) */}
+              <div className={`fixed bottom-0 left-0 ${isSidebarCollapsed ? 'lg:left-[80px]' : 'lg:left-[270px]'} right-0 bg-[#faf8ff] border-t border-[#c2c6d5] p-3 flex justify-between items-center shadow-[0px_-4px_6px_-1px_rgba(15,23,42,0.03)] z-30 transition-all duration-300 translate-y-0`}>
+                <div className="flex items-center gap-3 ml-5">
+                  <AlertTriangle className="w-5 h-5 text-[#92400e]" />
+                  <span className="text-sm text-[#131b2e]">Unsaved ordering changes detected.</span>
+                </div>
+                <div className="flex gap-5 mr-5">
+                  <button className="px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide border border-[#c2c6d5] text-[#131b2e] hover:bg-[#eaedff] transition-colors cursor-pointer">Discard</button>
+                  <button className="px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-[#0055c2] text-white hover:bg-[#00429a] transition-colors shadow-sm cursor-pointer" onClick={() => showToast('Position order saved successfully.', 'success')}>Save Changes</button>
+                </div>
               </div>
             </div>
           )}
 
           {/* TAB 5: CANDIDATES */}
           {activeTab === 'candidates' && (
-            <div className="bg-white border border-[#c2c6d5] rounded-2xl p-6 shadow-xs space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#eaedff] pb-4">
+            <div className="space-y-6 max-w-[1280px] mx-auto pb-24">
+              
+              {/* Page Header Section */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
                 <div>
-                  <h3 className="text-xl font-bold text-[#131b2e]">
-                    Electoral Candidates ({candidates.length})
-                  </h3>
-                  <p className="text-xs text-[#737785]">
-                    Screened and cleared contestants across all executive positions
-                  </p>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h2 className="text-2xl md:text-3xl lg:text-[32px] text-[#131b2e] font-bold tracking-tight">Candidate Management</h2>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#fef3c7] text-[#92400e] text-xs font-bold border border-[#fcd34d]">
+                        STATUS: {status}
+                    </span>
+                  </div>
+                  <p className="text-base text-[#424653] max-w-2xl">Review, manage and organize candidates participating in the BAMSSA 2026 General Elections.</p>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowAddCandidate(!showAddCandidate)}
-                  className="bg-[#0055c2] hover:bg-[#003f93] text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Register Candidate</span>
-                </button>
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+                  <button className="flex-1 md:flex-none border border-[#c2c6d5] bg-transparent text-[#131b2e] text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#f2f3ff] transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                    <Download className="w-5 h-5" />
+                    Export Candidates
+                  </button>
+                  <button 
+                    onClick={() => setShowAddCandidate(!showAddCandidate)}
+                    className="flex-1 md:flex-none bg-[#0055c2] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#003f93] transition-colors flex items-center justify-center gap-2 shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)] cursor-pointer"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Add Candidate
+                  </button>
+                </div>
               </div>
 
-              {/* Add Candidate Modal/Accordion */}
+              {/* Add Candidate Form (kept existing logic) */}
               {showAddCandidate && (
-                <form onSubmit={handleCreateCandidate} className="p-5 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl space-y-4">
+                <form onSubmit={handleCreateCandidate} className="p-6 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl shadow-xs space-y-4">
                   <h4 className="text-sm font-bold text-[#131b2e]">Register New Candidate</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     <div>
                       <label className="text-xs font-semibold text-[#424653]">Candidate Full Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={newCandName}
-                        onChange={(e) => setNewCandName(e.target.value)}
-                        placeholder="e.g. David O. Adeyemi"
-                        className="w-full mt-1 px-3 py-2 text-xs border border-[#c2c6d5] rounded-lg bg-white"
-                      />
+                      <input type="text" required value={newCandName} onChange={(e) => setNewCandName(e.target.value)} placeholder="e.g. David O. Adeyemi" className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white outline-hidden focus:border-[#0055c2]" />
                     </div>
-
                     <div>
                       <label className="text-xs font-semibold text-[#424653]">Position</label>
-                      <select
-                        value={newCandPosId}
-                        onChange={(e) => setNewCandPosId(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 text-xs border border-[#c2c6d5] rounded-lg bg-white"
-                      >
-                        {positions.map(p => (
-                          <option key={p.id} value={p.id}>{p.title}</option>
-                        ))}
+                      <select value={newCandPosId} onChange={(e) => setNewCandPosId(e.target.value)} className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white outline-hidden focus:border-[#0055c2]">
+                        {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                       </select>
                     </div>
-
                     <div>
                       <label className="text-xs font-semibold text-[#424653]">Department</label>
-                      <select
-                        value={newCandDept}
-                        onChange={(e) => setNewCandDept(e.target.value as BMSDepartment)}
-                        className="w-full mt-1 px-3 py-2 text-xs border border-[#c2c6d5] rounded-lg bg-white"
-                      >
+                      <select value={newCandDept} onChange={(e) => setNewCandDept(e.target.value as BMSDepartment)} className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white outline-hidden focus:border-[#0055c2]">
                         <option value="Human Anatomy">Human Anatomy</option>
                         <option value="Human Physiology">Human Physiology</option>
                         <option value="Medical Biochemistry">Medical Biochemistry</option>
                         <option value="Pharmacology">Pharmacology</option>
                       </select>
                     </div>
-
                     <div className="sm:col-span-2">
                       <label className="text-xs font-semibold text-[#424653]">Campaign Tagline / Slogan</label>
-                      <input
-                        type="text"
-                        value={newCandTagline}
-                        onChange={(e) => setNewCandTagline(e.target.value)}
-                        placeholder="e.g. Advancing Academic Excellence & Welfare"
-                        className="w-full mt-1 px-3 py-2 text-xs border border-[#c2c6d5] rounded-lg bg-white"
-                      />
+                      <input type="text" value={newCandTagline} onChange={(e) => setNewCandTagline(e.target.value)} placeholder="e.g. Advancing Academic Excellence & Welfare" className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white outline-hidden focus:border-[#0055c2]" />
                     </div>
-
                     <div>
                       <label className="text-xs font-semibold text-[#424653]">Photo URL (Optional)</label>
-                      <input
-                        type="url"
-                        value={newCandPhoto}
-                        onChange={(e) => setNewCandPhoto(e.target.value)}
-                        placeholder="https://..."
-                        className="w-full mt-1 px-3 py-2 text-xs border border-[#c2c6d5] rounded-lg bg-white"
-                      />
+                      <input type="url" value={newCandPhoto} onChange={(e) => setNewCandPhoto(e.target.value)} placeholder="https://..." className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white outline-hidden focus:border-[#0055c2]" />
                     </div>
                   </div>
-
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowAddCandidate(false)}
-                      className="px-3.5 py-1.5 text-xs text-[#424653] font-semibold hover:bg-white rounded-lg border border-[#c2c6d5]"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-1.5 text-xs bg-[#003f93] text-white font-bold rounded-lg shadow-xs"
-                    >
-                      Save Candidate
-                    </button>
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button type="button" onClick={() => setShowAddCandidate(false)} className="px-5 py-2 text-sm text-[#131b2e] border border-[#c2c6d5] font-semibold hover:bg-[#f2f3ff] rounded-lg cursor-pointer">Cancel</button>
+                    <button type="submit" className="px-5 py-2 text-sm bg-[#0055c2] hover:bg-[#003f93] text-white font-bold rounded-lg shadow-xs transition-colors cursor-pointer">Save Candidate</button>
                   </div>
                 </form>
               )}
 
-              {/* Candidates Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {candidates.map((c) => {
-                  const pos = positions.find(p => p.id === c.positionId);
-                  return (
-                    <div key={c.id} className="p-4 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl flex items-start gap-3">
-                      <img
-                        src={c.photoUrl}
-                        alt={c.fullName}
-                        className="w-14 h-14 rounded-full object-cover border border-[#c2c6d5] shrink-0 bg-[#eaedff]"
-                      />
-                      <div className="space-y-1 flex-1">
-                        <span className="text-[10px] font-bold text-[#003f93] bg-[#eaedff] px-2 py-0.5 rounded">
-                          {pos?.title || 'Contestant'}
-                        </span>
-                        <h4 className="text-sm font-bold text-[#131b2e] leading-tight">{c.fullName}</h4>
-                        <p className="text-xs text-[#737785]">{c.department} • {c.level}</p>
-                        <p className="text-xs font-bold text-[#131b2e] pt-1">{c.votesCount} votes recorded</p>
+              {/* Summary Stats Bento */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="bg-white border border-[#c2c6d5] rounded-xl p-5 flex flex-col gap-2 shadow-xs">
+                  <span className="text-xs font-bold text-[#424653] uppercase tracking-wider">Total Candidates</span>
+                  <div className="text-[32px] leading-tight text-[#131b2e] font-bold">{candidates.length}</div>
+                </div>
+                <div className="bg-white border border-[#c2c6d5] rounded-xl p-5 flex flex-col gap-2 shadow-xs border-l-4 border-l-[#003b82]">
+                  <span className="text-xs font-bold text-[#424653] uppercase tracking-wider">Approved</span>
+                  <div className="text-[32px] leading-tight text-[#131b2e] font-bold">{candidates.filter(c => c.approvedByEleco).length}</div>
+                </div>
+                <div className="bg-white border border-[#c2c6d5] rounded-xl p-5 flex flex-col gap-2 shadow-xs border-l-4 border-l-[#92400e]">
+                  <span className="text-xs font-bold text-[#424653] uppercase tracking-wider">Pending Review</span>
+                  <div className="text-[32px] leading-tight text-[#131b2e] font-bold">{candidates.filter(c => !c.approvedByEleco).length}</div>
+                </div>
+                <div className="bg-white border border-[#c2c6d5] rounded-xl p-5 flex flex-col gap-2 shadow-xs">
+                  <span className="text-xs font-bold text-[#424653] uppercase tracking-wider">Positions With Candidates</span>
+                  <div className="flex items-end gap-3">
+                    <span className="text-[32px] leading-tight text-[#131b2e] font-bold">{new Set(candidates.map(c => c.positionId)).size}/{positions.length}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Interactive Area */}
+              <div className="flex flex-col lg:flex-row gap-6">
+                
+                {/* Left/Main Column: Table & Filters */}
+                <div className="flex-1 flex flex-col gap-5">
+                  {/* Toolbar Card */}
+                  <div className="bg-white border border-[#c2c6d5] rounded-xl p-3 md:p-5 shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)] flex flex-col gap-3">
+                    <div className="flex flex-col md:flex-row gap-3 items-center w-full">
+                      <div className="relative w-full md:flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737785] w-5 h-5 pointer-events-none" />
+                        <input className="w-full pl-10 pr-3 py-2 rounded-lg border border-[#c2c6d5] bg-[#faf8ff] focus:border-[#0055c2] focus:ring-2 focus:ring-[#0055c2]/10 transition-all text-sm outline-hidden placeholder:text-[#737785]" placeholder="Search candidate name or department" type="text"/>
+                      </div>
+                      <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+                        <select className="border border-[#c2c6d5] rounded-lg py-2 px-3 bg-[#faf8ff] text-sm focus:border-[#0055c2] focus:ring-2 focus:ring-[#0055c2]/10 whitespace-nowrap min-w-[120px] outline-hidden">
+                          <option>All Positions</option>
+                          {positions.map(p => <option key={p.id}>{p.title}</option>)}
+                        </select>
+                        <select className="border border-[#c2c6d5] rounded-lg py-2 px-3 bg-[#faf8ff] text-sm focus:border-[#0055c2] focus:ring-2 focus:ring-[#0055c2]/10 whitespace-nowrap min-w-[120px] outline-hidden">
+                          <option>Status</option>
+                          <option>Pending</option>
+                          <option>Approved</option>
+                        </select>
+                        <button className="text-[#003f93] font-bold text-xs whitespace-nowrap hover:underline px-2 cursor-pointer">Clear Filters</button>
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+
+                  {/* Candidate Table/Card View */}
+                  <div className="bg-white border border-[#c2c6d5] rounded-xl shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)] overflow-hidden">
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead className="bg-[#f1f5f9] border-b border-[#c2c6d5]">
+                          <tr>
+                            <th className="py-3 px-5 text-xs font-bold text-[#424653] uppercase tracking-wider">Candidate</th>
+                            <th className="py-3 px-5 text-xs font-bold text-[#424653] uppercase tracking-wider">Position</th>
+                            <th className="py-3 px-5 text-xs font-bold text-[#424653] uppercase tracking-wider">ID Ref</th>
+                            <th className="py-3 px-5 text-xs font-bold text-[#424653] uppercase tracking-wider">Status</th>
+                            <th className="py-3 px-5 text-xs font-bold text-[#424653] uppercase tracking-wider">Type</th>
+                            <th className="py-3 px-5 text-xs font-bold text-[#424653] uppercase tracking-wider text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#c2c6d5]">
+                          {candidates.map((c) => {
+                            const pos = positions.find(p => p.id === c.positionId);
+                            const candCountForPos = candidates.filter(can => can.positionId === c.positionId).length;
+                            const isUnopposed = candCountForPos === 1;
+                            return (
+                              <tr key={c.id} className="hover:bg-[#f8fafc] transition-colors group">
+                                <td className="py-3 px-5">
+                                  <div className="flex items-center gap-3">
+                                    {c.photoUrl ? (
+                                      <img src={c.photoUrl} alt={c.fullName} className="w-8 h-8 rounded-full object-cover border border-[#c2c6d5]" />
+                                    ) : (
+                                      <div className="w-8 h-8 rounded-full bg-[#e2e7ff] flex items-center justify-center border border-[#c2c6d5] text-[#003f93] font-bold text-xs">
+                                        {getInitials(c.fullName)}
+                                      </div>
+                                    )}
+                                    <span className="text-sm font-semibold text-[#131b2e]">{c.fullName}</span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-5 text-sm">{pos?.title || 'Unknown'}</td>
+                                <td className="py-3 px-5 text-sm text-[#424653] font-mono">BAM/24/{c.id.replace('cand-','').padStart(3, '0')}</td>
+                                <td className="py-3 px-5">
+                                  {c.approvedByEleco ? (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#003b82] text-white tracking-wide">APPROVED</span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#fef3c7] text-[#92400e] border border-[#fcd34d] tracking-wide">PENDING</span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-5 text-sm text-[#424653]">{isUnopposed ? 'Unopposed' : 'Contested'}</td>
+                                <td className="py-3 px-5 text-right">
+                                  <button className="text-[#424653] hover:text-[#003f93] transition-colors p-2 rounded-full hover:bg-[#eaedff] cursor-pointer">
+                                    <MoreVertical className="w-5 h-5" />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden flex flex-col divide-y divide-[#c2c6d5]">
+                      {candidates.map((c) => {
+                        const pos = positions.find(p => p.id === c.positionId);
+                        const candCountForPos = candidates.filter(can => can.positionId === c.positionId).length;
+                        const isUnopposed = candCountForPos === 1;
+                        return (
+                          <div key={c.id} className="p-5 flex flex-col gap-3">
+                            <div className="flex justify-between items-start">
+                              <div className="flex items-center gap-3">
+                                {c.photoUrl ? (
+                                  <img src={c.photoUrl} alt={c.fullName} className="w-10 h-10 rounded-full object-cover border border-[#c2c6d5]" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-[#e2e7ff] flex items-center justify-center border border-[#c2c6d5] text-[#003f93] font-bold text-sm">
+                                    {getInitials(c.fullName)}
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="text-base font-semibold text-[#131b2e]">{c.fullName}</div>
+                                  <div className="text-xs text-[#424653] font-mono">BAM/24/{c.id.replace('cand-','').padStart(3, '0')}</div>
+                                </div>
+                              </div>
+                              <button className="text-[#424653] p-1 cursor-pointer hover:bg-[#f2f3ff] rounded-full"><MoreVertical className="w-5 h-5" /></button>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-[#e2e7ff] text-[#131b2e] border border-[#c2c6d5]/50">{pos?.title}</span>
+                              {c.approvedByEleco ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-semibold bg-[#003b82] text-white tracking-wide">APPROVED</span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-semibold bg-[#fef3c7] text-[#92400e] border border-[#fcd34d] tracking-wide">PENDING</span>
+                              )}
+                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-[#faf8ff] text-[#424653] border border-[#c2c6d5]/50">{isUnopposed ? 'Unopposed' : 'Contested'}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Sidebar Info */}
+                <div className="w-full lg:w-80 flex flex-col gap-5 shrink-0">
+                  {/* Position Overview */}
+                  <div className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-base font-bold text-[#131b2e]">Position Overview</h3>
+                    </div>
+                    <div className="flex flex-col gap-2 divide-y divide-[#c2c6d5]">
+                      {positions.map(p => {
+                        const candCount = candidates.filter(can => can.positionId === p.id).length;
+                        return (
+                          <div key={p.id} className="py-2 flex justify-between items-center">
+                            <div>
+                              <div className="text-sm font-semibold">{p.title}</div>
+                              <div className="text-xs text-[#424653]">{candCount} Candidate{candCount !== 1 ? 's' : ''}</div>
+                            </div>
+                            <span className={`text-xs ${candCount > 1 ? 'text-[#0055c2] font-medium' : candCount === 1 ? 'text-[#424653] italic' : 'text-[#93000a]'}`}>
+                              {candCount > 1 ? 'Contested' : candCount === 1 ? 'Unopposed' : 'Empty'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <button type="button" onClick={() => setActiveTab('positions')} className="mt-4 text-[#0055c2] font-bold text-xs hover:underline flex items-center gap-1 cursor-pointer">
+                      Manage Positions <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Administrative Notice */}
+                  <div className="bg-[#f1f5f9] border border-[#c2c6d5] rounded-xl p-5">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="text-[#335da5] w-5 h-5 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-[#131b2e] mb-1">Administrative Notice</h4>
+                        <p className="text-xs text-[#424653] leading-relaxed">
+                          Candidate changes are administrative actions. Adding, modifying, or disqualifying candidates after registration closes requires secondary authorization. All actions are securely recorded in the activity history logs.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
+
             </div>
           )}
 
           {/* TAB 6: MONITORING */}
           {activeTab === 'monitoring' && (
-            <div className="bg-white border border-[#c2c6d5] rounded-2xl p-6 shadow-xs space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#eaedff] pb-4">
+            <div className="space-y-6 max-w-[1280px] mx-auto pb-24">
+              {/* Page Header */}
+              <div className="flex justify-between items-end">
                 <div>
-                  <h3 className="text-xl font-bold text-[#131b2e]">
-                    Real-Time Ballots &amp; Turnout Monitoring
-                  </h3>
-                  <p className="text-xs text-[#737785]">
-                    Simulate and inspect live incoming ballots from accredited voters
-                  </p>
+                  <h2 className="text-2xl md:text-3xl lg:text-[32px] text-[#131b2e] font-bold tracking-tight mb-1">Election Monitoring</h2>
+                  <p className="text-base text-[#424653]">Monitor election activity, voter participation, and operational status in real time.</p>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={handleSimulateVotes}
-                  disabled={isSimulating}
-                  className="bg-[#0055c2] hover:bg-[#003f93] text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs transition-all active:scale-98"
-                >
-                  <Sparkles className={`w-4 h-4 ${isSimulating ? 'animate-spin' : ''}`} />
-                  <span>Simulate Incoming Votes (+25)</span>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl">
-                  <p className="text-xs font-bold text-[#737785] uppercase">Total Ballots Cast</p>
-                  <p className="text-3xl font-extrabold text-[#131b2e] mt-1">{totalBallotsCast}</p>
-                </div>
-                <div className="p-4 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl">
-                  <p className="text-xs font-bold text-[#737785] uppercase">Overall Turnout</p>
-                  <p className="text-3xl font-extrabold text-[#003f93] mt-1">{turnoutPercentage}%</p>
-                </div>
-                <div className="p-4 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl">
-                  <p className="text-xs font-bold text-[#737785] uppercase">Eligible Accounts</p>
-                  <p className="text-3xl font-extrabold text-[#131b2e] mt-1">{totalEligible}</p>
+                <div className="flex items-center gap-3 text-[#424653] text-sm">
+                  {/* We use RotateCw here as a refresh button, hooking into the simulate feature for testing */}
+                  <button onClick={handleSimulateVotes} disabled={isSimulating || status === 'pending'} className="flex items-center gap-1 hover:text-[#003f93] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" title="Simulate Votes (Requires Active Election)">
+                    <RotateCw className={`w-[18px] h-[18px] ${isSimulating ? 'animate-spin text-[#003f93]' : ''}`} />
+                  </button>
+                  <span>Last updated: Just now</span>
                 </div>
               </div>
 
-              {/* Departmental Breakdown */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-bold text-[#131b2e]">Departmental Turnout Progress</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {(Object.keys(departmentStats) as BMSDepartment[]).map(dept => {
-                    const stats = departmentStats[dept];
-                    const pct = stats.eligible > 0 ? Math.round((stats.voted / stats.eligible) * 100) : 0;
-                    return (
-                      <div key={dept} className="p-4 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl space-y-2">
-                        <div className="flex justify-between text-xs font-bold">
-                          <span>{dept}</span>
-                          <span className="text-[#003f93]">{pct}% ({stats.voted}/{stats.eligible})</span>
+              {/* Dashboard Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                {/* Banner */}
+                <div className="col-span-12 bg-white border border-[#c2c6d5] rounded-xl p-6 flex flex-col md:flex-row justify-between items-center md:items-start gap-5 shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#131b2e] mb-2">BAMSSA 2026 GENERAL ELECTIONS</h3>
+                    <div className="flex flex-wrap gap-3 text-sm text-[#424653]">
+                      <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> 20 August 2026</span>
+                      <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> 8:00 AM – 4:00 PM</span>
+                    </div>
+                  </div>
+                  <div className="bg-[#f2f3ff] p-3 rounded-lg border border-[#c2c6d5] text-center md:text-left w-full md:w-auto">
+                    <p className="text-sm text-[#424653]">
+                      {status === 'pending' 
+                        ? 'Voting has not started. Live participation data will appear when voting begins.' 
+                        : status === 'active' 
+                          ? 'Voting is live. Ballots are being recorded securely.'
+                          : 'Voting has concluded. Final results are being tabulated.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Metrics */}
+                <div className="col-span-12 md:col-span-3 bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
+                  <h4 className="text-xs font-bold text-[#424653] uppercase tracking-wider mb-3">Eligible Voters</h4>
+                  <p className="text-4xl lg:text-[48px] font-bold text-[#131b2e] leading-tight">{totalEligible.toLocaleString()}</p>
+                </div>
+                <div className="col-span-12 md:col-span-3 bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
+                  <h4 className="text-xs font-bold text-[#424653] uppercase tracking-wider mb-3">Accredited</h4>
+                  {status === 'pending' ? (
+                    <>
+                      <p className="text-4xl lg:text-[48px] font-bold text-[#c2c6d5] leading-tight">—</p>
+                      <p className="text-sm text-[#737785] mt-2">Not started</p>
+                    </>
+                  ) : (
+                    <p className="text-4xl lg:text-[48px] font-bold text-[#131b2e] leading-tight">{totalBallotsCast.toLocaleString()}</p>
+                  )}
+                </div>
+                <div className="col-span-12 md:col-span-3 bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
+                  <h4 className="text-xs font-bold text-[#424653] uppercase tracking-wider mb-3">Ballots Cast</h4>
+                  {status === 'pending' ? (
+                    <>
+                      <p className="text-4xl lg:text-[48px] font-bold text-[#c2c6d5] leading-tight">—</p>
+                      <p className="text-sm text-[#737785] mt-2">Not started</p>
+                    </>
+                  ) : (
+                    <p className="text-4xl lg:text-[48px] font-bold text-[#131b2e] leading-tight">{totalBallotsCast.toLocaleString()}</p>
+                  )}
+                </div>
+                <div className="col-span-12 md:col-span-3 bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
+                  <h4 className="text-xs font-bold text-[#424653] uppercase tracking-wider mb-3">Turnout</h4>
+                  {status === 'pending' ? (
+                    <>
+                      <p className="text-4xl lg:text-[48px] font-bold text-[#c2c6d5] leading-tight">—</p>
+                      <p className="text-sm text-[#737785] mt-2">Not started</p>
+                    </>
+                  ) : (
+                    <p className="text-4xl lg:text-[48px] font-bold text-[#003f93] leading-tight">{turnoutPercentage}%</p>
+                  )}
+                </div>
+
+                {/* Main Activity Area (Conditional) */}
+                {status === 'pending' ? (
+                  <>
+                    {/* Empty State Card (Voting Activity) */}
+                    <div className="col-span-12 md:col-span-6 bg-white border border-[#c2c6d5] rounded-xl p-8 flex flex-col items-center justify-center min-h-[300px] text-center shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
+                      <BarChart3 className="w-12 h-12 text-[#c2c6d5] mb-5" />
+                      <h4 className="text-lg font-semibold text-[#131b2e] mb-2">Voting Activity</h4>
+                      <p className="text-sm text-[#424653] max-w-md">Voting has not started. No ballots have been submitted yet. A live time-series chart will appear here once the election is LIVE.</p>
+                    </div>
+                    {/* Empty State Card (Turnout) */}
+                    <div className="col-span-12 md:col-span-6 bg-white border border-[#c2c6d5] rounded-xl p-8 flex flex-col justify-center min-h-[300px] shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
+                      <h4 className="text-lg font-semibold text-[#131b2e] mb-5">Turnout Overview</h4>
+                      <div className="space-y-5">
+                        <div className="flex justify-between items-center py-3 border-b border-[#c2c6d5]">
+                          <span className="text-sm text-[#424653]">Current Turnout</span>
+                          <span className="text-xs font-bold text-[#737785]">—</span>
                         </div>
-                        <div className="w-full bg-[#e2e7ff] h-2 rounded-full overflow-hidden">
-                          <div className="bg-[#003f93] h-full rounded-full" style={{ width: `${pct}%` }} />
+                        <div className="flex justify-between items-center py-3 border-b border-[#c2c6d5]">
+                          <span className="text-sm text-[#424653]">Target</span>
+                          <span className="text-xs font-bold text-[#737785]">Not configured</span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="col-span-12 md:col-span-6 bg-white border border-[#c2c6d5] rounded-xl p-8 flex flex-col justify-center min-h-[300px] shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
+                       <h4 className="text-lg font-semibold text-[#131b2e] mb-5">Departmental Turnout Progress</h4>
+                       <div className="space-y-4">
+                         {(Object.keys(departmentStats) as BMSDepartment[]).map(dept => {
+                           const stats = departmentStats[dept];
+                           const pct = stats.eligible > 0 ? Math.round((stats.voted / stats.eligible) * 100) : 0;
+                           return (
+                             <div key={dept} className="space-y-2">
+                               <div className="flex justify-between text-xs font-bold">
+                                 <span className="text-[#131b2e]">{dept}</span>
+                                 <span className="text-[#003f93]">{pct}% ({stats.voted}/{stats.eligible})</span>
+                               </div>
+                               <div className="w-full bg-[#e2e7ff] h-2 rounded-full overflow-hidden">
+                                 <div className="bg-[#003f93] h-full rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                               </div>
+                             </div>
+                           );
+                         })}
+                       </div>
+                    </div>
+
+                    <div className="col-span-12 md:col-span-6 bg-white border border-[#c2c6d5] rounded-xl p-8 flex flex-col justify-center min-h-[300px] shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
+                      <h4 className="text-lg font-semibold text-[#131b2e] mb-5">Turnout Overview</h4>
+                      <div className="space-y-5">
+                        <div className="flex justify-between items-center py-3 border-b border-[#c2c6d5]">
+                          <span className="text-sm text-[#424653]">Current Turnout</span>
+                          <span className="text-sm font-bold text-[#003f93]">{turnoutPercentage}%</span>
+                        </div>
+                        <div className="flex justify-between items-center py-3 border-b border-[#c2c6d5]">
+                          <span className="text-sm text-[#424653]">Target</span>
+                          <span className="text-sm font-bold text-[#737785]">75%</span>
+                        </div>
+                        <div className="pt-4">
+                           <div className="flex justify-between text-xs font-bold mb-2">
+                             <span className="text-[#131b2e]">Progress to Target</span>
+                             <span className="text-[#003f93]">{Math.min(100, Math.round((turnoutPercentage / 75) * 100))}%</span>
+                           </div>
+                           <div className="w-full bg-[#e2e7ff] h-2 rounded-full overflow-hidden">
+                             <div className="bg-[#0c59c6] h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, Math.round((turnoutPercentage / 75) * 100))}%` }} />
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -2206,7 +2538,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
               </div>
 
               {/* Persistent Footer Actions */}
-              <div className="fixed bottom-0 left-0 lg:left-[270px] right-0 bg-white border-t border-[#c2c6d5] p-4 flex items-center justify-between z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+              <div className={`fixed bottom-0 left-0 ${isSidebarCollapsed ? 'lg:left-[80px]' : 'lg:left-[270px]'} right-0 bg-white border-t border-[#c2c6d5] p-4 flex items-center justify-between z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] transition-all duration-300`}>
                 <div className="text-sm text-[#424653] flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-[#737785]" />
                   Last saved: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}

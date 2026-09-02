@@ -62,11 +62,11 @@ export const VotingProcess: React.FC<VotingProcessProps> = ({ onStepClick }) => 
                 key={step.num}
                 id={`voting-step-card-${step.num}`}
                 onClick={() => onStepClick(step.num)}
-                className="bg-white border border-[#c2c6d5] p-6 rounded-none shadow-xs flex flex-col items-center relative text-center hover:border-[#0055c2] hover:shadow-md transition-all cursor-pointer group z-10"
+                className="bg-white border border-[#c2c6d5] p-6 rounded-[12px] shadow-xs flex flex-col items-center relative text-center hover:border-[#0055c2] hover:shadow-md transition-all cursor-pointer group z-10"
               >
                 {/* Number Box */}
                 <div
-                  className={`w-12 h-12 rounded-none flex items-center justify-center mb-4 text-base font-bold transition-transform group-hover:scale-110 ${
+                  className={`w-12 h-12 rounded-[10px] flex items-center justify-center mb-4 text-base font-bold transition-transform group-hover:scale-110 ${
                     step.num === 1
                       ? 'bg-[#0055c2] text-white shadow-xs'
                       : 'bg-[#dae2fd] text-[#003f93]'

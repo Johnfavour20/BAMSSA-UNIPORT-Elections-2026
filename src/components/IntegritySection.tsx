@@ -29,7 +29,7 @@ export const IntegritySection: React.FC = () => {
     <section id="bamssa-integrity-section" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-[#faf8ff]">
       <div className="container mx-auto max-w-[1280px] grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
         {/* Left Column Image (Biometrics / Tablet) */}
-        <div className="order-2 md:order-1 rounded-none overflow-hidden border border-[#c2c6d5] shadow-xs h-full min-h-[380px] lg:min-h-[440px] relative group">
+        <div className="order-2 md:order-1 rounded-[12px] overflow-hidden border border-[#c2c6d5] shadow-xs h-full min-h-[380px] lg:min-h-[440px] relative group">
           <div
             className="w-full h-full min-h-[380px] bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
             style={{
@@ -46,7 +46,7 @@ export const IntegritySection: React.FC = () => {
 
         {/* Right Column Content */}
         <div className="order-1 md:order-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#eaedff] text-[#003f93] rounded-none text-xs font-bold uppercase tracking-wider mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#eaedff] text-[#003f93] rounded-[10px] border border-[#c2c6d5] text-xs font-bold uppercase tracking-wider mb-4">
             <Key className="w-3.5 h-3.5" />
             <span>Electoral Security Architecture</span>
           </div>

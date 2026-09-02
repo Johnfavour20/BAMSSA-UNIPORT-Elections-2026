@@ -8,7 +8,7 @@ export const AboutSection: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Left Column Text */}
           <div className="md:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#eaedff] text-[#003f93] rounded-md text-xs font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#eaedff] text-[#003f93] rounded-[10px] border border-[#c2c6d5] text-xs font-bold uppercase tracking-wider">
               <ShieldCheck className="w-3.5 h-3.5 text-[#0055c2]" />
               <span>ELECO Mandate &amp; Mission</span>
             </div>
@@ -54,7 +54,7 @@ export const AboutSection: React.FC = () => {
           </div>
 
           {/* Right Column Image */}
-          <div className="md:col-span-5 rounded-none overflow-hidden border border-[#c2c6d5] shadow-sm h-full min-h-[380px] lg:min-h-[440px] relative group">
+          <div className="md:col-span-5 rounded-[12px] overflow-hidden border border-[#c2c6d5] shadow-sm h-full min-h-[380px] lg:min-h-[440px] relative group">
             <div
               className="w-full h-full min-h-[380px] bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
               style={{
