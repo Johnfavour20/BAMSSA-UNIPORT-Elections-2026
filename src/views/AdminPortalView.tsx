@@ -796,9 +796,298 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
             </div>
           )}
 
-          {/* TAB 2: VOTER VERIFICATION QUEUE & DASHBOARD */}
+          {/* TAB 2: VOTER VERIFICATION QUEUE & REVIEW DETAIL */}
           {activeTab === 'verification' && (
             <div className="space-y-6">
+
+              {/* ─── REVIEW VOTER DETAIL VIEW ─── */}
+              {selectedReviewVoter ? (
+                <div className="space-y-6">
+
+                  {/* Page Header */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedReviewVoter(null);
+                        setReviewNotes('');
+                        setReviewChecklist({ nameMatches: true, matricMatches: true, docAuthentic: true, photoMatches: true, eligibilityMet: true });
+                        setViewerZoom(1);
+                        setViewerRotation(0);
+                      }}
+                      className="inline-flex items-center gap-1.5 text-[#0055c2] text-xs font-bold hover:underline mb-3 cursor-pointer"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      Back to Verification Queue
+                    </button>
+
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#131b2e] tracking-tight">Review Voter</h2>
+                        {selectedReviewVoter.verificationStatus === 'rejected' ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#ffdad6] text-[#93000a] border border-[#ffb4ab] uppercase tracking-wider">Rejected</span>
+                        ) : selectedReviewVoter.isAccredited ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#d9e2ff] text-[#003f93] border border-[#adc6ff] uppercase tracking-wider">Approved</span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] uppercase tracking-wider">Pending Review</span>
+                        )}
+                      </div>
+                      <div className="text-[#737785] text-xs flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        Submitted: {selectedReviewVoter.registeredAt || 'Oct 24, 2026, 14:30 WAT'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Workspace Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                    {/* Left Column */}
+                    <div className="lg:col-span-5 space-y-5">
+
+                      {/* Voter Information Card */}
+                      <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
+                        <h3 className="text-sm font-bold text-[#131b2e] border-b border-[#eaedff] pb-3 mb-4 flex items-center gap-2">
+                          <User className="w-4 h-4 text-[#0055c2]" />
+                          Voter Information
+                        </h3>
+                        <dl className="space-y-4 text-sm">
+                          <div>
+                            <dt className="text-[10px] font-bold uppercase tracking-wider text-[#737785] mb-0.5">Full Name</dt>
+                            <dd className="font-bold text-[#131b2e]">{selectedReviewVoter.fullName}</dd>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <dt className="text-[10px] font-bold uppercase tracking-wider text-[#737785] mb-0.5">Matric No</dt>
+                              <dd className="font-bold font-mono text-[#131b2e]">{selectedReviewVoter.matricNumber}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-[10px] font-bold uppercase tracking-wider text-[#737785] mb-0.5">Level</dt>
+                              <dd className="font-bold text-[#131b2e]">{selectedReviewVoter.level}</dd>
+                            </div>
+                          </div>
+                          <div>
+                            <dt className="text-[10px] font-bold uppercase tracking-wider text-[#737785] mb-0.5">Email</dt>
+                            <dd className="text-[#424653]">{selectedReviewVoter.email || `${selectedReviewVoter.matricNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}@uniport.edu.ng`}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-[10px] font-bold uppercase tracking-wider text-[#737785] mb-0.5">Department</dt>
+                            <dd className="text-[#424653]">{selectedReviewVoter.department}</dd>
+                          </div>
+                        </dl>
+                      </section>
+
+                      {/* Approved PIN Badge (if applicable) */}
+                      {selectedReviewVoter.isAccredited && (
+                        <div className="p-4 bg-[#d9e2ff]/50 border border-[#adc6ff] rounded-xl flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#003f93] block">Official 4-Digit Voting PIN</span>
+                            <span className="text-2xl font-mono font-extrabold text-[#003f93] tracking-widest mt-0.5 block">{selectedReviewVoter.voterPin || '4021'}</span>
+                          </div>
+                          <span className="text-[10px] font-bold bg-[#0055c2] text-white px-3 py-1.5 rounded-lg">Accredited</span>
+                        </div>
+                      )}
+
+                      {/* Rejection notice */}
+                      {selectedReviewVoter.verificationStatus === 'rejected' && (
+                        <div className="p-4 bg-[#ffdad6]/40 border border-[#ffdad6] rounded-xl text-xs space-y-1">
+                          <span className="font-bold text-[#93000a] block">Rejection Reason:</span>
+                          <p className="text-[#424653]">{selectedReviewVoter.rejectionReason || 'Non-matching departmental registration record'}</p>
+                        </div>
+                      )}
+
+                      {/* Verification Checklist */}
+                      <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
+                        <h3 className="text-sm font-bold text-[#131b2e] border-b border-[#eaedff] pb-3 mb-4 flex items-center gap-2">
+                          <CheckSquare className="w-4 h-4 text-[#0055c2]" />
+                          Verification Checklist
+                        </h3>
+                        <fieldset className="space-y-3 text-xs">
+                          {([
+                            { key: 'nameMatches' as const, label: 'Name on ID matches registration' },
+                            { key: 'matricMatches' as const, label: 'Matric No. on ID matches registration' },
+                            { key: 'docAuthentic' as const, label: 'Identification document appears valid/authentic' },
+                            { key: 'photoMatches' as const, label: 'Photo matches student profile' },
+                            { key: 'eligibilityMet' as const, label: 'Student meets eligibility criteria for BAMSSA' },
+                          ]).map(({ key, label }) => (
+                            <label key={key} className="flex items-start gap-2.5 cursor-pointer group">
+                              <input
+                                type="checkbox"
+                                checked={reviewChecklist[key]}
+                                onChange={(e) => setReviewChecklist(prev => ({ ...prev, [key]: e.target.checked }))}
+                                className="mt-0.5 h-4 w-4 rounded border-[#c2c6d5] text-[#0055c2] focus:ring-[#003f93] cursor-pointer"
+                              />
+                              <span className="text-[#424653] group-hover:text-[#131b2e] transition-colors leading-snug">{label}</span>
+                            </label>
+                          ))}
+                        </fieldset>
+                      </section>
+                    </div>
+
+                    {/* Right Column */}
+                    <div className="lg:col-span-7 space-y-5 flex flex-col">
+
+                      {/* Document Viewer */}
+                      <section className="bg-white border border-[#c2c6d5] rounded-xl flex-1 flex flex-col shadow-xs overflow-hidden">
+                        {/* Viewer Toolbar */}
+                        <div className="bg-[#f2f3ff] border-b border-[#c2c6d5] px-4 py-2.5 flex justify-between items-center">
+                          <div className="text-xs font-bold text-[#131b2e] flex items-center gap-2">
+                            <FileCheck2 className="w-4 h-4 text-[#0055c2]" />
+                            Student ID Card
+                          </div>
+                          <div className="flex items-center gap-1 text-[#424653]">
+                            <button
+                              type="button"
+                              onClick={() => setViewerZoom(z => Math.max(0.5, +(z - 0.25).toFixed(2)))}
+                              className="p-1.5 hover:bg-[#eaedff] rounded-md transition-colors cursor-pointer"
+                              title="Zoom Out"
+                            >
+                              <ZoomOut className="w-4 h-4" />
+                            </button>
+                            <span className="text-[10px] font-bold text-[#737785] w-8 text-center">{Math.round(viewerZoom * 100)}%</span>
+                            <button
+                              type="button"
+                              onClick={() => setViewerZoom(z => Math.min(3, +(z + 0.25).toFixed(2)))}
+                              className="p-1.5 hover:bg-[#eaedff] rounded-md transition-colors cursor-pointer"
+                              title="Zoom In"
+                            >
+                              <ZoomIn className="w-4 h-4" />
+                            </button>
+                            <div className="w-px h-4 bg-[#c2c6d5] mx-1" />
+                            <button
+                              type="button"
+                              onClick={() => setViewerRotation(r => (r + 90) % 360)}
+                              className="p-1.5 hover:bg-[#eaedff] rounded-md transition-colors cursor-pointer"
+                              title="Rotate"
+                            >
+                              <RotateCw className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setIsViewerFullscreen(v => !v)}
+                              className="p-1.5 hover:bg-[#eaedff] rounded-md transition-colors cursor-pointer"
+                              title="Expand"
+                            >
+                              {isViewerFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Image Container */}
+                        <div className={`bg-[#dae2fd]/40 flex items-center justify-center relative overflow-hidden transition-all ${
+                          isViewerFullscreen ? 'fixed inset-0 z-60 bg-black/80' : 'min-h-[320px] flex-1'
+                        }`}>
+                          {isViewerFullscreen && (
+                            <button
+                              type="button"
+                              onClick={() => setIsViewerFullscreen(false)}
+                              className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg cursor-pointer transition-colors z-10"
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
+                          )}
+                          {/* Quality Badge */}
+                          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur border border-[#c2c6d5] rounded-md px-2 py-1 flex items-center gap-1 text-[10px] font-bold text-[#1E40AF]">
+                            <CheckCircle className="w-3 h-3" />
+                            High Quality Scan
+                          </div>
+                          {selectedReviewVoter.idCardUrl ? (
+                            <img
+                              src={selectedReviewVoter.idCardUrl}
+                              alt={`${selectedReviewVoter.fullName} Student ID`}
+                              className="max-w-full object-contain rounded-lg shadow border border-[#c2c6d5] bg-white transition-transform duration-200"
+                              style={{
+                                transform: `scale(${viewerZoom}) rotate(${viewerRotation}deg)`,
+                                maxHeight: isViewerFullscreen ? '90vh' : '440px',
+                              }}
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center text-center p-8 gap-3">
+                              <div className="w-16 h-16 rounded-2xl bg-[#eaedff] flex items-center justify-center">
+                                <FileCheck2 className="w-8 h-8 text-[#0055c2]" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-[#131b2e]">No ID Card Uploaded</p>
+                                <p className="text-xs text-[#737785] mt-0.5">The student did not submit an ID card document with this registration.</p>
+                              </div>
+                              {/* Demo placeholder card */}
+                              <div className="mt-2 bg-white rounded-xl border-2 border-[#c2c6d5] p-5 shadow text-left max-w-xs w-full">
+                                <div className="flex items-start gap-3 mb-3">
+                                  <div className="w-14 h-14 rounded-lg bg-[#0055c2] text-white font-extrabold text-xl flex items-center justify-center shrink-0">
+                                    {getInitials(selectedReviewVoter.fullName)}
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-bold text-[#737785] uppercase tracking-wider">University of Port Harcourt</p>
+                                    <p className="font-extrabold text-[#131b2e] text-sm leading-tight">{selectedReviewVoter.fullName}</p>
+                                  </div>
+                                </div>
+                                <div className="space-y-1 text-[11px]">
+                                  <div><span className="text-[#737785]">Matric No: </span><span className="font-bold font-mono text-[#003f93]">{selectedReviewVoter.matricNumber}</span></div>
+                                  <div><span className="text-[#737785]">Level: </span><span className="font-bold">{selectedReviewVoter.level}</span></div>
+                                  <div><span className="text-[#737785]">Department: </span><span className="font-bold">{selectedReviewVoter.department}</span></div>
+                                </div>
+                                <div className="mt-3 pt-2 border-t border-[#eaedff]">
+                                  <p className="text-[9px] font-bold text-[#737785] uppercase tracking-wider">Student ID Card · Generated Profile</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </section>
+
+                      {/* Review Notes */}
+                      <section className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-xs">
+                        <label htmlFor="review_notes_field" className="text-sm font-bold text-[#131b2e] mb-2 flex items-center gap-2">
+                          <Edit3 className="w-4 h-4 text-[#0055c2]" />
+                          Review Notes <span className="text-[10px] font-normal text-[#737785]">(Optional)</span>
+                        </label>
+                        <textarea
+                          id="review_notes_field"
+                          value={reviewNotes}
+                          onChange={(e) => setReviewNotes(e.target.value)}
+                          rows={3}
+                          placeholder="Add any internal notes regarding this verification decision..."
+                          className="w-full rounded-lg border border-[#c2c6d5] bg-[#faf8ff] p-3 text-xs text-[#131b2e] focus:border-[#003f93] focus:ring-2 focus:ring-[#003f93]/10 transition-all resize-none placeholder:text-[#737785] outline-none"
+                        />
+                      </section>
+
+                      {/* Decision Buttons */}
+                      <div className="bg-white border border-[#c2c6d5] rounded-xl p-4 shadow-xs flex items-center justify-end gap-3">
+                        {selectedReviewVoter.verificationStatus !== 'approved' && !selectedReviewVoter.isAccredited && (
+                          <button
+                            type="button"
+                            onClick={() => setShowRejectionModal(true)}
+                            className="px-5 py-2.5 rounded-lg border border-[#c2c6d5] text-[#131b2e] text-xs font-bold hover:bg-[#ffdad6]/30 hover:border-[#ffdad6] hover:text-[#ba1a1a] transition-colors flex items-center gap-2 cursor-pointer"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Reject Submission
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleApproveVoter(selectedReviewVoter)}
+                          className="px-5 py-2.5 rounded-lg bg-[#0055c2] hover:bg-[#003f93] text-white text-xs font-bold transition-colors flex items-center gap-2 shadow-xs cursor-pointer"
+                        >
+                          <Check className="w-4 h-4" />
+                          {selectedReviewVoter.isAccredited ? 'Re-Issue PIN' : 'Approve Voter'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Audit Footer */}
+                  <div className="border-t border-[#eaedff] pt-3 text-center">
+                    <p className="text-[10px] text-[#737785]">
+                      Registration ID: <span className="font-mono">{selectedReviewVoter.registrationId || `REG-2026-${selectedReviewVoter.id.slice(-4).toUpperCase()}`}</span> •{' '}
+                      Action will be recorded in audit logs.
+                    </p>
+                  </div>
+
+                </div>
+              ) : (
+
+              /* ─── VERIFICATION QUEUE (default view) ─── */
+              <div className="space-y-6">
               
               {/* Header Section */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1118,6 +1407,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
 
               </div>
 
+            </div>
+            )}
             </div>
           )}
 
@@ -1774,167 +2065,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
         </main>
       </div>
 
-      {/* VOTER REVIEW MODAL */}
-      {selectedReviewVoter && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-[#c2c6d5] max-w-xl w-full shadow-2xl overflow-hidden animate-in fade-in duration-200">
-            
-            {/* Modal Header */}
-            <div className="p-5 border-b border-[#eaedff] flex items-center justify-between bg-[#faf8ff]">
-              <div>
-                <h3 className="text-base font-bold text-[#131b2e]">
-                  Voter Accreditation Review
-                </h3>
-                <p className="text-xs text-[#737785]">
-                  Verification dossier for BAMSSA General Elections 2026
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedReviewVoter(null)}
-                className="text-[#737785] hover:text-[#131b2e] p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Modal Body */}
-            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-              
-              {/* Profile Card */}
-              <div className="flex items-center gap-4 p-4 bg-[#eaedff]/30 rounded-xl border border-[#c2c6d5]/60">
-                <div className="w-14 h-14 rounded-full bg-[#0055c2] text-white font-bold text-lg flex items-center justify-center shrink-0 shadow-xs">
-                  {getInitials(selectedReviewVoter.fullName)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-base font-bold text-[#131b2e]">
-                      {selectedReviewVoter.fullName}
-                    </h4>
-                    {selectedReviewVoter.verificationStatus === 'rejected' ? (
-                      <span className="bg-[#ffdad6] text-[#93000a] text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                        Rejected
-                      </span>
-                    ) : selectedReviewVoter.isAccredited ? (
-                      <span className="bg-[#d9e2ff] text-[#003f93] text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                        Approved
-                      </span>
-                    ) : (
-                      <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                        Pending Review
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs font-mono font-bold text-[#003f93] mt-0.5">
-                    {selectedReviewVoter.matricNumber}
-                  </p>
-                  <p className="text-xs text-[#424653]">
-                    {selectedReviewVoter.department} • {selectedReviewVoter.level}
-                  </p>
-                </div>
-              </div>
-
-              {/* Data Grid */}
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-3 bg-[#faf8ff] rounded-lg border border-[#c2c6d5]/40">
-                  <span className="text-[10px] font-bold uppercase text-[#737785] block">Faculty</span>
-                  <span className="font-semibold text-[#131b2e]">Basic Medical Sciences</span>
-                </div>
-                <div className="p-3 bg-[#faf8ff] rounded-lg border border-[#c2c6d5]/40">
-                  <span className="text-[10px] font-bold uppercase text-[#737785] block">Registered On</span>
-                  <span className="font-semibold text-[#131b2e]">{selectedReviewVoter.registeredAt || 'Oct 12, 10:42 AM'}</span>
-                </div>
-                <div className="p-3 bg-[#faf8ff] rounded-lg border border-[#c2c6d5]/40">
-                  <span className="text-[10px] font-bold uppercase text-[#737785] block">Portal Email</span>
-                  <span className="font-semibold text-[#131b2e] truncate block">{selectedReviewVoter.email || `${selectedReviewVoter.matricNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}@bamssa.edu`}</span>
-                </div>
-                <div className="p-3 bg-[#faf8ff] rounded-lg border border-[#c2c6d5]/40">
-                  <span className="text-[10px] font-bold uppercase text-[#737785] block">Phone Contact</span>
-                  <span className="font-semibold text-[#131b2e]">{selectedReviewVoter.phone || '+234 800 000 0000'}</span>
-                </div>
-              </div>
-
-              {/* Rejection notice if rejected */}
-              {selectedReviewVoter.verificationStatus === 'rejected' && (
-                <div className="p-3.5 bg-[#ffdad6]/40 border border-[#ffdad6] rounded-xl text-xs space-y-1">
-                  <span className="font-bold text-[#93000a] block">Rejection Reason:</span>
-                  <p className="text-[#424653]">{selectedReviewVoter.rejectionReason || 'Non-matching departmental registration record'}</p>
-                </div>
-              )}
-
-              {/* Approved PIN Badge if approved */}
-              {selectedReviewVoter.isAccredited && (
-                <div className="p-4 bg-[#d9e2ff]/40 border border-[#adc6ff] rounded-xl text-xs flex items-center justify-between">
-                  <div>
-                    <span className="font-bold text-[#003f93] block">Official 4-Digit Voting PIN:</span>
-                    <span className="text-xl font-mono font-extrabold text-[#003f93] tracking-widest mt-0.5 block">
-                      {selectedReviewVoter.voterPin || '4021'}
-                    </span>
-                  </div>
-                  <span className="text-[11px] font-bold bg-[#0055c2] text-white px-3 py-1.5 rounded-lg">
-                    Accredited
-                  </span>
-                </div>
-              )}
-
-              {/* Verification Checklist */}
-              <div className="space-y-2 border-t border-[#eaedff] pt-4">
-                <h5 className="text-xs font-bold text-[#131b2e] uppercase tracking-wider">
-                  Accreditation Validation Checks
-                </h5>
-                <div className="space-y-1.5 text-xs text-[#424653]">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#0055c2]" />
-                    <span>Faculty Matriculation Database: Active Student Record</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#0055c2]" />
-                    <span>Departmental Dues Clearance: Cleared for 2026 Session</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#0055c2]" />
-                    <span>Single Registration Protocol: Verified Unique</span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Modal Actions */}
-            <div className="p-5 border-t border-[#eaedff] bg-[#faf8ff] flex flex-wrap items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => setSelectedReviewVoter(null)}
-                className="px-4 py-2 border border-[#c2c6d5] text-[#424653] hover:text-[#131b2e] rounded-lg text-xs font-bold transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-
-              <div className="flex items-center gap-2">
-                {selectedReviewVoter.verificationStatus !== 'approved' && !selectedReviewVoter.isAccredited && (
-                  <button
-                    type="button"
-                    onClick={() => setShowRejectionModal(true)}
-                    className="px-4 py-2 border border-[#ffdad6] bg-white hover:bg-[#ffdad6]/50 text-[#ba1a1a] rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                  >
-                    Reject Submission
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => handleApproveVoter(selectedReviewVoter)}
-                  className="px-4 py-2 bg-[#0055c2] hover:bg-[#003f93] text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>{selectedReviewVoter.isAccredited ? 'Re-Issue PIN' : 'Approve & Issue 4-Digit PIN'}</span>
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      )}
 
       {/* REJECTION REASON CONFIRMATION MODAL */}
       {showRejectionModal && selectedReviewVoter && (
