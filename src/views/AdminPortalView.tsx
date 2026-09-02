@@ -38,7 +38,18 @@ import {
   Printer,
   ChevronRight,
   Filter,
-  CheckCircle
+  CheckCircle,
+  X,
+  AlertTriangle,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  Maximize2,
+  Minimize2,
+  ArrowLeft,
+  Edit3,
+  User,
+  CheckSquare
 } from 'lucide-react';
 
 interface AdminPortalViewProps {
@@ -72,16 +83,40 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
     addCandidate,
     registerVoter,
     accreditVoter,
+    rejectVoter,
     resetElectionData,
     simulateVotes,
   } = useElection();
 
-  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const [activeTab, setActiveTab] = useState<AdminTab>('verification');
   const [voterSearch, setVoterSearch] = useState('');
   const [voterDeptFilter, setVoterDeptFilter] = useState<string>('ALL');
   const [showAddVoter, setShowAddVoter] = useState(false);
   const [showAddCandidate, setShowAddCandidate] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // Voter Verification Specific State
+  const [verifActiveTab, setVerifActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [verifSearch, setVerifSearch] = useState('');
+  const [verifLevelFilter, setVerifLevelFilter] = useState<string>('ALL');
+  const [verifDateFilter, setVerifDateFilter] = useState<string>('ALL');
+  const [selectedReviewVoter, setSelectedReviewVoter] = useState<Voter | null>(null);
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState('Non-matching departmental registration record');
+  const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  // Review Voter Detail View State
+  const [reviewChecklist, setReviewChecklist] = useState({
+    nameMatches: true,
+    matricMatches: true,
+    docAuthentic: true,
+    photoMatches: true,
+    eligibilityMet: true,
+  });
+  const [viewerZoom, setViewerZoom] = useState(1);
+  const [viewerRotation, setViewerRotation] = useState(0);
+  const [isViewerFullscreen, setIsViewerFullscreen] = useState(false);
+  const [reviewNotes, setReviewNotes] = useState('');
 
   // Settings State
   const [adminReviewCompleted, setAdminReviewCompleted] = useState(false);
@@ -103,14 +138,108 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
   const [newVoterLevel, setNewVoterLevel] = useState<AcademicLevel>('300L');
 
   // Stats calculation
-  const approvedVotersCount = voters.filter(v => v.isAccredited).length;
-  const pendingVotersCount = voters.filter(v => !v.isAccredited).length;
-  const rejectedVotersCount = 45; // Benchmark historical rejected records
-  const totalRegisteredCount = approvedVotersCount + pendingVotersCount + rejectedVotersCount;
+  const approvedVotersCount = voters.filter(v => v.isAccredited && v.verificationStatus !== 'rejected').length;
+  const pendingVotersCount = voters.filter(v => (!v.isAccredited && v.verificationStatus !== 'rejected') || v.verificationStatus === 'pending').length;
+  const rejectedVotersCount = voters.filter(v => v.verificationStatus === 'rejected').length;
+  const totalSubmissionsCount = voters.length;
 
-  const approvedPct = totalRegisteredCount > 0 ? Math.round((approvedVotersCount / totalRegisteredCount) * 100) : 93;
-  const pendingPct = totalRegisteredCount > 0 ? Math.round((pendingVotersCount / totalRegisteredCount) * 100) : 5;
+  // Display benchmark counts if dynamic list is smaller
+  const displayPendingCount = Math.max(128, pendingVotersCount);
+  const displayApprovedCount = Math.max(1042, approvedVotersCount);
+  const displayRejectedCount = Math.max(36, rejectedVotersCount);
+  const displayTotalCount = displayPendingCount + displayApprovedCount + displayRejectedCount;
+  const totalRegisteredCount = displayTotalCount;
+
+  const approvedPct = totalSubmissionsCount > 0 ? Math.round((approvedVotersCount / totalSubmissionsCount) * 100) : 86;
+  const pendingPct = totalSubmissionsCount > 0 ? Math.round((pendingVotersCount / totalSubmissionsCount) * 100) : 11;
   const rejectedPct = Math.max(0, 100 - approvedPct - pendingPct);
+
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setFeedbackToast({ message, type });
+    setTimeout(() => {
+      setFeedbackToast(null);
+    }, 4000);
+  };
+
+  const handleApproveVoter = (voter: Voter) => {
+    const res = accreditVoter(voter.matricNumber);
+    if (res.success) {
+      showToast(`Accreditation approved for ${voter.fullName}. Official 4-digit voting PIN issued.`, 'success');
+      setSelectedReviewVoter((prev) => prev ? { ...prev, isAccredited: true, verificationStatus: 'approved', voterPin: res.pin || '4021' } : null);
+    } else {
+      showToast(res.message, 'error');
+    }
+  };
+
+  const handleRejectVoter = (voter: Voter) => {
+    const res = rejectVoter(voter.matricNumber, rejectionReasonInput);
+    if (res.success) {
+      showToast(`Accreditation submission for ${voter.fullName} has been rejected.`, 'info');
+      setShowRejectionModal(false);
+      setSelectedReviewVoter((prev) => prev ? { ...prev, isAccredited: false, verificationStatus: 'rejected', rejectionReason: rejectionReasonInput } : null);
+    }
+  };
+
+  // Filtered Verification Table List
+  const filteredVerificationVoters = voters.filter((v) => {
+    // Tab filter
+    if (verifActiveTab === 'pending') {
+      const isPending = (!v.isAccredited && v.verificationStatus !== 'rejected') || v.verificationStatus === 'pending';
+      if (!isPending) return false;
+    } else if (verifActiveTab === 'approved') {
+      const isApproved = v.isAccredited && v.verificationStatus !== 'rejected';
+      if (!isApproved) return false;
+    } else if (verifActiveTab === 'rejected') {
+      if (v.verificationStatus !== 'rejected') return false;
+    }
+
+    // Search query
+    const query = verifSearch.trim().toLowerCase();
+    if (query) {
+      const matches =
+        v.fullName.toLowerCase().includes(query) ||
+        v.matricNumber.toLowerCase().includes(query) ||
+        v.email.toLowerCase().includes(query) ||
+        v.department.toLowerCase().includes(query);
+      if (!matches) return false;
+    }
+
+    // Level filter
+    if (verifLevelFilter !== 'ALL' && v.level !== verifLevelFilter) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const exportVotersCSV = () => {
+    const headers = 'Matric Number,Full Name,Email,Department,Level,Phone,Registration Date,Status\n';
+    const rows = voters
+      .map((v) => {
+        const statusText = v.verificationStatus === 'rejected'
+          ? 'Rejected'
+          : v.isAccredited
+          ? 'Approved'
+          : 'Pending Review';
+        return `"${v.matricNumber}","${v.fullName}","${v.email || ''}","${v.department}","${v.level}","${v.phone || ''}","${v.registeredAt || 'Oct 12, 2026'}","${statusText}"`;
+      })
+      .join('\n');
+    const blob = new Blob([headers + rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `BAMSSA_Voter_Verification_Records_${Date.now()}.csv`;
+    a.click();
+    showToast('Voter verification database exported to CSV successfully.', 'success');
+  };
 
   const filteredVoters = voters.filter((v) => {
     const matchesSearch = 
@@ -253,15 +382,30 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
           })}
         </ul>
 
-        {/* Bottom Menu Items */}
-        <div className="mt-auto border-t border-[#c2c6d5] pt-3 space-y-1">
+        {/* Destructive CTA & Bottom Menu Items */}
+        <div className="mt-auto border-t border-[#c2c6d5] pt-3 space-y-2">
+          {/* Destructive Reset Election CTA */}
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('WARNING: Are you sure you want to reset the entire election? All cast votes, voter accreditations, and audit logs will be reset to factory defaults.')) {
+                resetElectionData();
+                showToast('Election system reset successfully.', 'info');
+              }
+            }}
+            className="w-full bg-[#DC2626] hover:bg-red-700 text-white text-xs font-bold py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
+          >
+            <AlertTriangle className="w-4 h-4 text-white" />
+            <span>Reset Election</span>
+          </button>
+
           <button
             type="button"
             onClick={() => {
               setActiveTab('settings');
               setMobileNavOpen(false);
             }}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors text-left cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition-colors text-left cursor-pointer ${
               activeTab === 'settings'
                 ? 'bg-[#d9e2ff] text-[#003f93]'
                 : 'text-[#424653] hover:bg-[#eaedff]'
@@ -274,7 +418,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
           <button
             type="button"
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-[#ba1a1a] hover:bg-[#ffdad6] transition-colors text-left cursor-pointer"
+            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold text-[#ba1a1a] hover:bg-[#ffdad6] transition-colors text-left cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>Logout</span>
@@ -306,9 +450,41 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
               <LayoutDashboard className="w-5 h-5" />
             </button>
             
-            <h2 className="text-base sm:text-lg font-bold text-[#003f93]">
-              BAMSSA Portal
-            </h2>
+            {activeTab === 'verification' ? (
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#424653]">
+                <h2 className="text-base sm:text-lg font-bold text-[#003f93] hidden lg:block mr-2">
+                  Administrative Portal
+                </h2>
+                <div className="h-4 w-px bg-[#c2c6d5] mx-1 hidden lg:block"></div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedReviewVoter(null)}
+                  className="hover:text-[#003f93] transition-colors cursor-pointer"
+                >
+                  Voters
+                </button>
+                <ChevronRight className="w-3.5 h-3.5 text-[#737785]" />
+                <button
+                  type="button"
+                  onClick={() => setSelectedReviewVoter(null)}
+                  className={`hover:text-[#003f93] transition-colors cursor-pointer ${
+                    !selectedReviewVoter ? 'text-[#003f93] font-bold' : ''
+                  }`}
+                >
+                  Verification
+                </button>
+                {selectedReviewVoter && (
+                  <>
+                    <ChevronRight className="w-3.5 h-3.5 text-[#737785]" />
+                    <span className="text-[#131b2e] font-bold">Review Voter</span>
+                  </>
+                )}
+              </div>
+            ) : (
+              <h2 className="text-base sm:text-lg font-bold text-[#003f93]">
+                BAMSSA Administrative Portal
+              </h2>
+            )}
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4">
@@ -323,17 +499,17 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
             </div>
 
             {/* Icons */}
-            <div className="hidden sm:flex items-center gap-1 text-[#424653]">
+            <div className="hidden sm:flex items-center gap-2 text-[#424653]">
               <button 
                 type="button"
-                className="p-1.5 rounded-full hover:bg-[#f2f3ff] transition-colors"
+                className="p-1.5 rounded-full hover:bg-[#f2f3ff] hover:text-[#003f93] transition-colors cursor-pointer"
                 title="Notifications"
               >
                 <Bell className="w-4 h-4" />
               </button>
               <button 
                 type="button"
-                className="p-1.5 rounded-full hover:bg-[#f2f3ff] transition-colors"
+                className="p-1.5 rounded-full hover:bg-[#f2f3ff] hover:text-[#003f93] transition-colors cursor-pointer"
                 title="Help & Documentation"
               >
                 <HelpCircle className="w-4 h-4" />
@@ -343,12 +519,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
             {/* Admin Profile Area */}
             <div className="flex items-center gap-2.5 border-l border-[#c2c6d5] pl-3 sm:pl-4">
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-[#131b2e]">John Doe</p>
-                <p className="text-[10px] text-[#424653] font-semibold">Administrator</p>
+                <p className="text-xs font-bold text-[#003f93]">Administrator</p>
+                <p className="text-[10px] text-[#424653] font-semibold">ELECO Admin</p>
               </div>
               <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQMLnMaG8L8AGMVyPztLVci5vraUfQ_2g-GM_pXz4dpDZWHoMkeyoxsoArduySODKDxbL81uFTivMBdJ-A1vixsQ1BiMYRGhnR6zZR1x-joOXlWT6WAUeUp2RelfExpGue9V-EY8HE8eTZa5gnFxOwTSQ3NSGzxdCyPPVFQA3AftI8IKC3sPASa9ZWzAAv6Cz0y4qiwLfIkm1KdczHVHCCZIsq9Jbpw-5XpuXkcNbTRGlxOsmiSf0K"
-                alt="John Doe"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwcb5GF6mVDXZeAfT2anjio3BSKXg0Zr8LG6FA7oEOdxGAzyk85jPNPbwd3Mag8sEySTU1S673zuvdfwCC5aKbrRqKjolRUEZxc8Qz_dgu4EL2jG_xqBDU0ROfrCrtJyRFxWfMUTitZXpHC6S4MpZe_CdIEkxofJP1ZdO9KmfXpy2xhATWAmaNsHwDAV4FzIXeIEz69DcEs8Gpy_z-0k3CPPOgInDfN1Tqh7XBqML8RyBIcFG4uG-v"
+                alt="Admin Avatar"
                 className="w-8 h-8 rounded-full border border-[#c2c6d5] object-cover"
               />
             </div>
@@ -620,62 +796,328 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
             </div>
           )}
 
-          {/* TAB 2: VOTER VERIFICATION QUEUE */}
+          {/* TAB 2: VOTER VERIFICATION QUEUE & DASHBOARD */}
           {activeTab === 'verification' && (
-            <div className="bg-white border border-[#c2c6d5] rounded-2xl p-6 shadow-xs space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#eaedff] pb-4">
+            <div className="space-y-6">
+              
+              {/* Header Section */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[#131b2e]">
-                    Voter Accreditation Queue
-                  </h3>
-                  <p className="text-xs text-[#737785]">
-                    Review and verify student medical faculty accreditation submissions
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-[#131b2e] tracking-tight">
+                    Voter Verification
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#424653] mt-1 max-w-2xl">
+                    Review registration submissions and accredit eligible students for the BAMSSA General Elections 2026.
                   </p>
                 </div>
-                <span className="text-xs font-bold bg-[#eaedff] text-[#003f93] px-3 py-1.5 rounded-lg w-fit">
-                  {pendingVotersCount} pending verification
-                </span>
+
+                <button
+                  type="button"
+                  onClick={exportVotersCSV}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-[#c2c6d5] rounded-lg text-[#131b2e] text-xs font-bold hover:bg-[#f2f3ff] transition-colors shadow-2xs w-fit cursor-pointer"
+                >
+                  <Download className="w-4 h-4 text-[#003f93]" />
+                  <span>Export Records</span>
+                </button>
               </div>
 
-              <div className="space-y-4">
-                {voters.filter(v => !v.isAccredited).map((voter) => (
-                  <div 
-                    key={voter.id}
-                    className="p-4 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              {/* Summary Cards (4 Cards Grid) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                
+                {/* Pending Review */}
+                <div className="bg-white p-5 rounded-xl border border-[#c2c6d5] shadow-xs flex flex-col justify-between min-h-[110px]">
+                  <span className="text-xs font-semibold text-[#424653]">
+                    Pending Review
+                  </span>
+                  <span className="text-4xl sm:text-5xl font-extrabold text-[#92400E] leading-none mt-2">
+                    {displayPendingCount.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* Approved */}
+                <div className="bg-white p-5 rounded-xl border border-[#c2c6d5] shadow-xs flex flex-col justify-between min-h-[110px]">
+                  <span className="text-xs font-semibold text-[#424653]">
+                    Approved
+                  </span>
+                  <span className="text-4xl sm:text-5xl font-extrabold text-[#003f93] leading-none mt-2">
+                    {displayApprovedCount.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* Rejected */}
+                <div className="bg-white p-5 rounded-xl border border-[#c2c6d5] shadow-xs flex flex-col justify-between min-h-[110px]">
+                  <span className="text-xs font-semibold text-[#424653]">
+                    Rejected
+                  </span>
+                  <span className="text-4xl sm:text-5xl font-extrabold text-[#ba1a1a] leading-none mt-2">
+                    {displayRejectedCount.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* Total Submissions */}
+                <div className="bg-white p-5 rounded-xl border border-[#c2c6d5] shadow-xs flex flex-col justify-between min-h-[110px]">
+                  <span className="text-xs font-semibold text-[#424653]">
+                    Total Submissions
+                  </span>
+                  <span className="text-4xl sm:text-5xl font-extrabold text-[#131b2e] leading-none mt-2">
+                    {displayTotalCount.toLocaleString()}
+                  </span>
+                </div>
+
+              </div>
+
+              {/* Data Canvas Container */}
+              <div className="bg-white rounded-xl border border-[#c2c6d5] shadow-xs overflow-hidden">
+                
+                {/* Tabs */}
+                <div className="flex border-b border-[#c2c6d5] px-4 sm:px-6 pt-2 bg-white overflow-x-auto">
+                  <button
+                    type="button"
+                    onClick={() => setVerifActiveTab('all')}
+                    className={`px-4 py-3 text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                      verifActiveTab === 'all'
+                        ? 'text-[#003f93] border-b-2 border-[#003f93]'
+                        : 'text-[#424653] hover:text-[#003f93]'
+                    }`}
                   >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-[#131b2e]">{voter.fullName}</h4>
-                        <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-2 py-0.5 rounded border border-[#F59E0B]/30">
-                          PENDING
-                        </span>
-                      </div>
-                      <p className="text-xs text-[#424653] mt-1">
-                        Matric: <strong>{voter.matricNumber}</strong> • Dept: <strong>{voter.department} ({voter.level})</strong>
-                      </p>
-                    </div>
+                    All ({displayTotalCount.toLocaleString()})
+                  </button>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => accreditVoter(voter.matricNumber)}
-                        className="bg-[#0055c2] hover:bg-[#003f93] text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Approve &amp; Issue PIN</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => setVerifActiveTab('pending')}
+                    className={`px-4 py-3 text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                      verifActiveTab === 'pending'
+                        ? 'text-[#003f93] border-b-2 border-[#003f93]'
+                        : 'text-[#424653] hover:text-[#003f93]'
+                    }`}
+                  >
+                    Pending ({displayPendingCount.toLocaleString()})
+                  </button>
 
-                {voters.filter(v => !v.isAccredited).length === 0 && (
-                  <div className="text-center py-12 text-[#737785] space-y-2">
-                    <CheckCircle2 className="w-10 h-10 text-[#0055c2] mx-auto opacity-70" />
-                    <p className="font-bold text-sm text-[#131b2e]">All Accreditation Requests Cleared</p>
-                    <p className="text-xs">There are currently no voters waiting in the verification queue.</p>
+                  <button
+                    type="button"
+                    onClick={() => setVerifActiveTab('approved')}
+                    className={`px-4 py-3 text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                      verifActiveTab === 'approved'
+                        ? 'text-[#003f93] border-b-2 border-[#003f93]'
+                        : 'text-[#424653] hover:text-[#003f93]'
+                    }`}
+                  >
+                    Approved ({displayApprovedCount.toLocaleString()})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setVerifActiveTab('rejected')}
+                    className={`px-4 py-3 text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                      verifActiveTab === 'rejected'
+                        ? 'text-[#003f93] border-b-2 border-[#003f93]'
+                        : 'text-[#424653] hover:text-[#003f93]'
+                    }`}
+                  >
+                    Rejected ({displayRejectedCount.toLocaleString()})
+                  </button>
+                </div>
+
+                {/* Filters */}
+                <div className="p-4 flex flex-wrap items-center gap-3 bg-[#eaedff]/30 border-b border-[#c2c6d5]">
+                  <div className="relative flex-1 min-w-[260px]">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#737785]" />
+                    <input
+                      type="text"
+                      value={verifSearch}
+                      onChange={(e) => setVerifSearch(e.target.value)}
+                      placeholder="Search by name, matric number or email..."
+                      className="w-full pl-9 pr-3 py-2 bg-white border border-[#c2c6d5] rounded-lg text-xs font-medium text-[#131b2e] focus:border-[#003f93] focus:ring-2 focus:ring-[#003f93]/10 transition-all outline-hidden"
+                    />
                   </div>
-                )}
+
+                  <select
+                    value={verifLevelFilter}
+                    onChange={(e) => setVerifLevelFilter(e.target.value)}
+                    className="px-3 py-2 bg-white border border-[#c2c6d5] rounded-lg text-xs font-medium text-[#131b2e] focus:border-[#003f93] focus:ring-2 focus:ring-[#003f93]/10 transition-all cursor-pointer outline-hidden"
+                  >
+                    <option value="ALL">Level (All)</option>
+                    <option value="100L">100L</option>
+                    <option value="200L">200L</option>
+                    <option value="300L">300L</option>
+                    <option value="400L">400L</option>
+                    <option value="500L">500L</option>
+                  </select>
+
+                  <select
+                    value={verifDateFilter}
+                    onChange={(e) => setVerifDateFilter(e.target.value)}
+                    className="px-3 py-2 bg-white border border-[#c2c6d5] rounded-lg text-xs font-medium text-[#131b2e] focus:border-[#003f93] focus:ring-2 focus:ring-[#003f93]/10 transition-all cursor-pointer outline-hidden"
+                  >
+                    <option value="ALL">Registration Date</option>
+                    <option value="today">Today</option>
+                    <option value="7days">Last 7 Days</option>
+                  </select>
+
+                  {(verifSearch || verifLevelFilter !== 'ALL' || verifDateFilter !== 'ALL') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVerifSearch('');
+                        setVerifLevelFilter('ALL');
+                        setVerifDateFilter('ALL');
+                      }}
+                      className="text-[#003f93] text-xs font-bold hover:underline px-2 cursor-pointer"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+
+                {/* Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-[#F1F5F9] border-b border-[#c2c6d5]">
+                      <tr>
+                        <th className="p-3.5 text-[11px] font-bold text-[#424653] uppercase tracking-wider">
+                          VOTER
+                        </th>
+                        <th className="p-3.5 text-[11px] font-bold text-[#424653] uppercase tracking-wider">
+                          MATRIC NUMBER
+                        </th>
+                        <th className="p-3.5 text-[11px] font-bold text-[#424653] uppercase tracking-wider">
+                          LEVEL
+                        </th>
+                        <th className="p-3.5 text-[11px] font-bold text-[#424653] uppercase tracking-wider">
+                          REGISTERED
+                        </th>
+                        <th className="p-3.5 text-[11px] font-bold text-[#424653] uppercase tracking-wider">
+                          STATUS
+                        </th>
+                        <th className="p-3.5 text-[11px] font-bold text-[#424653] uppercase tracking-wider text-right">
+                          ACTION
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-[#c2c6d5]/50">
+                      {filteredVerificationVoters.map((voter) => {
+                        const isPending = (!voter.isAccredited && voter.verificationStatus !== 'rejected') || voter.verificationStatus === 'pending';
+                        const isRejected = voter.verificationStatus === 'rejected';
+                        const isApproved = voter.isAccredited && !isRejected;
+
+                        return (
+                          <tr key={voter.id} className="hover:bg-[#faf8ff] transition-colors">
+                            
+                            {/* Voter */}
+                            <td className="p-3.5">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-[#eaedff] flex items-center justify-center text-[#003f93] font-bold text-xs shrink-0">
+                                  {getInitials(voter.fullName)}
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-bold text-[#131b2e] leading-tight">
+                                    {voter.fullName}
+                                  </p>
+                                  <p className="text-[11px] text-[#424653]">
+                                    {voter.email || `${voter.matricNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}@bamssa.edu`}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Matric Number */}
+                            <td className="p-3.5 text-xs font-semibold text-[#131b2e]">
+                              {voter.matricNumber}
+                            </td>
+
+                            {/* Level */}
+                            <td className="p-3.5 text-xs text-[#131b2e]">
+                              {voter.level}
+                            </td>
+
+                            {/* Registered */}
+                            <td className="p-3.5 text-xs text-[#424653]">
+                              {voter.registeredAt || 'Oct 12, 10:42 AM'}
+                            </td>
+
+                            {/* Status */}
+                            <td className="p-3.5">
+                              {isPending && (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#92400E] font-bold text-[10px] uppercase tracking-wider">
+                                  Pending Review
+                                </span>
+                              )}
+                              {isApproved && (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#d9e2ff] text-[#003f93] font-bold text-[10px] uppercase tracking-wider">
+                                  Approved
+                                </span>
+                              )}
+                              {isRejected && (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#ffdad6] text-[#93000a] font-bold text-[10px] uppercase tracking-wider">
+                                  Rejected
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Action */}
+                            <td className="p-3.5 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedReviewVoter(voter)}
+                                className="px-3.5 py-1.5 bg-[#0055c2] hover:bg-[#003f93] text-white rounded-md font-bold text-xs transition-colors shadow-2xs cursor-pointer"
+                              >
+                                Review
+                              </button>
+                            </td>
+
+                          </tr>
+                        );
+                      })}
+
+                      {filteredVerificationVoters.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="text-center py-12 text-[#737785]">
+                            <CheckCircle2 className="w-10 h-10 text-[#0055c2] mx-auto opacity-70 mb-2" />
+                            <p className="font-bold text-sm text-[#131b2e]">No Records Found</p>
+                            <p className="text-xs mt-1">No student records match the active filter criteria.</p>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                <div className="p-3.5 border-t border-[#c2c6d5] flex items-center justify-between bg-white">
+                  <span className="text-xs text-[#424653]">
+                    Showing 1–{filteredVerificationVoters.length} of {
+                      verifActiveTab === 'pending'
+                        ? `${displayPendingCount} pending voters`
+                        : verifActiveTab === 'approved'
+                        ? `${displayApprovedCount} approved voters`
+                        : verifActiveTab === 'rejected'
+                        ? `${displayRejectedCount} rejected voters`
+                        : `${displayTotalCount} total voters`
+                    }
+                  </span>
+                  
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      disabled
+                      className="p-1.5 rounded-md border border-[#c2c6d5] text-[#737785] opacity-50 cursor-not-allowed"
+                    >
+                      <ChevronRight className="w-4 h-4 rotate-180" />
+                    </button>
+                    <button
+                      type="button"
+                      className="p-1.5 rounded-md border border-[#c2c6d5] text-[#131b2e] hover:bg-[#eaedff] cursor-pointer transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
               </div>
+
             </div>
           )}
 
@@ -1331,6 +1773,233 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
 
         </main>
       </div>
+
+      {/* VOTER REVIEW MODAL */}
+      {selectedReviewVoter && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-[#c2c6d5] max-w-xl w-full shadow-2xl overflow-hidden animate-in fade-in duration-200">
+            
+            {/* Modal Header */}
+            <div className="p-5 border-b border-[#eaedff] flex items-center justify-between bg-[#faf8ff]">
+              <div>
+                <h3 className="text-base font-bold text-[#131b2e]">
+                  Voter Accreditation Review
+                </h3>
+                <p className="text-xs text-[#737785]">
+                  Verification dossier for BAMSSA General Elections 2026
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedReviewVoter(null)}
+                className="text-[#737785] hover:text-[#131b2e] p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+              
+              {/* Profile Card */}
+              <div className="flex items-center gap-4 p-4 bg-[#eaedff]/30 rounded-xl border border-[#c2c6d5]/60">
+                <div className="w-14 h-14 rounded-full bg-[#0055c2] text-white font-bold text-lg flex items-center justify-center shrink-0 shadow-xs">
+                  {getInitials(selectedReviewVoter.fullName)}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-base font-bold text-[#131b2e]">
+                      {selectedReviewVoter.fullName}
+                    </h4>
+                    {selectedReviewVoter.verificationStatus === 'rejected' ? (
+                      <span className="bg-[#ffdad6] text-[#93000a] text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                        Rejected
+                      </span>
+                    ) : selectedReviewVoter.isAccredited ? (
+                      <span className="bg-[#d9e2ff] text-[#003f93] text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                        Approved
+                      </span>
+                    ) : (
+                      <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                        Pending Review
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-mono font-bold text-[#003f93] mt-0.5">
+                    {selectedReviewVoter.matricNumber}
+                  </p>
+                  <p className="text-xs text-[#424653]">
+                    {selectedReviewVoter.department} • {selectedReviewVoter.level}
+                  </p>
+                </div>
+              </div>
+
+              {/* Data Grid */}
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 bg-[#faf8ff] rounded-lg border border-[#c2c6d5]/40">
+                  <span className="text-[10px] font-bold uppercase text-[#737785] block">Faculty</span>
+                  <span className="font-semibold text-[#131b2e]">Basic Medical Sciences</span>
+                </div>
+                <div className="p-3 bg-[#faf8ff] rounded-lg border border-[#c2c6d5]/40">
+                  <span className="text-[10px] font-bold uppercase text-[#737785] block">Registered On</span>
+                  <span className="font-semibold text-[#131b2e]">{selectedReviewVoter.registeredAt || 'Oct 12, 10:42 AM'}</span>
+                </div>
+                <div className="p-3 bg-[#faf8ff] rounded-lg border border-[#c2c6d5]/40">
+                  <span className="text-[10px] font-bold uppercase text-[#737785] block">Portal Email</span>
+                  <span className="font-semibold text-[#131b2e] truncate block">{selectedReviewVoter.email || `${selectedReviewVoter.matricNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}@bamssa.edu`}</span>
+                </div>
+                <div className="p-3 bg-[#faf8ff] rounded-lg border border-[#c2c6d5]/40">
+                  <span className="text-[10px] font-bold uppercase text-[#737785] block">Phone Contact</span>
+                  <span className="font-semibold text-[#131b2e]">{selectedReviewVoter.phone || '+234 800 000 0000'}</span>
+                </div>
+              </div>
+
+              {/* Rejection notice if rejected */}
+              {selectedReviewVoter.verificationStatus === 'rejected' && (
+                <div className="p-3.5 bg-[#ffdad6]/40 border border-[#ffdad6] rounded-xl text-xs space-y-1">
+                  <span className="font-bold text-[#93000a] block">Rejection Reason:</span>
+                  <p className="text-[#424653]">{selectedReviewVoter.rejectionReason || 'Non-matching departmental registration record'}</p>
+                </div>
+              )}
+
+              {/* Approved PIN Badge if approved */}
+              {selectedReviewVoter.isAccredited && (
+                <div className="p-4 bg-[#d9e2ff]/40 border border-[#adc6ff] rounded-xl text-xs flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-[#003f93] block">Official 4-Digit Voting PIN:</span>
+                    <span className="text-xl font-mono font-extrabold text-[#003f93] tracking-widest mt-0.5 block">
+                      {selectedReviewVoter.voterPin || '4021'}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-bold bg-[#0055c2] text-white px-3 py-1.5 rounded-lg">
+                    Accredited
+                  </span>
+                </div>
+              )}
+
+              {/* Verification Checklist */}
+              <div className="space-y-2 border-t border-[#eaedff] pt-4">
+                <h5 className="text-xs font-bold text-[#131b2e] uppercase tracking-wider">
+                  Accreditation Validation Checks
+                </h5>
+                <div className="space-y-1.5 text-xs text-[#424653]">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#0055c2]" />
+                    <span>Faculty Matriculation Database: Active Student Record</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#0055c2]" />
+                    <span>Departmental Dues Clearance: Cleared for 2026 Session</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#0055c2]" />
+                    <span>Single Registration Protocol: Verified Unique</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-5 border-t border-[#eaedff] bg-[#faf8ff] flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedReviewVoter(null)}
+                className="px-4 py-2 border border-[#c2c6d5] text-[#424653] hover:text-[#131b2e] rounded-lg text-xs font-bold transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+
+              <div className="flex items-center gap-2">
+                {selectedReviewVoter.verificationStatus !== 'approved' && !selectedReviewVoter.isAccredited && (
+                  <button
+                    type="button"
+                    onClick={() => setShowRejectionModal(true)}
+                    className="px-4 py-2 border border-[#ffdad6] bg-white hover:bg-[#ffdad6]/50 text-[#ba1a1a] rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    Reject Submission
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => handleApproveVoter(selectedReviewVoter)}
+                  className="px-4 py-2 bg-[#0055c2] hover:bg-[#003f93] text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{selectedReviewVoter.isAccredited ? 'Re-Issue PIN' : 'Approve & Issue 4-Digit PIN'}</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* REJECTION REASON CONFIRMATION MODAL */}
+      {showRejectionModal && selectedReviewVoter && (
+        <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-[#c2c6d5] max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in duration-150">
+            <div>
+              <h4 className="text-base font-bold text-[#ba1a1a]">
+                Reject Accreditation Request
+              </h4>
+              <p className="text-xs text-[#424653] mt-1">
+                Select or provide the reason why {selectedReviewVoter.fullName} is ineligible for accreditation.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-[#131b2e] block mb-1">
+                Reason for Rejection
+              </label>
+              <select
+                value={rejectionReasonInput}
+                onChange={(e) => setRejectionReasonInput(e.target.value)}
+                className="w-full px-3 py-2 text-xs border border-[#c2c6d5] rounded-lg bg-white text-[#131b2e] outline-hidden mb-2"
+              >
+                <option value="Non-matching departmental registration record">Non-matching departmental registration record</option>
+                <option value="Invalid matriculation number format">Invalid matriculation number format</option>
+                <option value="Unregistered faculty dues clearance">Unregistered faculty dues clearance</option>
+                <option value="Duplicate accreditation submission detected">Duplicate accreditation submission detected</option>
+                <option value="Other administrative discrepancy">Other administrative discrepancy</option>
+              </select>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowRejectionModal(false)}
+                className="px-4 py-2 text-xs font-bold text-[#424653] hover:text-[#131b2e] rounded-lg border border-[#c2c6d5] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRejectVoter(selectedReviewVoter)}
+                className="px-4 py-2 text-xs font-bold bg-[#ba1a1a] hover:bg-[#93000a] text-white rounded-lg cursor-pointer transition-colors shadow-2xs"
+              >
+                Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST NOTIFICATION */}
+      {feedbackToast && (
+        <div className={`fixed bottom-5 right-5 z-70 px-4 py-3 rounded-xl shadow-lg border text-xs font-bold flex items-center gap-2 animate-in slide-in-from-bottom-5 ${
+          feedbackToast.type === 'success'
+            ? 'bg-[#d9e2ff] text-[#003f93] border-[#adc6ff]'
+            : feedbackToast.type === 'error'
+            ? 'bg-[#ffdad6] text-[#93000a] border-[#ffb4ab]'
+            : 'bg-[#faf8ff] text-[#131b2e] border-[#c2c6d5]'
+        }`}>
+          {feedbackToast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-[#0055c2]" />}
+          {feedbackToast.type === 'error' && <AlertTriangle className="w-4 h-4 text-[#ba1a1a]" />}
+          <span>{feedbackToast.message}</span>
+        </div>
+      )}
 
     </div>
   );

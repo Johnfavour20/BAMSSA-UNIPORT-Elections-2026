@@ -4,9 +4,12 @@ export type BMSDepartment =
   | 'Human Anatomy'
   | 'Human Physiology'
   | 'Pharmacology'
-  | 'Medical Biochemistry';
+  | 'Medical Biochemistry'
+  | 'Medicine & Surgery';
 
-export type AcademicLevel = '200L' | '300L' | '400L' | '500L';
+export type AcademicLevel = '100L' | '200L' | '300L' | '400L' | '500L';
+
+export type VerificationStatus = 'pending' | 'approved' | 'rejected';
 
 export interface Voter {
   id: string;
@@ -24,6 +27,12 @@ export interface Voter {
   votedTime?: string;
   ballotReceiptHash?: string;
   avatarUrl?: string;
+  verificationStatus?: VerificationStatus;
+  registeredAt?: string;
+  rejectionReason?: string;
+  idCardUrl?: string;
+  registrationId?: string;
+  reviewNotes?: string;
 }
 
 export interface Candidate {

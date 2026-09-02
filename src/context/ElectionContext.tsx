@@ -21,6 +21,7 @@ interface ElectionContextType {
   checkEligibility: (matricNumber: string) => Voter | null;
   registerVoter: (voterData: Omit<Voter, 'id' | 'isEligible' | 'isAccredited' | 'hasVoted' | 'voterPin'>) => Voter;
   accreditVoter: (matricNumber: string) => { success: boolean; message: string; pin?: string };
+  rejectVoter: (matricNumber: string, reason?: string) => { success: boolean; message: string };
   castBallot: (votes: Record<string, string>) => { success: boolean; receiptHash: string; message: string };
   
   // Admin Controls
@@ -234,6 +235,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     updatedVoters[voterIndex] = {
       ...targetVoter,
       isAccredited: true,
+      verificationStatus: 'approved',
       voterPin: generatedPin,
       accreditationTime: now,
     };
@@ -261,6 +263,35 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       message: 'Accreditation verified successfully! Keep your 4-digit PIN secure.',
       pin: generatedPin,
     };
+  };
+
+  const rejectVoter = (matricNumber: string, reason?: string) => {
+    const trimmed = matricNumber.trim().toUpperCase();
+    const voterIndex = voters.findIndex((v) => v.matricNumber.toUpperCase() === trimmed);
+    if (voterIndex === -1) {
+      return { success: false, message: 'Matriculation number not found.' };
+    }
+
+    const targetVoter = voters[voterIndex];
+    const updatedVoters = [...voters];
+    updatedVoters[voterIndex] = {
+      ...targetVoter,
+      isEligible: false,
+      isAccredited: false,
+      verificationStatus: 'rejected',
+      rejectionReason: reason || 'Accreditation credentials non-compliant with BMS student registry.',
+    };
+
+    setVoters(updatedVoters);
+
+    addAuditLog(
+      'Student Verification Rejected',
+      `ELECO Accreditation Officer`,
+      'ACCREDITATION',
+      `Matric: ${targetVoter.matricNumber} rejected. Reason: ${reason || 'Incomplete credentials'}`
+    );
+
+    return { success: true, message: 'Voter submission marked as rejected.' };
   };
 
   const registerVoter = (voterData: Omit<Voter, 'id' | 'isEligible' | 'isAccredited' | 'hasVoted' | 'voterPin'>) => {
@@ -470,6 +501,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         checkEligibility,
         registerVoter,
         accreditVoter,
+        rejectVoter,
         castBallot,
         addCandidate,
         updateCandidate,
