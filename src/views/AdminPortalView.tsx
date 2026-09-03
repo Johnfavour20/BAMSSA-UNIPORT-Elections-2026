@@ -133,6 +133,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
   const [savingProfile, setSavingProfile] = useState(false);
   const [editableCommissionMembers, setEditableCommissionMembers] = useState(commissionMembers);
   const [savingCommissionMembers, setSavingCommissionMembers] = useState(false);
+  const [commissionMembersDirty, setCommissionMembersDirty] = useState(false);
 
   useEffect(() => {
     setProfileName(adminName);
@@ -141,8 +142,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
   }, [adminName, adminAvatarUrl]);
 
   useEffect(() => {
-    setEditableCommissionMembers(commissionMembers);
-  }, [commissionMembers]);
+    if (!commissionMembersDirty) {
+      setEditableCommissionMembers(commissionMembers);
+    }
+  }, [commissionMembers, commissionMembersDirty]);
 
   const handleProfileImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -167,6 +170,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
     setSavingCommissionMembers(true);
     const result = await updateCommissionMembers(editableCommissionMembers);
     setSavingCommissionMembers(false);
+    if (result.success) setCommissionMembersDirty(false);
     showToast(result.success ? 'Electoral Commission roster updated.' : result.message || 'Unable to update roster.', result.success ? 'success' : 'error');
   };
 
@@ -2044,15 +2048,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-[#424653]">Max Selections</label>
-                      <select
+                      <input
+                        type="number"
+                        min={1}
                         value={newPositionMaxSelections}
-                        onChange={(e) => setNewPositionMaxSelections(Number(e.target.value))}
+                        onChange={(e) => setNewPositionMaxSelections(Math.max(1, Number(e.target.value) || 1))}
                         className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white"
-                      >
-                        <option value={1}>1</option>
-                        <option value={2}>2</option>
-                        <option value={3}>3</option>
-                      </select>
+                      />
                     </div>
                     <div className="sm:col-span-2">
                       <label className="text-xs font-semibold text-[#424653]">Description</label>
@@ -3033,20 +3035,38 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white border border-[#c2c6d5] rounded-2xl p-5 shadow-xs">
                   <h3 className="text-lg font-bold text-[#131b2e] flex items-center gap-2 border-b border-[#eaedff] pb-3 mb-4">
-                    <Sliders className="w-4 h-4 text-[#003f93]" />
-                    Administrative Adjustments
+                    <Users className="w-4 h-4 text-[#003f93]" />
+                    Electoral Commission Members
                   </h3>
-                  <div className="bg-[#f2f3ff] border border-dashed border-[#c2c6d5] rounded-xl p-6 flex flex-col items-center justify-center text-center h-32">
-                    <div className="w-10 h-10 rounded-full bg-[#eaedff] text-[#003f93] flex items-center justify-center mb-2">
-                      <Info className="w-5 h-5" />
-                    </div>
-                    <p className="text-sm text-[#424653]">No administrative adjustments recorded.</p>
+                  <p className="mb-4 text-sm text-[#424653]">These names and roles appear on the public Results screen after you save them.</p>
+                  <div className="space-y-3">
+                    {editableCommissionMembers.map((member, index) => (
+                      <div key={member.id} className="grid grid-cols-[64px_1fr_1fr_auto] gap-2 items-end">
+                        <label className="text-[10px] font-bold uppercase tracking-wide text-[#424653]">
+                          Initials
+                          <input value={member.initials} maxLength={5} onChange={(event) => { setCommissionMembersDirty(true); setEditableCommissionMembers((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, initials: event.target.value.toUpperCase() } : item)); }} className="mt-1 w-full rounded-lg border border-[#c2c6d5] px-2 py-2 text-sm text-[#131b2e]" />
+                        </label>
+                        <label className="text-[10px] font-bold uppercase tracking-wide text-[#424653]">
+                          Name
+                          <input value={member.name} onChange={(event) => { setCommissionMembersDirty(true); setEditableCommissionMembers((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, name: event.target.value } : item)); }} className="mt-1 w-full rounded-lg border border-[#c2c6d5] px-2 py-2 text-sm text-[#131b2e]" />
+                        </label>
+                        <label className="text-[10px] font-bold uppercase tracking-wide text-[#424653]">
+                          Role
+                          <input value={member.role} onChange={(event) => { setCommissionMembersDirty(true); setEditableCommissionMembers((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, role: event.target.value } : item)); }} className="mt-1 w-full rounded-lg border border-[#c2c6d5] px-2 py-2 text-sm text-[#131b2e]" />
+                        </label>
+                        <button type="button" onClick={() => { setCommissionMembersDirty(true); setEditableCommissionMembers((current) => current.filter((_, itemIndex) => itemIndex !== index)); }} disabled={editableCommissionMembers.length === 1} title="Remove commission member" className="mb-0.5 rounded-lg p-2 text-[#93000a] hover:bg-[#ffdad6] disabled:cursor-not-allowed disabled:opacity-40">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <div className="mt-4 text-[11px] text-[#424653] flex justify-between gap-4 flex-wrap">
-                    <span>Formula audit:</span>
-                    <span className="font-mono bg-[#f2f3ff] px-2 py-1 rounded border border-[#c2c6d5] text-[#131b2e]">
-                      Recorded Ballots (0) + Adjustments (0) = Final (0)
-                    </span>
+                  <div className="mt-4 flex flex-wrap justify-between gap-3">
+                    <button type="button" onClick={() => { setCommissionMembersDirty(true); setEditableCommissionMembers((current) => [...current, { id: `member-${Date.now()}`, initials: 'EC', name: '', role: '' }]); }} className="inline-flex items-center gap-2 rounded-lg border border-[#c2c6d5] px-3 py-2 text-xs font-bold text-[#131b2e] hover:bg-[#f2f3ff]">
+                      <Plus className="h-4 w-4" /> Add Member
+                    </button>
+                    <button type="button" onClick={() => void saveCommissionMembers()} disabled={savingCommissionMembers || editableCommissionMembers.some((member) => !member.initials.trim() || !member.name.trim() || !member.role.trim())} className="inline-flex items-center gap-2 rounded-lg bg-[#0055c2] px-3 py-2 text-xs font-bold text-white hover:bg-[#003f93] disabled:cursor-not-allowed disabled:opacity-50">
+                      {savingCommissionMembers ? 'Saving...' : 'Save Members'}
+                    </button>
                   </div>
                 </div>
 
