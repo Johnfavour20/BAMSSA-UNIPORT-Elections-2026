@@ -21,12 +21,22 @@ export const AccreditationStatusView: React.FC<AccreditationStatusViewProps> = (
   onNavigateToDashboard,
   onNavigateToElectionDetails,
 }) => {
-  const { currentVoter } = useElection();
+  const { currentVoter, voters } = useElection();
+  const liveVoter = currentVoter ? voters.find((voter) => voter.id === currentVoter.id) || currentVoter : null;
+  const isRejected = liveVoter?.verificationStatus === 'rejected';
+  const isAccredited = Boolean(liveVoter?.isAccredited);
 
   // Voter details (fallback to design mock data if not logged in)
-  const voterName = currentVoter?.fullName || 'John Doe';
-  const matricNo = currentVoter?.matricNumber || 'BMS/2022/12345';
-  const level = currentVoter?.level || '400';
+  const voterName = liveVoter?.fullName || 'John Doe';
+  const matricNo = liveVoter?.matricNumber || 'BMS/2022/12345';
+  const level = liveVoter?.level || '400';
+  const statusLabel = isRejected ? 'Rejected' : isAccredited ? 'Approved' : 'Submitted';
+  const statusHeading = isRejected ? 'ACCREDITATION REJECTED' : isAccredited ? 'ACCREDITATION APPROVED' : 'ACCREDITATION PENDING';
+  const statusMessage = isRejected
+    ? liveVoter?.rejectionReason || 'Your accreditation request was not approved. Please contact the Electoral Commission.'
+    : isAccredited
+    ? 'Your accreditation has been approved. Your voting PIN is ready and you are eligible to vote.'
+    : 'Your accreditation is being reviewed. Our team is currently verifying your submitted documents against institutional records.';
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#F8FAFC] text-[#131b2e] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 font-sans antialiased">
@@ -64,22 +74,20 @@ export const AccreditationStatusView: React.FC<AccreditationStatusViewProps> = (
               </div>
               <div>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f2f3ff] text-[#424653] text-xs font-semibold border border-[#d2d9f4]">
-                  Status: Submitted
+                  Status: {statusLabel}
                 </span>
               </div>
             </div>
 
-            {/* Primary Status Area (PENDING) */}
+            {/* Primary Status Area */}
             <div className="bg-white border border-[#c2c6d5] rounded-2xl p-8 sm:p-12 flex flex-col items-center justify-center text-center shadow-xs">
-              <div className="h-20 w-20 rounded-full bg-[#FEF3C7] flex items-center justify-center mb-5 animate-pulse">
-                <Clock className="w-10 h-10 text-[#92400E]" />
+              <div className={`h-20 w-20 rounded-full flex items-center justify-center mb-5 ${isRejected ? 'bg-[#ffdad6]' : isAccredited ? 'bg-[#dcfce7]' : 'bg-[#FEF3C7]'}`}>
+                {isRejected ? <ShieldCheck className="w-10 h-10 text-[#93000a]" /> : isAccredited ? <Check className="w-10 h-10 text-[#166534]" /> : <Clock className="w-10 h-10 text-[#92400E]" />}
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-[#92400E] mb-3 flex items-center justify-center gap-2">
-                <span>●</span> ACCREDITATION PENDING
+              <h2 className={`text-xl sm:text-2xl font-bold mb-3 flex items-center justify-center gap-2 ${isRejected ? 'text-[#93000a]' : isAccredited ? 'text-[#166534]' : 'text-[#92400E]'}`}>
+                <span>●</span> {statusHeading}
               </h2>
-              <p className="text-sm sm:text-base text-[#424653] max-w-lg leading-relaxed">
-                Your accreditation is being reviewed. Our team is currently verifying your submitted documents against institutional records.
-              </p>
+              <p className="text-sm sm:text-base text-[#424653] max-w-lg leading-relaxed">{statusMessage}</p>
             </div>
 
             {/* Accreditation Journey */}
@@ -106,8 +114,8 @@ export const AccreditationStatusView: React.FC<AccreditationStatusViewProps> = (
 
                 {/* Stage 2 */}
                 <div className="relative z-10 flex flex-col items-center gap-2 w-1/4">
-                  <div className="w-8 h-8 rounded-full bg-[#003f93] border-2 border-[#003f93] flex items-center justify-center text-white shadow-xs">
-                    <MoreHorizontal className="w-4 h-4" />
+                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-white shadow-xs ${isRejected || isAccredited ? 'bg-[#003f93] border-[#003f93]' : 'bg-[#003f93] border-[#003f93]'}`}>
+                    {isAccredited || isRejected ? <Check className="w-4 h-4" /> : <MoreHorizontal className="w-4 h-4" />}
                   </div>
                   <span className="text-[11px] sm:text-xs font-bold text-center text-[#003f93]">
                     Documents Reviewed
@@ -116,8 +124,8 @@ export const AccreditationStatusView: React.FC<AccreditationStatusViewProps> = (
 
                 {/* Stage 3 */}
                 <div className="relative z-10 flex flex-col items-center gap-2 w-1/4">
-                  <div className="w-8 h-8 rounded-full bg-white border-2 border-[#c2c6d5] flex items-center justify-center text-[#737785]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-transparent"></span>
+                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${isAccredited ? 'bg-[#003f93] border-[#003f93] text-white' : 'bg-white border-[#c2c6d5] text-[#737785]'}`}>
+                    {isAccredited ? <Check className="w-4 h-4" /> : <span className="w-2.5 h-2.5 rounded-full bg-transparent"></span>}
                   </div>
                   <span className="text-[11px] sm:text-xs font-medium text-center text-[#737785]">
                     Accreditation Approved
@@ -126,8 +134,8 @@ export const AccreditationStatusView: React.FC<AccreditationStatusViewProps> = (
 
                 {/* Stage 4 */}
                 <div className="relative z-10 flex flex-col items-center gap-2 w-1/4">
-                  <div className="w-8 h-8 rounded-full bg-white border-2 border-[#c2c6d5] flex items-center justify-center text-[#737785]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-transparent"></span>
+                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${isAccredited ? 'bg-[#003f93] border-[#003f93] text-white' : 'bg-white border-[#c2c6d5] text-[#737785]'}`}>
+                    {isAccredited ? <Check className="w-4 h-4" /> : <span className="w-2.5 h-2.5 rounded-full bg-transparent"></span>}
                   </div>
                   <span className="text-[11px] sm:text-xs font-medium text-center text-[#737785]">
                     Eligible to Vote
