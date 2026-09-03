@@ -321,20 +321,6 @@ export const ResultsView: React.FC = () => {
         onClose={() => setSelectedCandidate(null)}
       />
 
-      <footer className="border-t border-[#dfe7ff] bg-[#f1f5f9]">
-        <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-4 px-4 py-5 text-sm text-[#424653] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#131b2e]">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#003f93] text-[10px] font-bold text-white">B</div>
-            © 2026 BAMSSA Electoral Commission
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] font-semibold uppercase tracking-[0.12em] md:justify-end">
-            {['1-Student-1-Ballot', 'Secrecy', 'Scheduled Hours', 'Privacy Policy', 'Terms of Service'].map((link) => (
-              <span key={link} className="text-[#424653]">{link}</span>
-            ))}
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

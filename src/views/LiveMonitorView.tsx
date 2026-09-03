@@ -346,24 +346,6 @@ export const LiveMonitorView: React.FC<LiveMonitorViewProps> = ({
         </div>
       </main>
 
-      <footer className="border-t border-[#dfe7ff] bg-[#f1f5f9]">
-        <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-4 px-4 py-5 text-sm text-[#424653] md:flex-row md:items-center md:justify-between sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 font-bold text-[#131b2e]">
-            <img
-              alt="BAMSSA Logo"
-              className="h-6 w-6 rounded-md object-contain"
-              src="/assets/nreerety-removebg-preview.png"
-            />
-            © 2026 BAMSSA Electoral Commission
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] font-semibold uppercase tracking-wide md:justify-end">
-            {['1-Student-1-Ballot', 'Secrecy', 'Scheduled Hours', 'Privacy Policy', 'Terms of Service'].map((link) => (
-              <span key={link} className="text-[#424653]">{link}</span>
-            ))}
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

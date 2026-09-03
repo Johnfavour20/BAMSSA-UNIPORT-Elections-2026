@@ -300,8 +300,8 @@ function ElectionAppContent() {
         </Routes>
       </main>
 
-      {/* Universal Footer (Hidden when inside full Admin Console) */}
-      {currentView !== 'admin' && (
+      {/* Landing page footer */}
+      {currentView === 'home' && (
         <Footer
           setCurrentView={(view) => {
             setCurrentView(view);

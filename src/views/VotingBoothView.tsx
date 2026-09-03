@@ -338,16 +338,6 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="bg-[#f2f3ff] border-t border-[#c2c6d5] px-6 py-3.5 flex justify-between items-center text-xs text-[#737785]">
-            <span>ELECO Commission Certified 2026/2027</span>
-            <button
-              onClick={onBackToHome}
-              className="text-[#0055c2] font-semibold hover:underline cursor-pointer"
-            >
-              Return to Homepage
-            </button>
-          </div>
         </div>
       </div>
     );

@@ -481,26 +481,6 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
         </section>
       </div>
 
-      {/* Screen 02 Footer */}
-      <footer className="w-full mt-auto py-8 px-4 md:px-6 bg-white border-t border-[#c2c6d5]/70 pb-24 md:pb-8">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-[#424653]">
-          <p className="text-center sm:text-left font-medium">
-            © 2026 BAMSSA Electoral Commission · Secure &amp; Confidential Voting
-          </p>
-          <div className="flex items-center gap-6">
-            <button onClick={onNavigateHome} className="hover:text-[#003f93] transition-colors cursor-pointer">
-              Home
-            </button>
-            <button onClick={onCheckEligibility} className="hover:text-[#003f93] transition-colors cursor-pointer">
-              Eligibility
-            </button>
-            <button onClick={onNavigateResults} className="hover:text-[#003f93] transition-colors cursor-pointer">
-              Live Monitor
-            </button>
-          </div>
-        </div>
-      </footer>
-
       {/* Mobile Sticky Bottom Nav Bar */}
       <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-[#faf8ff] px-2 py-3 border-t border-[#c2c6d5] shadow-lg rounded-t-2xl">
         <button
