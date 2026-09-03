@@ -325,9 +325,9 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return (
       voters.find(
         (v) =>
-          v.matricNumber.toUpperCase() === trimmed ||
-          v.email.toUpperCase() === trimmed ||
-          v.matricNumber.replace(/\//g, '').toUpperCase() === trimmed.replace(/\//g, '')
+          v.matricNumber?.toUpperCase() === trimmed ||
+          v.email?.toUpperCase() === trimmed ||
+          v.matricNumber?.replace(/\//g, '').toUpperCase() === trimmed.replace(/\//g, '')
       ) || null
     );
   };
@@ -451,7 +451,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const accreditVoter = async (matricNumber: string) => {
     const trimmed = matricNumber.trim().toUpperCase();
-    const existingVoter = voters.find((v) => v.matricNumber.toUpperCase() === trimmed);
+    const existingVoter = voters.find((v) => v.matricNumber?.toUpperCase() === trimmed);
     if (!existingVoter) {
       return { success: false, message: 'Matriculation number not registered.' };
     }
@@ -472,7 +472,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!response.ok || !payload.success) return { success: false, message: payload.message || 'Unable to accredit voter.' };
           const finalPin = payload.pin || generatedPin;
           setVoters((prev) => prev.map((v) =>
-            v.matricNumber.toUpperCase() === trimmed
+            v.matricNumber?.toUpperCase() === trimmed
               ? {
                   ...v,
                   isAccredited: true,
@@ -497,7 +497,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const rejectVoter = async (matricNumber: string, reason?: string) => {
     const trimmed = matricNumber.trim().toUpperCase();
-    const existingVoter = voters.find((v) => v.matricNumber.toUpperCase() === trimmed);
+    const existingVoter = voters.find((v) => v.matricNumber?.toUpperCase() === trimmed);
     if (!existingVoter) {
       return { success: false, message: 'Matriculation number not found.' };
     }
@@ -511,7 +511,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const payload = await response.json();
       if (!response.ok || !payload.success) return { success: false, message: payload.message || 'Unable to reject voter.' };
           setVoters((prev) => prev.map((v) =>
-            v.matricNumber.toUpperCase() === trimmed
+            v.matricNumber?.toUpperCase() === trimmed
               ? { ...v, isEligible: false, isAccredited: false, verificationStatus: 'rejected', rejectionReason: reason || payload.reason || 'Accreditation credentials non-compliant with BMS student registry.' }
               : v,
           ));
