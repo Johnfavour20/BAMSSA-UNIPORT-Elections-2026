@@ -519,7 +519,7 @@ def get_election_state() -> Any:
         audit_logs = conn.execute("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 100").fetchall()
     else:
         voters = conn.execute(
-            "SELECT id, matric_number, full_name, department, level, is_eligible, is_accredited, has_voted, verification_status FROM voters ORDER BY full_name"
+            "SELECT id, matric_number, full_name, department, level, is_eligible, is_accredited, has_voted, verification_status, registered_at FROM voters ORDER BY full_name"
         ).fetchall()
         audit_logs = []
     department_stats = conn.execute("SELECT * FROM department_stats ORDER BY department").fetchall()

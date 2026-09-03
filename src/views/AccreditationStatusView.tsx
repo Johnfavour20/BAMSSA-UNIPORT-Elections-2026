@@ -41,6 +41,10 @@ export const AccreditationStatusView: React.FC<AccreditationStatusViewProps> = (
   const voterName = liveVoter.fullName;
   const matricNo = liveVoter.matricNumber;
   const level = liveVoter.level;
+  const submittedOn = liveVoter.registeredAt
+    ? new Date(liveVoter.registeredAt).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })
+    : 'Recently submitted';
+  const documentLabel = liveVoter.idCardUrl ? 'Uploaded student document' : 'Student document';
   const statusLabel = isRejected ? 'Rejected' : isAccredited ? 'Approved' : 'Submitted';
   const statusHeading = isRejected ? 'ACCREDITATION REJECTED' : isAccredited ? 'ACCREDITATION APPROVED' : 'ACCREDITATION PENDING';
   const statusMessage = isRejected
@@ -186,7 +190,7 @@ export const AccreditationStatusView: React.FC<AccreditationStatusViewProps> = (
                   </span>
                   <span className="text-sm font-medium text-[#131b2e] flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-[#737785]" />
-                    Oct 24, 2024 - 10:45 AM
+                    {submittedOn}
                   </span>
                 </li>
                 <li>
@@ -196,7 +200,7 @@ export const AccreditationStatusView: React.FC<AccreditationStatusViewProps> = (
                   <div className="flex items-center justify-between p-3 bg-[#f8fafc] rounded-lg border border-[#c2c6d5]">
                     <div className="flex items-center gap-2.5">
                       <FileBadge className="w-4 h-4 text-[#003f93]" />
-                      <span className="text-sm font-medium text-[#131b2e]">Student ID Card</span>
+                      <span className="text-sm font-medium text-[#131b2e]">{documentLabel}</span>
                     </div>
                     <Eye className="w-4 h-4 text-[#737785]" />
                   </div>
@@ -227,9 +231,9 @@ export const AccreditationStatusView: React.FC<AccreditationStatusViewProps> = (
                     2
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-[#131b2e] mb-0.5">Notification</h4>
+                    <h4 className="text-xs font-bold text-[#131b2e] mb-0.5">Status Updates</h4>
                     <p className="text-xs text-[#424653] leading-relaxed">
-                      You will receive an email once your status changes to Approved or if further action is needed.
+                      Return to this page to check for approval or any further action needed on your submission.
                     </p>
                   </div>
                 </div>
