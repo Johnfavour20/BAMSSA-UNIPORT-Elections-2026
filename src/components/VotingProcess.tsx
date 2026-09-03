@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { UserCheck, Fingerprint, Vote, BarChart3, ArrowRight } from 'lucide-react';
 
 interface VotingProcessProps {
@@ -42,14 +43,18 @@ export const VotingProcess: React.FC<VotingProcessProps> = ({ onStepClick }) => 
   ];
 
   return (
-    <section 
+    <motion.section
       id="bamssa-voting-process"
       className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-[#f2f3ff] border-y border-[#c2c6d5]/70"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.65 }}
     >
       <div className="container mx-auto max-w-[1280px] text-center">
-        <h3 className="text-2xl sm:text-3xl lg:text-[32px] font-bold text-[#131b2e] mb-12 tracking-tight">
+        <motion.h3 className="text-2xl sm:text-3xl lg:text-[32px] font-bold text-[#131b2e] mb-12 tracking-tight" initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
           How Voting Works
-        </h3>
+        </motion.h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 relative">
           {/* Decorative Connecting Line on desktop */}
@@ -58,11 +63,16 @@ export const VotingProcess: React.FC<VotingProcessProps> = ({ onStepClick }) => 
           {steps.map((step) => {
             const Icon = step.icon;
             return (
-              <div
+              <motion.div
                 key={step.num}
                 id={`voting-step-card-${step.num}`}
                 onClick={() => onStepClick(step.num)}
                 className="bg-white border border-[#c2c6d5] p-6 rounded-[12px] shadow-xs flex flex-col items-center relative text-center hover:border-[#0055c2] hover:shadow-md transition-all cursor-pointer group z-10"
+                initial={{ opacity: 0, y: 22 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -6 }}
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ duration: 0.45, delay: step.num * 0.08 }}
               >
                 {/* Number Box */}
                 <div
@@ -97,11 +107,11 @@ export const VotingProcess: React.FC<VotingProcessProps> = ({ onStepClick }) => 
                   <span>{step.actionText}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </span>
-              </div>
+              </motion.div>
             );
           })}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

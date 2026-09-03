@@ -493,7 +493,7 @@ export const INITIAL_AUDIT_LOGS: AuditLog[] = [
     actor: 'ELECO Technical Secretariat',
     encryptedHash: '0x9E2D1837C091A4EF551BCA38012D99FF',
     category: 'ACCREDITATION',
-    details: 'Biometric verification portal active for 2,450 registered basic medical science scholars.'
+    details: 'Voter verification portal active for 2,450 registered basic medical science scholars.'
   },
   {
     id: 'log-3',
@@ -502,7 +502,7 @@ export const INITIAL_AUDIT_LOGS: AuditLog[] = [
     actor: 'System (Matric: U2021/5568045)',
     encryptedHash: '0x1C44A99F0B873210CDEF558902A38817',
     category: 'ACCREDITATION',
-    details: 'Biometric 4-digit token matched academic record from Department of Human Physiology.'
+    details: '4-digit voter PIN matched the academic record from Department of Human Physiology.'
   },
   {
     id: 'log-4',

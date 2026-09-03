@@ -1,36 +1,55 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Candidate, ElectionPosition, Voter, AuditLog, ElectionStatus, BMSDepartment } from '../types';
-import { INITIAL_CANDIDATES, INITIAL_POSITIONS, INITIAL_VOTERS, INITIAL_AUDIT_LOGS, DEPARTMENT_STATS } from '../data/initialData';
+import { Candidate, ElectionPosition, Voter, AuditLog, ElectionStatus, ResultsStatus, BMSDepartment, CommissionMember } from '../types';
 
 interface ElectionContextType {
   status: ElectionStatus;
+  startTime: string | null;
+  endTime: string | null;
+  durationMinutes: number;
+  resultsStatus: ResultsStatus;
+  publishedAt: string | null;
+  certifiedAt: string | null;
+  publishResults: () => Promise<{ success: boolean; message?: string }>;
+  adminRequest: (url: string, options?: RequestInit) => Promise<Response>;
+  electionStatus: ElectionStatus;
   setStatus: (status: ElectionStatus) => void;
+  setElectionStatus: (status: ElectionStatus) => void;
+    setElectionDuration: (durationMinutes: number) => Promise<{ success: boolean; message?: string }>;
   positions: ElectionPosition[];
   candidates: Candidate[];
   voters: Voter[];
   auditLogs: AuditLog[];
   departmentStats: Record<BMSDepartment, { eligible: number; accredited: number; voted: number }>;
+  commissionMembers: CommissionMember[];
+  updateCommissionMembers: (members: CommissionMember[]) => Promise<{ success: boolean; message?: string }>;
   currentVoter: Voter | null;
   isAdminLoggedIn: boolean;
+  isAdminAuthenticated: boolean;
+  adminName: string;
+  adminEmail: string;
+  adminAvatarUrl: string | null;
+  updateAdminProfile: (name: string, avatarUrl: string | null) => Promise<{ success: boolean; message?: string }>;
   
   // Actions
-  loginVoter: (matricNumber: string, pin: string) => { success: boolean; message: string; voter?: Voter };
+  loginVoter: (matricNumber: string, pin: string) => Promise<{ success: boolean; message: string; voter?: Voter }>;
   logoutVoter: () => void;
-  loginAdmin: (passcode: string) => boolean;
+  loginAdmin: (passcode: string, name?: string, email?: string) => Promise<boolean>;
   logoutAdmin: () => void;
   checkEligibility: (matricNumber: string) => Voter | null;
-  registerVoter: (voterData: Omit<Voter, 'id' | 'isEligible' | 'isAccredited' | 'hasVoted' | 'voterPin'>) => Voter;
-  accreditVoter: (matricNumber: string) => { success: boolean; message: string; pin?: string };
-  rejectVoter: (matricNumber: string, reason?: string) => { success: boolean; message: string };
-  castBallot: (votes: Record<string, string>) => { success: boolean; receiptHash: string; message: string };
+  registerVoter: (voterData: Omit<Voter, 'id' | 'isEligible' | 'isAccredited' | 'hasVoted' | 'voterPin'>) => Promise<Voter | null>;
+  accreditVoter: (matricNumber: string) => Promise<{ success: boolean; message: string; pin?: string }>;
+  rejectVoter: (matricNumber: string, reason?: string) => Promise<{ success: boolean; message: string }>;
+  castBallot: (votes: Record<string, string>) => Promise<{ success: boolean; receiptHash: string; message: string }>;
   
   // Admin Controls
-  addCandidate: (candidate: Omit<Candidate, 'id' | 'votesCount' | 'approvedByEleco'>) => void;
+  addCandidate: (candidate: Omit<Candidate, 'id' | 'votesCount' | 'approvedByEleco'>) => Promise<void>;
+  addPosition: (position: Omit<ElectionPosition, 'id' | 'order'>) => Promise<void>;
   updateCandidate: (id: string, updates: Partial<Candidate>) => void;
-  adjustCandidateVotes: (id: string, delta: number) => void;
-  deleteCandidate: (id: string) => void;
-  resetElectionData: () => void;
-  simulateVotes: (count: number) => void;
+  adjustCandidateVotes: (id: string, delta: number) => Promise<void>;
+  deleteCandidate: (id: string) => Promise<{ success: boolean; message?: string }>;
+  deletePosition: (id: string) => Promise<{ success: boolean; message?: string }>;
+  deleteVoter: (id: string) => Promise<{ success: boolean; message?: string }>;
+  resetElectionData: () => Promise<{ success: boolean; message?: string }>;
   
   // Computed
   totalEligible: number;
@@ -40,6 +59,8 @@ interface ElectionContextType {
 }
 
 const ElectionContext = createContext<ElectionContextType | undefined>(undefined);
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const STORAGE_KEYS = {
   STATUS: 'bamssa_election_status_2026',
@@ -51,57 +72,47 @@ const STORAGE_KEYS = {
   DEPT_STATS: 'bamssa_dept_stats_2026',
 };
 
+const EMPTY_DEPT_STATS = (): Record<BMSDepartment, { eligible: number; accredited: number; voted: number }> => ({
+  'Human Anatomy': { eligible: 0, accredited: 0, voted: 0 },
+  'Human Physiology': { eligible: 0, accredited: 0, voted: 0 },
+  Pharmacology: { eligible: 0, accredited: 0, voted: 0 },
+  'Medical Biochemistry': { eligible: 0, accredited: 0, voted: 0 },
+  'Medicine & Surgery': { eligible: 0, accredited: 0, voted: 0 },
+});
+
 export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [status, setStatusState] = useState<ElectionStatus>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.STATUS);
-    return (saved as ElectionStatus) || 'STANDBY';
-  });
+  const [status, setStatusState] = useState<ElectionStatus>('STANDBY');
+  const [startTime, setStartTime] = useState<string | null>(null);
+  const [endTime, setEndTime] = useState<string | null>(null);
+  const [durationMinutes, setDurationMinutes] = useState(120);
+  const [resultsStatus, setResultsStatus] = useState<ResultsStatus>('DRAFT');
+  const [publishedAt, setPublishedAt] = useState<string | null>(null);
+  const [certifiedAt, setCertifiedAt] = useState<string | null>(null);
 
-  const [candidates, setCandidates] = useState<Candidate[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.CANDIDATES);
-    return saved ? JSON.parse(saved) : INITIAL_CANDIDATES;
-  });
+  const [positions, setPositions] = useState<ElectionPosition[]>([]);
 
-  const [voters, setVoters] = useState<Voter[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.VOTERS);
-    return saved ? JSON.parse(saved) : INITIAL_VOTERS;
-  });
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
 
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
-    return saved ? JSON.parse(saved) : INITIAL_AUDIT_LOGS;
-  });
+  const [voters, setVoters] = useState<Voter[]>([]);
 
-  const [currentVoter, setCurrentVoter] = useState<Voter | null>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.CURRENT_VOTER);
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
-  });
+  const [currentVoter, setCurrentVoter] = useState<Voter | null>(null);
+  const [voterSession, setVoterSession] = useState<string | null>(null);
 
-  const [departmentStats, setDepartmentStats] = useState<Record<BMSDepartment, { eligible: number; accredited: number; voted: number }>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.DEPT_STATS);
-    return saved ? JSON.parse(saved) : DEPARTMENT_STATS;
-  });
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
+  const [adminSession, setAdminSession] = useState<string | null>(null);
+  const [adminName, setAdminName] = useState('Administrator');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminAvatarUrl, setAdminAvatarUrl] = useState<string | null>(null);
 
-  // Sync to local storage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.STATUS, status);
-  }, [status]);
+  const [departmentStats, setDepartmentStats] = useState<Record<BMSDepartment, { eligible: number; accredited: number; voted: number }>>(EMPTY_DEPT_STATS);
+  const [commissionMembers, setCommissionMembers] = useState<CommissionMember[]>([]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CANDIDATES, JSON.stringify(candidates));
-  }, [candidates]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.VOTERS, JSON.stringify(voters));
-  }, [voters]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(auditLogs));
-  }, [auditLogs]);
+    const storedKeys = Object.keys(localStorage).filter((key) => key.startsWith('bamssa_'));
+    storedKeys.forEach((key) => localStorage.removeItem(key));
+  }, []);
 
   useEffect(() => {
     if (currentVoter) {
@@ -115,9 +126,114 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, String(isAdminLoggedIn));
   }, [isAdminLoggedIn]);
 
+  const refreshElectionData = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/election`, {
+        headers: adminSession ? { 'X-Admin-Session': adminSession } : undefined,
+      });
+      if (!response.ok) {
+        setStatusState('STANDBY');
+        setPositions([]);
+        setCandidates([]);
+        setVoters([]);
+        setAuditLogs([]);
+        setDepartmentStats(EMPTY_DEPT_STATS());
+        return;
+      }
+
+      const payload = await response.json();
+      if (payload.status) {
+        setStatusState(payload.status as ElectionStatus);
+      }
+      setStartTime(payload.start_time || null);
+      setEndTime(payload.end_time || null);
+      setDurationMinutes(Number(payload.duration_minutes || 120));
+      setResultsStatus((payload.results_status || 'DRAFT') as ResultsStatus);
+      setPublishedAt(payload.published_at || null);
+      setCertifiedAt(payload.certified_at || null);
+      if (payload.positions) {
+        setPositions(payload.positions.map((position: any) => ({
+          id: position.id,
+          title: position.title,
+          description: position.description,
+          order: Number(position.order_index ?? position.order ?? 0),
+          maxSelections: Number(position.max_selections ?? position.maxSelections ?? 1),
+        })));
+      }
+      if (payload.candidates) {
+        setCandidates(payload.candidates.map((candidate: any) => ({
+          id: candidate.id,
+          positionId: candidate.position_id,
+          fullName: candidate.full_name,
+          department: candidate.department,
+          level: candidate.level,
+          cgpaRange: candidate.cgpa_range || 'N/A',
+          photoUrl: candidate.photo_url || '',
+          tagline: candidate.tagline || '',
+          manifesto: candidate.manifesto ? candidate.manifesto.split('|') : [],
+          runningMate: candidate.running_mate_name ? {
+            name: candidate.running_mate_name,
+            department: candidate.running_mate_department,
+            level: candidate.running_mate_level,
+          } : undefined,
+          votesCount: Number(candidate.votes_count || 0),
+          approvedByEleco: Boolean(candidate.approved_by_eleco),
+        })));
+      }
+      if (payload.voters) {
+        setVoters(payload.voters.map((voter: any) => ({
+          id: voter.id,
+          matricNumber: voter.matric_number,
+          fullName: voter.full_name,
+          department: voter.department,
+          level: voter.level,
+          email: voter.email,
+          phone: voter.phone,
+          isEligible: Boolean(voter.is_eligible),
+          isAccredited: Boolean(voter.is_accredited),
+          hasVoted: Boolean(voter.has_voted),
+          voterPin: voter.voter_pin || '',
+          accreditationTime: voter.accreditation_time || undefined,
+          votedTime: voter.voted_time || undefined,
+          ballotReceiptHash: voter.ballot_receipt_hash || undefined,
+          avatarUrl: voter.avatar_url || undefined,
+          verificationStatus: voter.verification_status as any,
+          registeredAt: voter.registered_at || undefined,
+          rejectionReason: voter.rejection_reason || undefined,
+          idCardUrl: voter.id_card_url || undefined,
+          registrationId: voter.registration_id || undefined,
+          reviewNotes: voter.review_notes || undefined,
+        })));
+      }
+      if (payload.audit_logs) {
+        setAuditLogs(payload.audit_logs.map((log: any) => ({
+          id: log.id,
+          timestamp: log.timestamp,
+          action: log.action,
+          actor: log.actor,
+          encryptedHash: log.encrypted_hash,
+          category: log.category,
+          details: log.details,
+        })));
+      }
+      if (payload.department_stats) {
+        setDepartmentStats(payload.department_stats as Record<BMSDepartment, { eligible: number; accredited: number; voted: number }>);
+      }
+      if (payload.commission_members) {
+        setCommissionMembers(payload.commission_members);
+      }
+    } catch (error) {
+      // Ignore transient backend sync issues; the local UI remains usable when the backend is unavailable.
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.DEPT_STATS, JSON.stringify(departmentStats));
-  }, [departmentStats]);
+    refreshElectionData();
+    const interval = window.setInterval(() => {
+      refreshElectionData();
+    }, 4000);
+    return () => window.clearInterval(interval);
+  }, [adminSession]);
 
   const addAuditLog = (action: string, actor: string, category: AuditLog['category'], details?: string) => {
     const randomHex = Array.from({ length: 28 }, () => Math.floor(Math.random() * 16).toString(16)).join('').toUpperCase();
@@ -133,14 +249,71 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setAuditLogs((prev) => [newLog, ...prev]);
   };
 
-  const setStatus = (newStatus: ElectionStatus) => {
-    setStatusState(newStatus);
+  const generateVoterPin = (matricNumber: string): string => {
+    const usedPins = new Set(voters.map((voter) => voter.voterPin).filter(Boolean));
+    const randomValues = new Uint32Array(1);
+    for (let attempt = 0; attempt < 9000; attempt += 1) {
+      window.crypto.getRandomValues(randomValues);
+      const candidate = String((randomValues[0] % 9000) + 1000);
+      if (!usedPins.has(candidate)) return candidate;
+    }
+    return '1000';
+  };
+
+  const setStatus = async (newStatus: ElectionStatus) => {
+    try {
+      const response = await adminFetch(`${API_BASE}/admin/set-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) return;
+      setStatusState(newStatus);
+      setStartTime(payload.start_time || null);
+      setEndTime(payload.end_time || null);
+    } catch {
+      return;
+    }
     addAuditLog(
       `Election Status Modified to [${newStatus}]`,
       'ELECO Electoral Officer',
       'ADMIN',
       `System transitioned state from ${status} to ${newStatus}.`
     );
+  };
+
+  const setElectionStatus = (newStatus: ElectionStatus) => {
+    void setStatus(newStatus);
+  };
+
+  const setElectionDuration = async (nextDuration: number) => {
+    try {
+      const response = await adminFetch(`${API_BASE}/admin/set-duration`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ durationMinutes: nextDuration }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) return { success: false, message: payload.message };
+      setDurationMinutes(nextDuration);
+      return { success: true };
+    } catch {
+      return { success: false, message: 'Unable to update election duration.' };
+    }
+  };
+
+  const publishResults = async () => {
+    try {
+      const response = await adminFetch(`${API_BASE}/admin/publish-results`, { method: 'POST' });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) return { success: false, message: payload.message };
+      setResultsStatus('PUBLISHED');
+      setPublishedAt(payload.publishedAt || new Date().toISOString());
+      return { success: true };
+    } catch {
+      return { success: false, message: 'Unable to publish results.' };
+    }
   };
 
   const checkEligibility = (query: string): Voter | null => {
@@ -156,181 +329,255 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
   };
 
-  const loginVoter = (identifier: string, credential?: string) => {
+  const loginVoter = async (identifier: string, credential?: string) => {
     const trimmed = identifier.trim().toUpperCase();
     if (!trimmed) {
       return { success: false, message: 'Please provide your Matriculation Number or UNIPORT email.' };
     }
-    const voter = voters.find(
-      (v) =>
-        v.matricNumber.toUpperCase() === trimmed ||
-        v.email.toUpperCase() === trimmed ||
-        v.matricNumber.replace(/\//g, '').toUpperCase() === trimmed.replace(/\//g, '')
-    );
-    
-    if (!voter) {
-      return { success: false, message: 'Student record not found in BAMSSA 2026 electoral register.' };
-    }
-    
-    if (!voter.isEligible) {
-      return { success: false, message: 'Student record flagged as ineligible. Please visit ELECO Help Desk.' };
-    }
-
-    if (credential && credential.trim()) {
-      const cred = credential.trim();
-      // If PIN is checked or password provided
-      if (cred.length === 4 && voter.voterPin && voter.voterPin !== cred && cred !== '1234') {
-        return { success: false, message: 'Invalid 4-digit biometric voter PIN. Check your accreditation record.' };
+    try {
+      const response = await fetch(`${API_BASE}/voters/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: trimmed, credential: credential?.trim() || '' }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success || !payload.session || !payload.voter) {
+        return { success: false, message: payload.message || 'Unable to authenticate voter.' };
       }
+      const voterData = payload.voter;
+      const voter: Voter = {
+        id: voterData.id,
+        matricNumber: voterData.matric_number,
+        fullName: voterData.full_name,
+        department: voterData.department,
+        level: voterData.level,
+        email: voterData.email,
+        phone: voterData.phone,
+        isEligible: Boolean(voterData.is_eligible),
+        isAccredited: Boolean(voterData.is_accredited),
+        hasVoted: Boolean(voterData.has_voted),
+        voterPin: credential?.trim() || '',
+        accreditationTime: voterData.accreditation_time || undefined,
+        votedTime: voterData.voted_time || undefined,
+        ballotReceiptHash: voterData.ballot_receipt_hash || undefined,
+        avatarUrl: voterData.avatar_url || undefined,
+        verificationStatus: voterData.verification_status,
+      };
+      setVoterSession(payload.session);
+      setCurrentVoter(voter);
+      return { success: true, message: 'Authentication successful. Proceed to confidential ballot.', voter };
+    } catch {
+      return { success: false, message: 'Unable to reach the election server.' };
     }
-
-    setCurrentVoter(voter);
-    addAuditLog(
-      'Voter Authenticated at Ballot Booth',
-      `Voter Session (${voter.department})`,
-      'ACCREDITATION',
-      `Secure authentication session initiated for ${voter.level} student.`
-    );
-    return { success: true, message: 'Authentication successful. Proceed to confidential ballot.', voter };
   };
 
   const logoutVoter = () => {
     setCurrentVoter(null);
+    setVoterSession(null);
   };
 
-  const loginAdmin = (passcode: string): boolean => {
-    // Default ELECO Master PIN is 2026 or eleco2026
-    if (passcode.trim() === '2026' || passcode.trim().toLowerCase() === 'eleco2026') {
+  const loginAdmin = async (passcode: string, name?: string, email?: string): Promise<boolean> => {
+    const trimmedPasscode = passcode.trim();
+    try {
+      const response = await fetch(`${API_BASE}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode: trimmedPasscode, adminName: name?.trim() || '', email: email?.trim() || '' }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.session) return false;
+      setAdminSession(payload.session);
+      setAdminName(payload.adminName || 'Administrator');
+        setAdminEmail(payload.adminEmail || '');
+      setAdminAvatarUrl(payload.adminAvatarUrl || null);
       setIsAdminLoggedIn(true);
-      addAuditLog(
-        'ELECO Commission Dashboard Accessed',
-        'Chief Electoral Officer',
-        'SECURITY',
-        'Administrative dashboard authorization granted.'
-      );
       return true;
+    } catch {
+      return false;
     }
-    return false;
   };
 
   const logoutAdmin = () => {
     setIsAdminLoggedIn(false);
+    setAdminSession(null);
+    setAdminName('Administrator');
+      setAdminEmail('');
+    setAdminAvatarUrl(null);
   };
 
-  const accreditVoter = (matricNumber: string) => {
+  const updateAdminProfile = async (name: string, avatarUrl: string | null) => {
+    try {
+      const response = await adminFetch(`${API_BASE}/admin/profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminName: name, adminAvatarUrl: avatarUrl || '' }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) return { success: false, message: payload.message || 'Unable to update administrator profile.' };
+      setAdminName(payload.adminName);
+      setAdminAvatarUrl(payload.adminAvatarUrl || null);
+      return { success: true };
+    } catch {
+      return { success: false, message: 'Unable to reach the election server.' };
+    }
+  };
+
+  const updateCommissionMembers = async (members: CommissionMember[]) => {
+    try {
+      const response = await adminFetch(`${API_BASE}/admin/commission-members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ members }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) return { success: false, message: payload.message || 'Unable to update commission roster.' };
+      setCommissionMembers(payload.commissionMembers);
+      return { success: true };
+    } catch {
+      return { success: false, message: 'Unable to reach the election server.' };
+    }
+  };
+
+  const adminFetch = (url: string, options: RequestInit = {}) => fetch(url, {
+    ...options,
+    headers: { ...(options.headers || {}), 'X-Admin-Session': adminSession || '' },
+  });
+
+  const accreditVoter = async (matricNumber: string) => {
     const trimmed = matricNumber.trim().toUpperCase();
-    const voterIndex = voters.findIndex((v) => v.matricNumber.toUpperCase() === trimmed);
-    if (voterIndex === -1) {
+    const existingVoter = voters.find((v) => v.matricNumber.toUpperCase() === trimmed);
+    if (!existingVoter) {
       return { success: false, message: 'Matriculation number not registered.' };
     }
 
-    const targetVoter = voters[voterIndex];
-    if (targetVoter.isAccredited) {
-      return { success: true, message: 'Voter is already accredited.', pin: targetVoter.voterPin };
+    if (existingVoter.isAccredited) {
+      return { success: true, message: 'Voter is already accredited.', pin: existingVoter.voterPin };
     }
 
-    const updatedVoters = [...voters];
-    const generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
-    const now = new Date().toISOString();
-    
-    updatedVoters[voterIndex] = {
-      ...targetVoter,
-      isAccredited: true,
-      verificationStatus: 'approved',
-      voterPin: generatedPin,
-      accreditationTime: now,
-    };
+    const generatedPin = existingVoter.voterPin || generateVoterPin(trimmed);
 
-    setVoters(updatedVoters);
-
-    // Update dept stats
-    setDepartmentStats((prev) => ({
-      ...prev,
-      [targetVoter.department]: {
-        ...prev[targetVoter.department],
-        accredited: prev[targetVoter.department].accredited + 1,
-      },
-    }));
-
-    addAuditLog(
-      'Student Voter Accredited',
-      `ELECO Registry (${targetVoter.department})`,
-      'ACCREDITATION',
-      `Biometric PIN generated for Matric: ${targetVoter.matricNumber}`
-    );
-
-    return {
-      success: true,
-      message: 'Accreditation verified successfully! Keep your 4-digit PIN secure.',
-      pin: generatedPin,
-    };
+    try {
+      const response = await adminFetch(`${API_BASE}/voters/accredit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matricNumber: trimmed }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) return { success: false, message: payload.message || 'Unable to accredit voter.' };
+          const finalPin = payload.pin || generatedPin;
+          setVoters((prev) => prev.map((v) =>
+            v.matricNumber.toUpperCase() === trimmed
+              ? {
+                  ...v,
+                  isAccredited: true,
+                  isEligible: true,
+                  verificationStatus: 'approved',
+                  voterPin: finalPin,
+                  accreditationTime: payload.accreditationTime || v.accreditationTime || new Date().toISOString(),
+                }
+              : v,
+          ));
+          addAuditLog(
+            'Student Voter Accredited',
+            `ELECO Registry (${existingVoter.department})`,
+            'ACCREDITATION',
+            `Voter PIN generated for Matric: ${existingVoter.matricNumber} | PIN: ${finalPin}`
+          );
+      return { success: true, message: 'Accreditation verified successfully! Keep your 4-digit PIN secure.', pin: finalPin };
+    } catch {
+      return { success: false, message: 'Unable to reach the election server.' };
+    }
   };
 
-  const rejectVoter = (matricNumber: string, reason?: string) => {
+  const rejectVoter = async (matricNumber: string, reason?: string) => {
     const trimmed = matricNumber.trim().toUpperCase();
-    const voterIndex = voters.findIndex((v) => v.matricNumber.toUpperCase() === trimmed);
-    if (voterIndex === -1) {
+    const existingVoter = voters.find((v) => v.matricNumber.toUpperCase() === trimmed);
+    if (!existingVoter) {
       return { success: false, message: 'Matriculation number not found.' };
     }
 
-    const targetVoter = voters[voterIndex];
-    const updatedVoters = [...voters];
-    updatedVoters[voterIndex] = {
-      ...targetVoter,
-      isEligible: false,
-      isAccredited: false,
-      verificationStatus: 'rejected',
-      rejectionReason: reason || 'Accreditation credentials non-compliant with BMS student registry.',
-    };
-
-    setVoters(updatedVoters);
-
-    addAuditLog(
-      'Student Verification Rejected',
-      `ELECO Accreditation Officer`,
-      'ACCREDITATION',
-      `Matric: ${targetVoter.matricNumber} rejected. Reason: ${reason || 'Incomplete credentials'}`
-    );
-
-    return { success: true, message: 'Voter submission marked as rejected.' };
+    try {
+      const response = await adminFetch(`${API_BASE}/voters/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matricNumber: trimmed, reason: reason || 'Accreditation credentials non-compliant with BMS student registry.' }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) return { success: false, message: payload.message || 'Unable to reject voter.' };
+          setVoters((prev) => prev.map((v) =>
+            v.matricNumber.toUpperCase() === trimmed
+              ? { ...v, isEligible: false, isAccredited: false, verificationStatus: 'rejected', rejectionReason: reason || payload.reason || 'Accreditation credentials non-compliant with BMS student registry.' }
+              : v,
+          ));
+          addAuditLog(
+            'Student Verification Rejected',
+            'ELECO Accreditation Officer',
+            'ACCREDITATION',
+            `Matric: ${existingVoter.matricNumber} rejected. Reason: ${reason || 'Incomplete credentials'}`
+          );
+      return { success: true, message: 'Voter submission marked as rejected.' };
+    } catch {
+      return { success: false, message: 'Unable to reach the election server.' };
+    }
   };
 
-  const registerVoter = (voterData: Omit<Voter, 'id' | 'isEligible' | 'isAccredited' | 'hasVoted' | 'voterPin'>) => {
-    const generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
-    const newVoter: Voter = {
-      ...voterData,
-      id: `voter-${Date.now()}`,
+  const registerVoter = async (voterData: Omit<Voter, 'id' | 'isEligible' | 'isAccredited' | 'hasVoted' | 'voterPin'>) => {
+    const payload = {
       matricNumber: voterData.matricNumber.trim().toUpperCase(),
-      isEligible: true,
-      isAccredited: true,
-      hasVoted: false,
-      voterPin: generatedPin,
-      accreditationTime: new Date().toISOString(),
-      avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+      fullName: voterData.fullName,
+      department: voterData.department,
+      level: voterData.level,
+      email: voterData.email,
+      phone: voterData.phone,
+      idCardUrl: voterData.idCardUrl,
     };
 
-    setVoters((prev) => [newVoter, ...prev]);
+    try {
+      const response = await fetch(`${API_BASE}/voters/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to enroll voter');
+      }
 
-    setDepartmentStats((prev) => ({
-      ...prev,
-      [newVoter.department]: {
-        ...prev[newVoter.department],
-        eligible: prev[newVoter.department].eligible + 1,
-        accredited: prev[newVoter.department].accredited + 1,
-      },
-    }));
+      const newVoter: Voter = {
+        ...voterData,
+        id: `voter-${Date.now()}`,
+        matricNumber: payload.matricNumber,
+        isEligible: false,
+        isAccredited: false,
+        hasVoted: false,
+        voterPin: '',
+        accreditationTime: undefined,
+        avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+        verificationStatus: 'pending',
+      };
 
-    addAuditLog(
-      'New Student Voter Registered & Accredited',
-      `Registry System (${newVoter.department})`,
-      'ACCREDITATION',
-      `Matriculation ${newVoter.matricNumber} added to verified voter roll.`
-    );
-
-    return newVoter;
+      setVoters((prev) => [newVoter, ...prev]);
+      setDepartmentStats((prev) => ({
+        ...prev,
+        [newVoter.department]: {
+          ...prev[newVoter.department],
+          eligible: prev[newVoter.department].eligible + 1,
+        },
+      }));
+      addAuditLog(
+        'New Student Voter Registration Submitted',
+        `Registry System (${newVoter.department})`,
+        'ACCREDITATION',
+        `Matriculation ${newVoter.matricNumber} submitted for eligibility review.`
+      );
+      return newVoter;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
   };
 
-  const castBallot = (votes: Record<string, string>) => {
+  const castBallot = async (votes: Record<string, string>) => {
     if (!currentVoter) {
       return { success: false, receiptHash: '', message: 'No voter authenticated.' };
     }
@@ -339,80 +586,92 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return { success: false, receiptHash: currentVoter.ballotReceiptHash || '', message: 'Voter has already cast a ballot. Multiple votes strictly prohibited.' };
     }
 
-    // Generate official digital receipt hash
-    const randomReceipt = '0x' + Array.from({ length: 28 }, () => Math.floor(Math.random() * 16).toString(16)).join('').toUpperCase();
-    const now = new Date().toISOString();
-
-    // Increment candidate votes
-    setCandidates((prevCandidates) =>
-      prevCandidates.map((cand) => {
-        if (Object.values(votes).includes(cand.id)) {
-          return { ...cand, votesCount: cand.votesCount + 1 };
-        }
-        return cand;
-      })
-    );
-
-    // Update voter status
-    const updatedVoters = voters.map((v) => {
-      if (v.id === currentVoter.id) {
-        return {
-          ...v,
-          hasVoted: true,
-          votedTime: now,
-          ballotReceiptHash: randomReceipt,
-        };
+    try {
+      const response = await fetch(`${API_BASE}/voters/cast-ballot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Voter-Session': voterSession || '' },
+        body: JSON.stringify({ voterId: currentVoter.id, votes }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        return { success: false, receiptHash: '', message: result.message || 'Ballot submission rejected by the backend.' };
       }
-      return v;
-    });
-    setVoters(updatedVoters);
-
-    const updatedCurrentVoter = {
-      ...currentVoter,
-      hasVoted: true,
-      votedTime: now,
-      ballotReceiptHash: randomReceipt,
-    };
-    setCurrentVoter(updatedCurrentVoter);
-
-    // Update dept stats
-    setDepartmentStats((prev) => ({
-      ...prev,
-      [currentVoter.department]: {
-        ...prev[currentVoter.department],
-        voted: prev[currentVoter.department].voted + 1,
-      },
-    }));
-
-    // Add tamper-proof audit log
-    addAuditLog(
-      'Confidential Ballot Cast & Verified',
-      `Anonymous Session #${currentVoter.voterPin}`,
-      'VOTE',
-      `Receipt Token: ${randomReceipt.slice(0, 14)}... | 1-Student-1-Ballot confirmed.`
-    );
-
-    return {
-      success: true,
-      receiptHash: randomReceipt,
-      message: 'Your vote has been cast and recorded in the zero-compromise audit chain.',
-    };
+      const votedTime = new Date().toISOString();
+      const updatedVoter = { ...currentVoter, hasVoted: true, votedTime, ballotReceiptHash: result.receiptHash };
+      setCurrentVoter(updatedVoter);
+      setVoters((prev) => prev.map((v) => (v.id === currentVoter.id ? updatedVoter : v)));
+      return { success: true, receiptHash: result.receiptHash, message: result.message || 'Your vote has been cast and recorded.' };
+    } catch {
+      return { success: false, receiptHash: '', message: 'Unable to reach the election server.' };
+    }
   };
 
-  const addCandidate = (candidateData: Omit<Candidate, 'id' | 'votesCount' | 'approvedByEleco'>) => {
-    const newCand: Candidate = {
-      ...candidateData,
-      id: `cand-${Date.now()}`,
-      votesCount: 0,
-      approvedByEleco: true,
-    };
-    setCandidates((prev) => [...prev, newCand]);
-    addAuditLog(
-      `New Candidate Certified: ${newCand.fullName}`,
-      'ELECO Screening Committee',
-      'ADMIN',
-      `Position ID: ${newCand.positionId} | Department: ${newCand.department}`
-    );
+  const addCandidate = async (candidateData: Omit<Candidate, 'id' | 'votesCount' | 'approvedByEleco'>) => {
+    try {
+      const response = await adminFetch(`${API_BASE}/admin/candidates`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: candidateData.fullName,
+          positionId: candidateData.positionId,
+          department: candidateData.department,
+          level: candidateData.level,
+          photoUrl: candidateData.photoUrl,
+          tagline: candidateData.tagline,
+          manifesto: candidateData.manifesto,
+          cgpaRange: candidateData.cgpaRange,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to create candidate');
+      }
+
+      const newCand: Candidate = {
+        ...candidateData,
+        id: data.candidate?.id || `cand-${Date.now()}`,
+        votesCount: Number(data.candidate?.votesCount || 0),
+        approvedByEleco: Boolean(data.candidate?.approvedByEleco ?? true),
+      };
+      setCandidates((prev) => [...prev, newCand]);
+      addAuditLog(
+        `New Candidate Certified: ${newCand.fullName}`,
+        'ELECO Screening Committee',
+        'ADMIN',
+        `Position ID: ${newCand.positionId} | Department: ${newCand.department}`
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const addPosition = async (positionData: Omit<ElectionPosition, 'id' | 'order'>) => {
+    try {
+      const response = await adminFetch(`${API_BASE}/admin/positions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: positionData.title,
+          description: positionData.description,
+          maxSelections: positionData.maxSelections,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to create position');
+      }
+      if (data.position) {
+        setPositions((prev) => [...prev, {
+          id: data.position.id,
+          title: data.position.title,
+          description: data.position.description,
+          order: Number(data.position.order || prev.length + 1),
+          maxSelections: Number(data.position.maxSelections || 1),
+        }]);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const updateCandidate = (id: string, updates: Partial<Candidate>) => {
@@ -426,73 +685,103 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
   };
 
-  const adjustCandidateVotes = (id: string, delta: number) => {
+  const adjustCandidateVotes = async (id: string, delta: number) => {
     const candidate = candidates.find((c) => c.id === id);
     if (!candidate) return;
 
     const safeDelta = Number.isFinite(delta) ? delta : 0;
-    const nextValue = Math.max(0, candidate.votesCount + safeDelta);
-
+    const optimisticValue = Math.max(0, candidate.votesCount + safeDelta);
     setCandidates((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, votesCount: nextValue } : c))
+      prev.map((c) => (c.id === id ? { ...c, votesCount: optimisticValue } : c))
     );
+    try {
+      const response = await adminFetch(`${API_BASE}/admin/adjust-candidate-votes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ candidateId: id, delta: safeDelta }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) {
+        setCandidates((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, votesCount: candidate.votesCount } : c))
+        );
+        return;
+      }
 
-    addAuditLog(
-      `Candidate Vote Count Adjusted: ${candidate.fullName}`,
-      'ELECO Administrator',
-      'ADMIN',
-      `Votes changed by ${safeDelta >= 0 ? '+' : ''}${safeDelta}. New total: ${nextValue}.`
-    );
+      setCandidates((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, votesCount: payload.votesCount } : c))
+      );
+    } catch {
+      return;
+    }
   };
 
-  const deleteCandidate = (id: string) => {
+  const deleteCandidate = async (id: string) => {
     const cand = candidates.find((c) => c.id === id);
+    const response = await adminFetch(`${API_BASE}/admin/candidates/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await response.json();
+    if (!response.ok) return { success: false, message: data.message || 'Unable to delete candidate.' };
     setCandidates((prev) => prev.filter((c) => c.id !== id));
     addAuditLog(
       `Candidate Removed: ${cand?.fullName || id}`,
       'ELECO Electoral Tribunal',
       'ADMIN'
     );
+    return { success: true };
   };
 
-  const resetElectionData = () => {
+  const deletePosition = async (id: string) => {
+    const position = positions.find((item) => item.id === id);
+    const response = await adminFetch(`${API_BASE}/admin/positions/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await response.json();
+    if (!response.ok) return { success: false, message: data.message || 'Unable to delete position.' };
+    setPositions((prev) => prev.filter((item) => item.id !== id));
+    addAuditLog(`Position Removed: ${position?.title || id}`, 'ELECO Electoral Tribunal', 'ADMIN');
+    return { success: true };
+  };
+
+  const deleteVoter = async (id: string) => {
+    const voter = voters.find((item) => item.id === id);
+    const response = await adminFetch(`${API_BASE}/admin/voters/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await response.json();
+    if (!response.ok) return { success: false, message: data.message || 'Unable to delete voter.' };
+    setVoters((prev) => prev.filter((item) => item.id !== id));
+    if (currentVoter?.id === id) setCurrentVoter(null);
+    addAuditLog(`Voter Removed: ${voter?.fullName || id}`, 'ELECO Electoral Tribunal', 'ADMIN');
+    return { success: true };
+  };
+
+  const resetElectionData = async () => {
+    try {
+      const response = await adminFetch(`${API_BASE}/admin/reset`, { method: 'POST' });
+      const payload = await response.json();
+      if (!response.ok || !payload.success) {
+        return { success: false, message: payload.message || 'Unable to reset the election.' };
+      }
+    } catch {
+      return { success: false, message: 'Unable to reach the election server.' };
+    }
+
     setStatusState('STANDBY');
-    setCandidates(INITIAL_CANDIDATES);
-    setVoters(INITIAL_VOTERS);
-    setAuditLogs(INITIAL_AUDIT_LOGS);
+    setResultsStatus('DRAFT');
+    setPublishedAt(null);
+    setCertifiedAt(null);
+    setPositions([]);
+    setCandidates([]);
+    setVoters([]);
+    setAuditLogs([]);
     setCurrentVoter(null);
     setIsAdminLoggedIn(false);
-    setDepartmentStats(DEPARTMENT_STATS);
-    localStorage.clear();
+    setDepartmentStats(EMPTY_DEPT_STATS());
+    localStorage.removeItem(STORAGE_KEYS.STATUS);
+    localStorage.removeItem(STORAGE_KEYS.CANDIDATES);
+    localStorage.removeItem(STORAGE_KEYS.VOTERS);
+    localStorage.removeItem(STORAGE_KEYS.AUDIT_LOGS);
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_VOTER);
+    localStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
+    localStorage.removeItem(STORAGE_KEYS.DEPT_STATS);
     addAuditLog('System Reset to Initial Calibration', 'System Admin', 'SYSTEM');
-  };
-
-  const simulateVotes = (count: number) => {
-    setCandidates((prev) =>
-      prev.map((c) => {
-        const added = Math.floor(Math.random() * count) + 5;
-        return { ...c, votesCount: c.votesCount + added };
-      })
-    );
-
-    setDepartmentStats((prev) => {
-      const updated = { ...prev };
-      (Object.keys(updated) as BMSDepartment[]).forEach((dept) => {
-        const addedVoted = Math.floor((count * 1.5) / 4);
-        updated[dept] = {
-          ...updated[dept],
-          voted: Math.min(updated[dept].eligible, updated[dept].voted + addedVoted),
-        };
-      });
-      return updated;
-    });
-
-    addAuditLog(
-      `Simulated ${count} Multi-Department Ballots`,
-      'ELECO Simulation Engine',
-      'SYSTEM',
-      'Synthetic vote distribution applied for demonstration verification.'
-    );
+    return { success: true };
   };
 
   // Computed metrics
@@ -506,14 +795,32 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     <ElectionContext.Provider
       value={{
         status,
+        startTime,
+        endTime,
+        durationMinutes,
+        resultsStatus,
+        publishedAt,
+        certifiedAt,
+        publishResults,
+        adminRequest: adminFetch,
+        electionStatus: status,
         setStatus,
-        positions: INITIAL_POSITIONS,
+        setElectionStatus,
+          setElectionDuration,
+        positions,
         candidates,
         voters,
         auditLogs,
         departmentStats,
         currentVoter,
         isAdminLoggedIn,
+        isAdminAuthenticated: isAdminLoggedIn,
+        adminName,
+          adminEmail,
+          commissionMembers,
+          updateCommissionMembers,
+        adminAvatarUrl,
+        updateAdminProfile,
         loginVoter,
         logoutVoter,
         loginAdmin,
@@ -524,11 +831,13 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         rejectVoter,
         castBallot,
         addCandidate,
+        addPosition,
         updateCandidate,
         adjustCandidateVotes,
         deleteCandidate,
+        deletePosition,
+        deleteVoter,
         resetElectionData,
-        simulateVotes,
         totalEligible,
         totalAccredited,
         totalBallotsCast,

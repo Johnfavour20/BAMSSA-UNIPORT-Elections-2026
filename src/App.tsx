@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { ElectionProvider, useElection } from './context/ElectionContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
@@ -8,6 +9,7 @@ import { VotingProcess } from './components/VotingProcess';
 import { IntegritySection } from './components/IntegritySection';
 import { FinalCTA } from './components/FinalCTA';
 import { Footer } from './components/Footer';
+import { OnboardingTour } from './components/OnboardingTour';
 
 import { EligibilityModal } from './components/EligibilityModal';
 import { VoterLoginModal } from './components/VoterLoginModal';
@@ -15,6 +17,7 @@ import { ElecoAdminModal } from './components/ElecoAdminModal';
 
 import { VotingBoothView } from './views/VotingBoothView';
 import { LiveMonitorView } from './views/LiveMonitorView';
+import { ResultsView } from './views/ResultsView';
 import { RegistrationView } from './views/RegistrationView';
 import { AdminPortalView } from './views/AdminPortalView';
 import { GuidelinesView } from './views/GuidelinesView';
@@ -26,13 +29,60 @@ import { VoterDashboardView } from './views/VoterDashboardView';
 import { AccreditationStatusView } from './views/AccreditationStatusView';
 import { AdminLoginView } from './views/AdminLoginView';
 
+const VIEW_TO_PATH: Record<string, string> = {
+  home: '/',
+  elections: '/elections',
+  vote: '/vote',
+  'live-monitor': '/live-monitor',
+  results: '/results',
+  register: '/register',
+  login: '/login',
+  'forgot-password': '/forgot-password',
+  dashboard: '/dashboard',
+  'accreditation-status': '/accreditation-status',
+  eligibility: '/eligibility',
+  'admin-login': '/admin-login',
+  admin: '/admin',
+  guidelines: '/guidelines',
+};
+
+const PATH_TO_VIEW: Record<string, string> = Object.fromEntries(
+  Object.entries(VIEW_TO_PATH).map(([view, path]) => [path, view]),
+);
+
 function ElectionAppContent() {
   const { currentVoter, isAdminAuthenticated, logoutAdmin, loginVoter } = useElection();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const [currentView, setCurrentView] = useState<string>('home');
+  const currentView = PATH_TO_VIEW[location.pathname] ?? 'home';
+  const setCurrentView = (view: string) => {
+    const target = VIEW_TO_PATH[view] ?? '/';
+    navigate(target);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const [showEligibilityModal, setShowEligibilityModal] = useState(false);
   const [showVoterLoginModal, setShowVoterLoginModal] = useState(false);
   const [showElecoAdminModal, setShowElecoAdminModal] = useState(false);
+  const [showOnboardingTour, setShowOnboardingTour] = useState(() => localStorage.getItem('election_onboarding_completed') !== 'true');
+  const [showAdminOnboardingTour, setShowAdminOnboardingTour] = useState(false);
+
+  const closeOnboardingTour = () => {
+    localStorage.setItem('election_onboarding_completed', 'true');
+    setShowOnboardingTour(false);
+  };
+
+  const closeAdminOnboardingTour = () => {
+    localStorage.setItem('election_admin_onboarding_completed', 'true');
+    setShowAdminOnboardingTour(false);
+  };
+
+  React.useEffect(() => {
+    if (isAdminAuthenticated && currentView === 'admin' && localStorage.getItem('election_admin_onboarding_completed') !== 'true') {
+      setShowAdminOnboardingTour(true);
+    }
+  }, [currentView, isAdminAuthenticated]);
 
   const handleStepClick = (stepIndex: number) => {
     if (stepIndex === 1) {
@@ -58,17 +108,15 @@ function ElectionAppContent() {
           currentView={currentView}
           setCurrentView={(view) => {
             setCurrentView(view);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          onOpenEligibilityModal={() => setShowEligibilityModal(true)}
+          onOpenEligibility={() => setShowEligibilityModal(true)}
           onOpenVoterModal={() => setShowVoterLoginModal(true)}
+          onOpenGuide={() => setShowOnboardingTour(true)}
           onOpenElecoModal={() => {
             if (isAdminAuthenticated) {
               setCurrentView('admin');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
               setCurrentView('admin-login');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           }}
         />
@@ -76,250 +124,180 @@ function ElectionAppContent() {
 
       {/* Main View Switcher */}
       <main className="flex-1">
-        {currentView === 'home' && (
-          <div className="space-y-0">
-            {/* Hero Section */}
-            <Hero
-              onCheckEligibility={() => {
-                setCurrentView('eligibility');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              onCastVote={() => {
-                setCurrentView('vote');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              onLiveResults={() => {
-                setCurrentView('live-monitor');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <div className="space-y-0">
+                <Hero
+                  onCheckEligibility={() => setCurrentView('eligibility')}
+                  onViewLiveMonitor={() => setCurrentView('live-monitor')}
+                  onStartVoting={() => setCurrentView('vote')}
+                />
 
-            {/* Real-time Status Strip */}
-            <StatusStrip
-              onOpenLiveMonitor={() => {
-                setCurrentView('live-monitor');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
+                <StatusStrip onOpenLiveMonitor={() => setCurrentView('live-monitor')} />
 
-            {/* About / Mission Section */}
-            <AboutSection />
+                <AboutSection />
+                <VotingProcess onStepClick={handleStepClick} />
+                <IntegritySection />
 
-            {/* How Voting Works 4-Step Grid */}
-            <VotingProcess onStepClick={handleStepClick} />
-
-            {/* Electoral Integrity & Biometric Security Section */}
-            <IntegritySection />
-
-            {/* Final Call to Action */}
-            <FinalCTA
-              onCheckEligibility={() => {
-                setCurrentView('eligibility');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              onViewGuidelines={() => {
-                setCurrentView('guidelines');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
-          </div>
-        )}
-
-        {currentView === 'elections' && (
-          <ElectionDetailsView
-            onCheckEligibility={() => {
-              setCurrentView('eligibility');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onOpenLiveMonitor={() => {
-              setCurrentView('live-monitor');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onOpenVotingBooth={() => {
-              setCurrentView('vote');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateHome={() => {
-              setCurrentView('home');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateResults={() => {
-              setCurrentView('live-monitor');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+                <FinalCTA
+                  onCheckEligibility={() => setCurrentView('eligibility')}
+                  onViewGuidelines={() => setCurrentView('guidelines')}
+                />
+              </div>
+            }
           />
-        )}
 
-        {currentView === 'vote' && (
-          <VotingBoothView
-            onBackToHome={() => {
-              setCurrentView('home');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onOpenLiveMonitor={() => {
-              setCurrentView('live-monitor');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onOpenEligibility={() => setShowEligibilityModal(true)}
+          <Route
+            path="/elections"
+            element={
+              <ElectionDetailsView
+                onCheckEligibility={() => setCurrentView('eligibility')}
+                onOpenLiveMonitor={() => setCurrentView('live-monitor')}
+                onOpenVotingBooth={() => setCurrentView('vote')}
+                onNavigateHome={() => setCurrentView('home')}
+                onNavigateResults={() => setCurrentView('results')}
+              />
+            }
           />
-        )}
 
-        {currentView === 'live-monitor' && (
-          <LiveMonitorView
-            onBackToHome={() => {
-              setCurrentView('home');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onOpenVotingBooth={() => {
-              setCurrentView('vote');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+          <Route
+            path="/results"
+            element={<ResultsView />}
           />
-        )}
 
-        {currentView === 'register' && (
-          <RegistrationView
-            onSuccessNavigateToVote={() => {
-              setCurrentView('vote');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onOpenEligibility={() => {
-              setCurrentView('eligibility');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToLogin={() => {
-              setCurrentView('login');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToAccreditationStatus={() => {
-              setCurrentView('accreditation-status');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+          <Route
+            path="/vote"
+            element={
+              <VotingBoothView
+                onBackToHome={() => setCurrentView('home')}
+                onOpenLiveMonitor={() => setCurrentView('live-monitor')}
+                onOpenEligibility={() => setShowEligibilityModal(true)}
+              />
+            }
           />
-        )}
 
-        {currentView === 'dashboard' && (
-          <VoterDashboardView
-            onNavigateToElections={() => {
-              setCurrentView('elections');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToLiveMonitor={() => {
-              setCurrentView('live-monitor');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToGuidelines={() => {
-              setCurrentView('guidelines');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToVote={() => {
-              setCurrentView('vote');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+          <Route
+            path="/live-monitor"
+            element={
+              <LiveMonitorView
+                onBackToHome={() => setCurrentView('home')}
+                onOpenVotingBooth={() => setCurrentView('vote')}
+              />
+            }
           />
-        )}
 
-        {currentView === 'accreditation-status' && (
-          <AccreditationStatusView
-            onNavigateToDashboard={() => {
-              setCurrentView(currentVoter ? 'dashboard' : 'home');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToElectionDetails={() => {
-              setCurrentView('elections');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+          <Route
+            path="/register"
+            element={
+              <RegistrationView
+                onSuccessNavigateToVote={() => setCurrentView('vote')}
+                onOpenEligibility={() => setCurrentView('eligibility')}
+                onNavigateToLogin={() => setCurrentView('login')}
+                onNavigateToAccreditationStatus={() => setCurrentView('accreditation-status')}
+              />
+            }
           />
-        )}
 
-        {currentView === 'login' && (
-          <VoterLoginView
-            onSuccessNavigateToVote={() => {
-              setCurrentView('dashboard');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToRegister={() => {
-              setCurrentView('register');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToEligibility={() => {
-              setCurrentView('eligibility');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToForgotPassword={() => {
-              setCurrentView('forgot-password');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+          <Route
+            path="/dashboard"
+            element={
+              <VoterDashboardView
+                onNavigateToElections={() => setCurrentView('elections')}
+                onNavigateToLiveMonitor={() => setCurrentView('live-monitor')}
+                onNavigateToGuidelines={() => setCurrentView('guidelines')}
+                onNavigateToVote={() => setCurrentView('vote')}
+              />
+            }
           />
-        )}
 
-        {currentView === 'forgot-password' && (
-          <ForgotPasswordView
-            onNavigateToLogin={() => {
-              setCurrentView('login');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToRegister={() => {
-              setCurrentView('register');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+          <Route
+            path="/accreditation-status"
+            element={
+              <AccreditationStatusView
+                onNavigateToDashboard={() => setCurrentView(currentVoter ? 'dashboard' : 'home')}
+                onNavigateToElectionDetails={() => setCurrentView('elections')}
+              />
+            }
           />
-        )}
 
-        {currentView === 'admin-login' && (
-          <AdminLoginView
-            onSuccess={() => {
-              setCurrentView('admin');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToVoterPortal={() => {
-              setCurrentView('login');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToGuidelines={() => {
-              setCurrentView('guidelines');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+          <Route
+            path="/login"
+            element={
+              <VoterLoginView
+                onSuccessNavigateToVote={() => setCurrentView('dashboard')}
+                onNavigateToRegister={() => setCurrentView('register')}
+                onNavigateToEligibility={() => setCurrentView('eligibility')}
+                onNavigateToForgotPassword={() => setCurrentView('forgot-password')}
+              />
+            }
           />
-        )}
 
-        {currentView === 'admin' && (
-          <AdminPortalView
-            onLogout={() => {
-              logoutAdmin();
-              setCurrentView('home');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+          <Route
+            path="/forgot-password"
+            element={
+              <ForgotPasswordView
+                onNavigateToLogin={() => setCurrentView('login')}
+                onNavigateToRegister={() => setCurrentView('register')}
+              />
+            }
           />
-        )}
 
-        {currentView === 'guidelines' && (
-          <GuidelinesView
-            onOpenVotingBooth={() => {
-              setCurrentView('vote');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onOpenEligibility={() => setShowEligibilityModal(true)}
+          <Route
+            path="/admin-login"
+            element={
+              <AdminLoginView
+                onSuccess={() => setCurrentView('admin')}
+                onNavigateToVoterPortal={() => setCurrentView('login')}
+                onNavigateToGuidelines={() => setCurrentView('guidelines')}
+              />
+            }
           />
-        )}
 
-        {currentView === 'eligibility' && (
-          <EligibilityView
-            onNavigateToLogin={(voter) => {
-              if (voter) {
-                loginVoter(voter.matricNumber, voter.voterPin);
-                setCurrentView('dashboard');
-              } else {
-                setCurrentView('login');
-              }
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            onNavigateToRegister={() => {
-              setCurrentView('register');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+          <Route
+            path="/admin"
+            element={
+              isAdminAuthenticated ? (
+                <AdminPortalView
+                  onLogout={() => {
+                    logoutAdmin();
+                    setCurrentView('home');
+                  }}
+                  onOpenGuide={() => setShowAdminOnboardingTour(true)}
+                />
+              ) : <Navigate to="/admin-login" replace />
+            }
           />
-        )}
+
+          <Route
+            path="/guidelines"
+            element={
+              <GuidelinesView
+                onOpenVotingBooth={() => setCurrentView('vote')}
+                onOpenEligibility={() => setShowEligibilityModal(true)}
+              />
+            }
+          />
+
+          <Route
+            path="/eligibility"
+            element={
+              <EligibilityView
+                onNavigateToLogin={(voter) => {
+                  if (voter) {
+                    setCurrentView('login');
+                  } else {
+                    setCurrentView('login');
+                  }
+                }}
+                onNavigateToRegister={() => setCurrentView('register')}
+              />
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       {/* Universal Footer (Hidden when inside full Admin Console) */}
@@ -327,16 +305,13 @@ function ElectionAppContent() {
         <Footer
           setCurrentView={(view) => {
             setCurrentView(view);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           onOpenEligibility={() => setShowEligibilityModal(true)}
           onOpenElecoModal={() => {
             if (isAdminAuthenticated) {
               setCurrentView('admin');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
               setCurrentView('admin-login');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           }}
           onOpenVoterModal={() => setShowVoterLoginModal(true)}
@@ -348,8 +323,7 @@ function ElectionAppContent() {
         isOpen={showEligibilityModal}
         onClose={() => setShowEligibilityModal(false)}
         onProceedToVote={(voter) => {
-          loginVoter(voter.matricNumber, voter.voterPin);
-          setCurrentView('vote');
+          setCurrentView('login');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
       />
@@ -362,6 +336,19 @@ function ElectionAppContent() {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         onOpenCheckEligibility={() => setShowEligibilityModal(true)}
+      />
+
+      <OnboardingTour
+        isOpen={showOnboardingTour && currentView === 'home'}
+        onClose={closeOnboardingTour}
+        onNavigate={setCurrentView}
+      />
+
+      <OnboardingTour
+        isOpen={showAdminOnboardingTour && currentView === 'admin'}
+        onClose={closeAdminOnboardingTour}
+        onNavigate={setCurrentView}
+        audience="admin"
       />
 
       <ElecoAdminModal

@@ -25,8 +25,9 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
 }) => {
   const { loginAdmin } = useElection();
   
-  const [email, setEmail] = useState('admin@bamssauniport.org');
-  const [password, setPassword] = useState('2026');
+  const [email, setEmail] = useState('');
+  const [adminName, setAdminName] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -37,24 +38,17 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
     setErrorMessage(null);
     setIsLoading(true);
 
-    setTimeout(() => {
-      // Allow passcode 2026 or eleco2026, or if valid admin email with matching password
-      const isSuccess = loginAdmin(password);
-      
+    setTimeout(async () => {
+        const isSuccess = await loginAdmin(password, adminName, email);
+
       if (isSuccess) {
         setIsLoading(false);
         onSuccess();
       } else {
         setIsLoading(false);
-        setErrorMessage('Invalid ELECO credentials. Please enter authorized master PIN (Default: 2026).');
+        setErrorMessage('Invalid ELECO credentials. Please enter the authorized master passcode.');
       }
     }, 400);
-  };
-
-  const handleQuickDemoFill = () => {
-    setEmail('admin@bamssauniport.org');
-    setPassword('2026');
-    setErrorMessage(null);
   };
 
   return (
@@ -80,7 +74,7 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
           {/* Logo */}
           <div className="w-32 h-32 mb-8 bg-white rounded-full p-2 flex items-center justify-center shadow-lg border-4 border-[#0055c2]/40 shrink-0">
             <img 
-              src="https://lh3.googleusercontent.com/aida/AEtjO1VhPzOn-DLx2tFhoVnNUu3pdnFuu5UlBLIOEbrGDabyk7P0N74mYbF5B9T2PZ-5TScMMLewBgDXwPgyH_G-sT321OWCgNZX9V4ZWCF82-rsmo7fEmq7bx41rB_aQproIHSc4iDsLqO3aT8jNOPVJXqftroUNcFspqsHuD1Y4BKiwkSxpGFYIFMNBI4QCjtHb9ZESf0-wTeyI6aJs8Lo7BGOj4EKIl6YqL0A1BqmASAGY6oROXFf7FZTpK4" 
+              src="/assets/nreerety-removebg-preview.png"
               alt="BAMSSA Logo" 
               className="w-full h-full object-cover rounded-full"
             />
@@ -138,19 +132,27 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <span>{errorMessage}</span>
-                <button
-                  type="button"
-                  onClick={handleQuickDemoFill}
-                  className="block mt-1 underline font-bold hover:text-black cursor-pointer"
-                >
-                  Click here to auto-fill default admin passcode (2026)
-                </button>
               </div>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             
+            {/* Email Input */}
+            <div className="mb-4">
+              <label className="text-xs font-bold text-[#131b2e] block uppercase tracking-wider" htmlFor="admin-name">
+                Administrator Name
+              </label>
+              <input
+                id="admin-name"
+                type="text"
+                value={adminName}
+                onChange={(e) => setAdminName(e.target.value)}
+                placeholder="e.g. John C. Doe"
+                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-[#0055c2]"
+              />
+            </div>
+
             {/* Email Input */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-[#131b2e] block uppercase tracking-wider" htmlFor="admin-email">
@@ -176,13 +178,7 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
                 <label className="text-xs font-bold text-[#131b2e] block uppercase tracking-wider" htmlFor="admin-password">
                   Password
                 </label>
-                <button
-                  type="button"
-                  onClick={handleQuickDemoFill}
-                  className="text-xs font-semibold text-[#0055c2] hover:text-[#003f93] transition-colors cursor-pointer"
-                >
-                  Forgot Password?
-                </button>
+                <span className="text-xs font-semibold text-[#737785]">Authorized access only</span>
               </div>
 
               <div className="relative rounded-xl border border-[#c2c6d5] bg-white transition-all duration-200 flex items-center overflow-hidden focus-within:ring-2 focus-within:ring-[#0055c2]/20 focus-within:border-[#0055c2]">
@@ -225,13 +221,7 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
                 </span>
               </label>
 
-              <button
-                type="button"
-                onClick={handleQuickDemoFill}
-                className="text-[11px] font-semibold text-[#0055c2] hover:underline cursor-pointer"
-              >
-                Demo Fill (2026)
-              </button>
+              <span className="text-[11px] font-semibold text-[#737785]">Restricted ELECO access</span>
             </div>
 
             {/* Authorized ELECO Personnel Security Alert */}

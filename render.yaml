@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: bamssa-elections-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 120
+    healthCheckPath: /api/health
+    disk:
+      name: bamssa-election-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: BAMSSA_DB_PATH
+        value: /var/data/election_demo.db
+      - key: BAMSSA_ADMIN_PASSCODE
+        sync: false
+      - key: BAMSSA_ADMIN_NAME
+        value: Administrator
+      - key: BAMSSA_ADMIN_EMAILS
+        sync: false
+      - key: BAMSSA_CORS_ORIGINS
+        sync: false

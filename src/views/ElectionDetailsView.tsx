@@ -39,32 +39,8 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
   const { status, totalEligible, positions, candidates } = useElection();
   const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
 
-  const availablePositionsList = [
-    'President',
-    'Vice President',
-    'General Secretary',
-    'AGS',
-    'Financial Secretary',
-    'Treasurer',
-    'Director of Socials',
-    'Assistant Socials',
-    'Director of Sports',
-    'Assistant Sports',
-    'PRO',
-    'Welfare',
-    'Assistant Welfare',
-    'Provost',
-    'Senate President',
-    'Deputy Senate President',
-  ];
-
-  // Map position names to potential candidates if available
-  const getCandidatesForPosition = (posName: string) => {
-    const matchedPos = positions.find(
-      (p) => p.title.toLowerCase().includes(posName.toLowerCase()) || posName.toLowerCase().includes(p.title.toLowerCase())
-    );
-    if (!matchedPos) return [];
-    return candidates.filter((c) => c.positionId === matchedPos.id);
+  const getCandidatesForPosition = (positionId: string) => {
+    return candidates.filter((candidate) => candidate.positionId === positionId);
   };
 
   const getStatusBadge = () => {
@@ -172,7 +148,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
                 Date
               </p>
               <p className="text-base md:text-lg font-bold text-[#131b2e]">
-                20 August 2026
+                4 September 2026
               </p>
             </div>
             <div>
@@ -180,7 +156,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
                 Voters
               </p>
               <p className="text-base md:text-lg font-bold text-[#131b2e]">
-                {totalEligible > 0 ? totalEligible.toLocaleString() : '2,450'}
+                {totalEligible.toLocaleString()}
               </p>
             </div>
             <div>
@@ -264,26 +240,26 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
               Available Positions
             </h2>
             <span className="text-xs font-semibold text-[#737785]">
-              {availablePositionsList.length} Contestable Offices
+              {positions.length} Contestable Offices
             </span>
           </div>
 
           <div className="flex flex-wrap gap-2.5 sm:gap-3">
-            {availablePositionsList.map((pos) => {
-              const matchingCandidates = getCandidatesForPosition(pos);
-              const isSelected = selectedPosition === pos;
+            {positions.map((position) => {
+              const matchingCandidates = getCandidatesForPosition(position.id);
+              const isSelected = selectedPosition === position.id;
 
               return (
                 <button
-                  key={pos}
-                  onClick={() => setSelectedPosition(isSelected ? null : pos)}
+                  key={position.id}
+                  onClick={() => setSelectedPosition(isSelected ? null : position.id)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer select-none text-left flex items-center gap-1.5 ${
                     isSelected
                       ? 'bg-[#003f93] text-white border border-[#003f93] shadow-xs'
                       : 'bg-[#f2f3ff] border border-[#c2c6d5]/70 text-[#131b2e] hover:border-[#0055c2] hover:bg-[#eaedff]'
                   }`}
                 >
-                  <span>{pos}</span>
+                  <span>{position.title}</span>
                   {matchingCandidates.length > 0 && (
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                       isSelected ? 'bg-white/20 text-white' : 'bg-[#e2e7ff] text-[#003f93]'
@@ -303,7 +279,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
                 <div className="flex items-center gap-2">
                   <Award className="w-5 h-5 text-[#0055c2]" />
                   <h3 className="text-base font-bold text-[#003f93]">
-                    Contest Office: {selectedPosition}
+                    Contest Office: {positions.find((position) => position.id === selectedPosition)?.title}
                   </h3>
                 </div>
                 <button
@@ -319,13 +295,13 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
                   {getCandidatesForPosition(selectedPosition).map((cand) => (
                     <div key={cand.id} className="flex items-center gap-3 p-3 bg-[#faf8ff] rounded-xl border border-[#eaedff]">
                       <img
-                        src={cand.imageUrl}
-                        alt={cand.name}
+                        src={cand.photoUrl}
+                        alt={cand.fullName}
                         className="w-12 h-12 rounded-lg object-cover border border-[#c2c6d5]"
                       />
                       <div>
-                        <h4 className="text-sm font-bold text-[#131b2e]">{cand.name}</h4>
-                        <p className="text-xs text-[#424653]">{cand.department} • {cand.level}L</p>
+                        <h4 className="text-sm font-bold text-[#131b2e]">{cand.fullName}</h4>
+                        <p className="text-xs text-[#424653]">{cand.department} • {cand.level}</p>
                         <p className="text-[11px] text-[#0055c2] italic mt-0.5 font-medium">"{cand.tagline}"</p>
                       </div>
                     </div>
@@ -348,7 +324,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
                 <img
                   alt="BAMSSA Logo"
                   className="h-7 w-7 object-contain rounded-md"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDA9DvvsvOSf0bD4hnzLJ8fOuOc26kxMSibbEFYOiTOnbmnkZF3Niej3JjshkKLJ-nG31Nan0dnDGxNMhYPZOLQRrn9B_gaYDbWTw8FpsC3wl255Zod6WC2bkn3zgtXSKITlrxh6T-GIrnonAw_OkjURVxxWhyLCkFDsWg7UZ6mGoERaI6jiNfBcA_TiLx5rUK7po01U2DGfL4Vuc_ydugilMknknO_p3sOnV1DBvUb2pKXdgWJn8UQ"
+                  src="/assets/nreerety-removebg-preview.png"
                 />
                 <span className="text-xs font-bold text-[#003f93] uppercase tracking-wider">
                   Faculty of Basic Medical Sciences • UNIPORT
@@ -498,7 +474,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
               onClick={onCheckEligibility}
               className="bg-white text-[#003f93] hover:bg-[#f2f3ff] px-8 py-4 rounded-xl text-base font-bold transition-all shadow-sm flex items-center gap-2 relative z-10 active:scale-[0.98] cursor-pointer"
             >
-              <span>Check My Eligibility</span>
+              <span>Live Monitor</span>
               <ArrowRight className="w-5 h-5 text-[#003f93]" />
             </button>
           </div>

@@ -1,12 +1,14 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { ShieldCheck, Award } from 'lucide-react';
+import uniportImage from '../public/uniport images.jpg';
 
 export const AboutSection: React.FC = () => {
   return (
-    <section id="bamssa-about-section" className="border-t border-[#eaedff] bg-[#faf8ff] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-20">
+    <motion.section id="bamssa-about-section" className="border-t border-[#eaedff] bg-[#faf8ff] px-4 py-14 sm:px-6 sm:py-18 lg:px-8 lg:py-20" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: 0.7 }}>
       <div className="container mx-auto max-w-[1280px]">
         <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-12 lg:gap-12">
-          <div className="space-y-5 md:col-span-7">
+          <motion.div className="space-y-5 md:col-span-7" initial={{ opacity: 0, x: -24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.25 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 rounded-full border border-[#c2c6d5] bg-[#eaedff] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#003f93]">
               <ShieldCheck className="h-3.5 w-3.5 text-[#0055c2]" />
               <span>ELECO Mandate &amp; Mission</span>
@@ -47,22 +49,22 @@ export const AboutSection: React.FC = () => {
                 <div className="text-[11px] text-[#737785]">Decoupled Identity</div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="relative h-full min-h-[340px] overflow-hidden rounded-[20px] border border-[#c2c6d5] shadow-[0_18px_40px_rgba(15,23,42,0.08)] md:col-span-5 lg:min-h-[440px]">
+          <motion.div className="relative h-full min-h-[340px] overflow-hidden rounded-[20px] border border-[#c2c6d5] shadow-[0_18px_40px_rgba(15,23,42,0.08)] md:col-span-5 lg:min-h-[440px]" initial={{ opacity: 0, x: 24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.25 }} transition={{ duration: 0.7, delay: 0.12 }}>
             <div
               className="h-full min-h-[340px] w-full bg-cover bg-center transition-transform duration-700 hover:scale-[1.03] lg:min-h-[440px]"
               style={{
-                backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuBDqWjbTRbT11NQAiv_2-4oKlX7Xq4a0uEIGw8dzs69UwndLiPsWUM_C6xlg3XcU5u0IRgsjCbpaqKTeBavwCgr2WpunkEn_gkxsoUyhVtsFsvP1RupsXuQ6YbMe7BUkwZxXK4T5o2bopODM6rUbTM_et7fZoSutwPT-Nlpksqr6KgE2gLq08GUrRNUOKcQJ0HIaqqJcIBMT4-mEtN-B9Jh9XzdSM5GrrrNKUflVRgvmbsqHz33X1RA')`
+                backgroundImage: `url('${uniportImage}')`
               }}
             ></div>
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#131b2e]/95 via-[#131b2e]/60 to-transparent p-4 text-white sm:p-5">
               <p className="text-xs font-bold text-white/95">Basic Medical Science Students, Faculty of Basic Medical Sciences</p>
-              <p className="mt-0.5 text-[11px] text-white/75">University of Port Harcourt, Choba Campus</p>
+              <p className="mt-0.5 text-[11px] text-white/75">University of Port Harcourt, Abuja Campus</p>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

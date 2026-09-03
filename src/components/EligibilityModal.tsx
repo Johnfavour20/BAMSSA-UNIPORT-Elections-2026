@@ -14,12 +14,11 @@ export const EligibilityModal: React.FC<EligibilityModalProps> = ({
   onClose,
   onProceedToVote,
 }) => {
-  const { checkEligibility, accreditVoter, voters } = useElection();
+  const { checkEligibility } = useElection();
   const [matricInput, setMatricInput] = useState('');
   const [searchedVoter, setSearchedVoter] = useState<Voter | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [copiedPin, setCopiedPin] = useState(false);
-  const [accrediting, setAccrediting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -32,26 +31,6 @@ export const EligibilityModal: React.FC<EligibilityModalProps> = ({
     setSearchedVoter(result);
     setHasSearched(true);
     setMessage(null);
-  };
-
-  const handleQuickPreset = (matric: string) => {
-    setMatricInput(matric);
-    const result = checkEligibility(matric);
-    setSearchedVoter(result);
-    setHasSearched(true);
-    setMessage(null);
-  };
-
-  const handleAccreditNow = () => {
-    if (!searchedVoter) return;
-    setAccrediting(true);
-    const res = accreditVoter(searchedVoter.matricNumber);
-    setAccrediting(false);
-    if (res.success) {
-      const refreshed = checkEligibility(searchedVoter.matricNumber);
-      setSearchedVoter(refreshed);
-      setMessage(res.message);
-    }
   };
 
   const copyVoterPin = (pin: string) => {
@@ -91,44 +70,6 @@ export const EligibilityModal: React.FC<EligibilityModalProps> = ({
 
         {/* Content */}
         <div className="p-6 overflow-y-auto space-y-6">
-          {/* Quick presets for demo */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#424653] uppercase tracking-wider flex items-center gap-1.5">
-                <UserCheck className="w-3.5 h-3.5 text-[#0055c2]" />
-                Demo Test Accounts (Quick Click)
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickPreset('U2022/5570012')}
-                className="text-left p-2.5 bg-[#f2f3ff] hover:bg-[#eaedff] border border-[#c2c6d5] rounded-lg text-xs transition-colors"
-              >
-                <div className="font-bold text-[#003f93]">U2022/5570012</div>
-                <div className="text-[11px] text-[#424653]">Accredited (Ready to Vote)</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickPreset('U2023/5582099')}
-                className="text-left p-2.5 bg-[#f2f3ff] hover:bg-[#eaedff] border border-[#c2c6d5] rounded-lg text-xs transition-colors"
-              >
-                <div className="font-bold text-[#003f93]">U2023/5582099</div>
-                <div className="text-[11px] text-[#d97706] font-medium">Needs Accreditation</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickPreset('U2021/5568045')}
-                className="text-left p-2.5 bg-[#f2f3ff] hover:bg-[#eaedff] border border-[#c2c6d5] rounded-lg text-xs transition-colors"
-              >
-                <div className="font-bold text-[#003f93]">U2021/5568045</div>
-                <div className="text-[11px] text-[#15803d]">Ballot Already Cast</div>
-              </button>
-            </div>
-          </div>
-
           {/* Search Form */}
           <form onSubmit={handleSearch} className="space-y-2">
             <label className="block text-xs font-bold text-[#131b2e] uppercase tracking-wider">
@@ -230,19 +171,9 @@ export const EligibilityModal: React.FC<EligibilityModalProps> = ({
                     ) : (
                       <div>
                         <p className="text-xs text-[#424653] font-medium">
-                          You are cleared on the voter roll. Click below to generate your secure voting passcode.
+                          Your record is awaiting ELECO accreditation. Your voting PIN will be issued after approval.
                         </p>
                       </div>
-                    )}
-
-                    {!searchedVoter.isAccredited && (
-                      <button
-                        onClick={handleAccreditNow}
-                        disabled={accrediting}
-                        className="w-full sm:w-auto bg-[#0055c2] hover:bg-[#003f93] text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer"
-                      >
-                        {accrediting ? 'Generating PIN...' : 'Accredit Now'}
-                      </button>
                     )}
                   </div>
 

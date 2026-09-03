@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useElection } from '../context/ElectionContext';
 
 interface StatusStripProps {
   onOpenAdminPrompt?: () => void;
+  onOpenLiveMonitor?: () => void;
 }
 
 const AnimatedNumber = ({
@@ -57,14 +59,18 @@ const AnimatedNumber = ({
 export const StatusStrip: React.FC<StatusStripProps> = () => {
   const { totalEligible, totalBallotsCast, turnoutPercentage } = useElection();
 
-  const eligibleTarget = totalEligible > 0 ? totalEligible : 2450;
-  const ballotsTarget = totalBallotsCast > 0 ? totalBallotsCast : 1005;
-  const turnoutTarget = turnoutPercentage > 0 ? turnoutPercentage : 41;
+  const eligibleTarget = totalEligible;
+  const ballotsTarget = totalBallotsCast;
+  const turnoutTarget = turnoutPercentage;
 
   return (
-    <section 
+    <motion.section
       id="bamssa-status-strip" 
       className="border-y border-[#d2d9f4] bg-[radial-gradient(circle_at_top,_#f4f8ff,_#edf4fc_50%,_#edf3ff)] px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6 }}
     >
       <div className="container mx-auto max-w-[1280px]">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
@@ -97,7 +103,7 @@ export const StatusStrip: React.FC<StatusStripProps> = () => {
 
           <div className="rounded-2xl border border-[#c2c6d5]/70 bg-white px-5 py-7 text-center shadow-[0_12px_22px_rgba(15,23,42,0.04)] transition-colors hover:border-[#0055c2]/40 sm:px-6">
             <div className="mb-3 text-2xl font-bold leading-none tracking-[-0.04em] text-[#003f93] sm:text-3xl md:text-[32px]">
-              20 Aug, 2026
+              4 Sept, 2026
             </div>
             <div className="text-sm font-medium text-[#424653] md:text-base">
               Election Day
@@ -105,7 +111,7 @@ export const StatusStrip: React.FC<StatusStripProps> = () => {
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };
 

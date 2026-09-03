@@ -1,4 +1,5 @@
 export type ElectionStatus = 'STANDBY' | 'ACCREDITATION_OPEN' | 'LIVE' | 'CLOSED' | 'CERTIFIED';
+export type ResultsStatus = 'DRAFT' | 'PUBLISHED' | 'CERTIFIED';
 
 export type BMSDepartment = 
   | 'Human Anatomy'
@@ -22,7 +23,7 @@ export interface Voter {
   isEligible: boolean;
   isAccredited: boolean;
   hasVoted: boolean;
-  voterPin: string; // 4-digit biometric PIN
+  voterPin: string; // 4-digit voter PIN
   accreditationTime?: string;
   votedTime?: string;
   ballotReceiptHash?: string;
@@ -60,6 +61,13 @@ export interface ElectionPosition {
   description: string;
   order: number;
   maxSelections: number;
+}
+
+export interface CommissionMember {
+  id: string;
+  initials: string;
+  name: string;
+  role: string;
 }
 
 export interface AuditLog {

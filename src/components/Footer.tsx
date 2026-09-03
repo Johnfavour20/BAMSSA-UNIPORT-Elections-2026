@@ -25,7 +25,7 @@ export const Footer: React.FC<FooterProps> = ({
               <img
                 alt="BAMSSA Logo"
                 className="h-11 w-11 object-contain rounded-md"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDA9DvvsvOSf0bD4hnzLJ8fOuOc26kxMSibbEFYOiTOnbmnkZF3Niej3JjshkKLJ-nG31Nan0dnDGxNMhYPZOLQRrn9B_gaYDbWTw8FpsC3wl255Zod6WC2bkn3zgtXSKITlrxh6T-GIrnonAw_OkjURVxxWhyLCkFDsWg7UZ6mGoERaI6jiNfBcA_TiLx5rUK7po01U2DGfL4Vuc_ydugilMknknO_p3sOnV1DBvUb2pKXdgWJn8UQ"
+                src="/assets/nreerety-removebg-preview.png"
               />
               <div>
                 <h2 className="text-xl font-bold text-[#003f93] leading-none">BAMSSA UNIPORT</h2>

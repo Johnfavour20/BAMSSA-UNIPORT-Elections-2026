@@ -15,7 +15,7 @@ export const VoterLoginModal: React.FC<VoterLoginModalProps> = ({
   onSuccess,
   onOpenCheckEligibility,
 }) => {
-  const { loginVoter, checkEligibility } = useElection();
+  const { loginVoter } = useElection();
   const [matricNumber, setMatricNumber] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +23,7 @@ export const VoterLoginModal: React.FC<VoterLoginModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -38,21 +38,9 @@ export const VoterLoginModal: React.FC<VoterLoginModalProps> = ({
     }
 
     setLoading(true);
-    const res = loginVoter(matricNumber, pin);
+    const res = await loginVoter(matricNumber, pin);
     setLoading(false);
 
-    if (res.success) {
-      onSuccess();
-      onClose();
-    } else {
-      setError(res.message);
-    }
-  };
-
-  const handleQuickLogin = (matric: string, userPin: string) => {
-    setMatricNumber(matric);
-    setPin(userPin);
-    const res = loginVoter(matric, userPin);
     if (res.success) {
       onSuccess();
       onClose();
@@ -92,33 +80,6 @@ export const VoterLoginModal: React.FC<VoterLoginModalProps> = ({
 
         {/* Content */}
         <div className="p-4 sm:p-6 space-y-4">
-          {/* Quick Click Demo Voter Accounts */}
-          <div>
-            <div className="text-[10px] sm:text-xs font-bold text-[#424653] uppercase tracking-wider mb-2 flex items-center gap-1">
-              <UserCheck className="w-3 h-3 text-[#0055c2]" />
-              <span>Quick Test Accounts</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('U2022/5570012', '4829')}
-                className="text-left p-2.5 bg-[#faf8ff] hover:bg-[#eaedff] border border-slate-200 rounded-lg text-xs transition-colors cursor-pointer"
-              >
-                <div className="font-bold text-[#003f93]">Chidera Anyanwu</div>
-                <div className="text-[11px] text-[#424653] font-mono">PIN: 4829 (Ready)</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('U2021/5569103', '8215')}
-                className="text-left p-2.5 bg-[#faf8ff] hover:bg-[#eaedff] border border-slate-200 rounded-lg text-xs transition-colors cursor-pointer"
-              >
-                <div className="font-bold text-[#003f93]">Emeka Nwankwo</div>
-                <div className="text-[11px] text-[#424653] font-mono">PIN: 8215 (Ready)</div>
-              </button>
-            </div>
-          </div>
-
           {error && (
             <div className="p-2.5 sm:p-3 bg-[#fee2e2] border border-[#fca5a5] text-[#991b1b] text-xs font-medium rounded-lg flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />

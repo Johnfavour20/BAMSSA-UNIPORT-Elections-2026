@@ -32,15 +32,6 @@ export const ElecoAdminModal: React.FC<ElecoAdminModalProps> = ({
     }
   };
 
-  const handleQuickDemoAccess = () => {
-    setPasscode('2026');
-    const success = loginAdmin('2026');
-    if (success) {
-      onSuccess();
-      onClose();
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div 
@@ -76,9 +67,6 @@ export const ElecoAdminModal: React.FC<ElecoAdminModalProps> = ({
             <Key className="w-4 h-4 text-[#003f93] shrink-0 mt-0.5" />
             <div className="text-xs text-[#131b2e]">
               <span className="font-bold">Electoral Officer Passcode:</span> Enter your authorized clearance PIN.
-              <div className="mt-1 text-[11px] text-[#424653]">
-                Default Master PIN: <code className="bg-white border border-slate-200 px-1.5 py-0.5 rounded font-mono font-bold text-[#003f93]">2026</code>
-              </div>
             </div>
           </div>
 
@@ -105,24 +93,13 @@ export const ElecoAdminModal: React.FC<ElecoAdminModalProps> = ({
               />
             </div>
 
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                className="flex-1 bg-[#003f93] hover:bg-[#001944] text-white font-semibold py-2.5 rounded-lg transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-98"
-              >
-                <Lock className="w-4 h-4" />
-                <span>Authorize Login</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleQuickDemoAccess}
-                className="px-3.5 py-2.5 bg-[#eaedff] hover:bg-[#dae2fd] text-[#003f93] font-bold text-xs rounded-lg transition-colors cursor-pointer"
-                title="Quick Access Demo"
-              >
-                Demo Fill
-              </button>
-            </div>
+            <button
+              type="submit"
+              className="w-full bg-[#003f93] hover:bg-[#001944] text-white font-semibold py-2.5 rounded-lg transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-98"
+            >
+              <Lock className="w-4 h-4" />
+              <span>Authorize Login</span>
+            </button>
           </form>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useElection } from '../context/ElectionContext';
 import { CheckCircle2, BarChart2, ShieldCheck, GraduationCap, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -9,17 +9,17 @@ interface HeroProps {
   onStartVoting: () => void;
 }
 
-const HERO_IMAGES = [
+const HERO_VIDEOS = [
   {
-    url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD35Vfpx5kND5j0XlDU8T6g7FWdebvNYyZ-sjjQm_GPDOCreRb6fim29YHk_nrvnTpAkkWdcNDnYpPB5i9cttuWSCuiR_JT4Mw1h53-22FyvSJvJM_qZ8vlrIQ9xA8o4K8ALST9HE4-G6xt-GiT4qaNWM1tE2AGLrqshFIegW_KonGnFTiEqzrTiMhFTKvnQeJF9_DuDnN4CnOVHNhjMg4J5PlDNR6CRT5ZIfcBFOMirgTyPUuzLffc',
+    url: '/assets/hero/hero-1.mp4',
     caption: 'Faculty of Basic Medical Sciences Complex, UNIPORT'
   },
   {
-    url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBC6Hl86_K2w-7Y1R5o3y3Z0X1o9p4qL_5JjE7fD9xR6Q_2M_1a8b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8b9c0d1e2f3g4h5i6j7k8l9m0n1o2p3q4r5s6t7u8v9w0x1y2z3',
+    url: '/assets/hero/hero-2.mp4',
     caption: 'BAMSSA Student Assembly & Congress'
   },
   {
-    url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1920&q=80',
+    url: '/assets/hero/hero-3.mp4',
     caption: 'University of Port Harcourt College of Health Sciences'
   }
 ];
@@ -29,16 +29,41 @@ export const Hero: React.FC<HeroProps> = ({
   onViewLiveMonitor,
   onStartVoting,
 }) => {
-  const { status, currentVoter } = useElection();
+  const { status, endTime, currentVoter } = useElection();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [clockNow, setClockNow] = useState(Date.now());
+  const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
 
-  // Auto transition carousel every 6 seconds
+  // Auto transition carousel every 11 seconds
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 6000);
+      setCurrentImageIndex((prev) => (prev + 1) % HERO_VIDEOS.length);
+    }, 11000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    videoRefs.current.forEach((video, index) => {
+      if (!video) return;
+
+      if (index === currentImageIndex) {
+        void video.play().catch(() => undefined);
+      } else {
+        video.pause();
+        video.currentTime = 0;
+      }
+    });
+  }, [currentImageIndex]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setClockNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const remainingSeconds = status === 'LIVE' && endTime
+    ? Math.max(0, Math.floor((new Date(endTime).getTime() - clockNow) / 1000))
+    : 0;
+  const remainingTime = `${String(Math.floor(remainingSeconds / 3600)).padStart(2, '0')}:${String(Math.floor((remainingSeconds % 3600) / 60)).padStart(2, '0')}:${String(remainingSeconds % 60).padStart(2, '0')}`;
 
   return (
     <motion.section
@@ -58,22 +83,33 @@ export const Hero: React.FC<HeroProps> = ({
           transition={{ duration: 0.8 }}
         />
 
-        {HERO_IMAGES.map((img, idx) => (
+        {HERO_VIDEOS.map((video, idx) => (
           <motion.div
             key={idx}
             className={`absolute inset-0 bg-cover bg-center scale-105 ${
               idx === currentImageIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
-            style={{
-              backgroundImage: `url('${img.url}')`,
-            }}
             initial={{ scale: 1.08, opacity: 0 }}
             animate={{
               opacity: idx === currentImageIndex ? 1 : 0,
               scale: 1.08,
             }}
             transition={{ duration: 1.1, ease: 'easeInOut' }}
-          />
+          >
+            <video
+              className="h-full w-full object-cover"
+              src={video.url}
+              ref={(element) => {
+                videoRefs.current[idx] = element;
+              }}
+              autoPlay={idx === currentImageIndex}
+              muted
+              loop
+              playsInline
+              preload={idx === currentImageIndex ? 'auto' : 'metadata'}
+              aria-label={video.caption}
+            />
+          </motion.div>
         ))}
       </div>
 
@@ -136,13 +172,13 @@ export const Hero: React.FC<HeroProps> = ({
           ) : (
             <motion.button
               id="hero-check-eligibility-btn"
-              onClick={onCheckEligibility}
+              onClick={onViewLiveMonitor}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563eb] px-5 py-2.75 text-sm font-semibold text-white shadow-lg shadow-[#003f93]/25 transition-all hover:bg-[#003f93] active:scale-[0.99] sm:w-auto"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>Check My Eligibility</span>
+              <span>Check Eligibility</span>
             </motion.button>
           )}
 
@@ -165,7 +201,7 @@ export const Hero: React.FC<HeroProps> = ({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.55 }}
         >
-          {HERO_IMAGES.map((_, idx) => (
+          {HERO_VIDEOS.map((_, idx) => (
             <motion.button
               key={idx}
               onClick={() => setCurrentImageIndex(idx)}
@@ -185,6 +221,7 @@ export const Hero: React.FC<HeroProps> = ({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.6 }}
         >
+          {status === 'LIVE' && <div className="flex items-center gap-1.5"><span>Time left</span><strong className="font-mono text-white">{remainingTime}</strong></div>}
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-[#8ab0fe]" />
             <span>Zero-Compromise Ballot Secrecy</span>

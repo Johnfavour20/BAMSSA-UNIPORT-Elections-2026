@@ -15,15 +15,15 @@ export const VoterLoginView: React.FC<VoterLoginViewProps> = ({
   onNavigateToEligibility,
   onNavigateToForgotPassword,
 }) => {
-  const { loginVoter, electionStatus } = useElection();
+  const { loginVoter, status } = useElection();
 
-  const [identifier, setIdentifier] = useState('U2021/5530001');
-  const [password, setPassword] = useState('4021');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -38,7 +38,7 @@ export const VoterLoginView: React.FC<VoterLoginViewProps> = ({
     }
 
     setIsLoading(true);
-    const res = loginVoter(identifier, password);
+    const res = await loginVoter(identifier, password);
     setIsLoading(false);
 
     if (res.success) {
@@ -65,7 +65,7 @@ export const VoterLoginView: React.FC<VoterLoginViewProps> = ({
               <img
                 alt="BAMSSA Logo"
                 className="w-full h-full object-cover"
-                src="https://lh3.googleusercontent.com/aida/AEtjO1VhPzOn-DLx2tFhoVnNUu3pdnFuu5UlBLIOEbrGDabyk7P0N74mYbF5B9T2PZ-5TScMMLewBgDXwPgyH_G-sT321OWCgNZX9V4ZWCF82-rsmo7fEmq7bx41rB_aQproIHSc4iDsLqO3aT8jNOPVJXqftroUNcFspqsHuD1Y4BKiwkSxpGFYIFMNBI4QCjtHb9ZESf0-wTeyI6aJs8Lo7BGOj4EKIl6YqL0A1BqmASAGY6oROXFf7FZTpK4"
+                src="/assets/nreerety-removebg-preview.png"
               />
             </div>
             <span className="inline-flex items-center rounded-full bg-[#eaedff] px-3 py-0.5 text-[11px] font-bold text-[#001944] mb-1.5 uppercase tracking-wider">
@@ -81,36 +81,13 @@ export const VoterLoginView: React.FC<VoterLoginViewProps> = ({
             <Info className="w-4 h-4 sm:w-5 sm:h-5 text-[#003f93] mt-0.5 shrink-0" />
             <div>
               <h3 className="text-xs font-bold text-[#131b2e] uppercase tracking-wider mb-0.5">
-                {electionStatus === 'STANDBY' ? 'Standby Status' : 'Elections Active'}
+                {status === 'STANDBY' ? 'Standby Status' : 'Elections Active'}
               </h3>
               <p className="text-xs text-[#424653] leading-relaxed">
-                {electionStatus === 'STANDBY' 
+                {status === 'STANDBY'
                   ? 'Voting has not officially commenced. Log in to verify your accreditation status and credentials.'
                   : 'Voting is active. Log in with your matriculation credentials to access your secure ballot.'}
               </p>
-            </div>
-          </div>
-
-          {/* Quick Demo Fill Buttons */}
-          <div className="w-full mb-4 bg-[#faf8ff] border border-slate-200/70 rounded-lg p-2.5">
-            <p className="text-[10px] sm:text-[11px] font-bold text-[#737785] uppercase tracking-wider mb-1.5 flex items-center gap-1">
-              <UserCheck className="w-3.5 h-3.5 text-[#0055c2]" /> Quick Sample Accounts
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleQuickFill('U2021/5530001', '4021')}
-                className="text-xs px-2.5 py-1 bg-white hover:bg-[#eaedff] border border-slate-200 rounded-md text-[#003f93] font-medium transition-colors cursor-pointer"
-              >
-                John Doe (U2021/5530001)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('U2022/5570012', '4829')}
-                className="text-xs px-2.5 py-1 bg-white hover:bg-[#eaedff] border border-slate-200 rounded-md text-[#003f93] font-medium transition-colors cursor-pointer"
-              >
-                Chidera (U2022/5570012)
-              </button>
             </div>
           </div>
 

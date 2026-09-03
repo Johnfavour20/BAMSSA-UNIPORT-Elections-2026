@@ -1,6 +1,6 @@
 import React from 'react';
 import { Candidate, ElectionPosition } from '../types';
-import { Award, BookOpen, GraduationCap, CheckCircle2, X, Users } from 'lucide-react';
+import { Award, BookOpen, CheckCircle2, X, Users } from 'lucide-react';
 
 interface CandidateDetailModalProps {
   candidate: Candidate | null;
@@ -52,10 +52,6 @@ export const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
               <p className="text-sm text-[#8ab0fe] font-medium">
                 Dept. of {candidate.department} • {candidate.level}
               </p>
-              <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-white/80 bg-white/10 px-2.5 py-1 rounded-md">
-                <GraduationCap className="w-3.5 h-3.5 text-[#8ab0fe]" />
-                <span>Academic Standing: {candidate.cgpaRange}</span>
-              </div>
             </div>
           </div>
         </div>

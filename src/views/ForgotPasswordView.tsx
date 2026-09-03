@@ -48,7 +48,7 @@ export const ForgotPasswordView: React.FC<ForgotPasswordViewProps> = ({
             <img
               className="w-full h-full object-contain p-1"
               alt="BAMSSA Medical Emblem"
-              src="https://lh3.googleusercontent.com/aida/AEtjO1VhPzOn-DLx2tFhoVnNUu3pdnFuu5UlBLIOEbrGDabyk7P0N74mYbF5B9T2PZ-5TScMMLewBgDXwPgyH_G-sT321OWCgNZX9V4ZWCF82-rsmo7fEmq7bx41rB_aQproIHSc4iDsLqO3aT8jNOPVJXqftroUNcFspqsHuD1Y4BKiwkSxpGFYIFMNBI4QCjtHb9ZESf0-wTeyI6aJs8Lo7BGOj4EKIl6YqL0A1BqmASAGY6oROXFf7FZTpK4"
+              src="/assets/nreerety-removebg-preview.png"
             />
           </div>
           

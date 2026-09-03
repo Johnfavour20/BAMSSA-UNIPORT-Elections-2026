@@ -18,7 +18,8 @@ import {
   UserCheck,
   IdCard,
   FileText,
-  X
+  X,
+  Clock
 } from 'lucide-react';
 
 interface RegistrationViewProps {
@@ -54,6 +55,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Result state
+  const [registrationSubmitted, setRegistrationSubmitted] = useState(false);
   const [registeredPin, setRegisteredPin] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedPin, setCopiedPin] = useState(false);
@@ -61,6 +63,14 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        setErrorMessage('Please upload a JPG, PNG, or WebP image of your Student ID or Course Form.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMessage('The uploaded document must be 5 MB or smaller.');
+        return;
+      }
       setSelectedFile(file);
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -77,6 +87,14 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        setErrorMessage('Please upload a JPG, PNG, or WebP image of your Student ID or Course Form.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMessage('The uploaded document must be 5 MB or smaller.');
+        return;
+      }
       setSelectedFile(file);
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -97,7 +115,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
     setIsDragging(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -111,26 +129,41 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
       return;
     }
 
+    if (!selectedFile || !filePreview) {
+      setErrorMessage('Please upload a clear photo of your UNIPORT Student ID or recent Course Form.');
+      return;
+    }
+
     const trimmedMatric = matricNumber.trim().toUpperCase();
     const existing = checkEligibility(trimmedMatric);
     if (existing) {
       if (existing.isAccredited) {
         setErrorMessage(`Matriculation ${trimmedMatric} is already registered & accredited with PIN: ${existing.voterPin}`);
         setRegisteredPin(existing.voterPin);
+        setRegistrationSubmitted(true);
+        return;
+      }
+      if (existing.verificationStatus === 'pending') {
+        setErrorMessage(`Matriculation ${trimmedMatric} is already submitted and awaiting ELECO approval.`);
+        setRegistrationSubmitted(true);
         return;
       }
     }
 
-    const created = registerVoter({
+    const created = await registerVoter({
       fullName: fullName.trim(),
       matricNumber: trimmedMatric,
       department,
       level,
       email: email.trim() || `${trimmedMatric.toLowerCase().replace('/', '')}@uniport.edu.ng`,
       phone: '+234 800 000 0000',
+      idCardUrl: filePreview,
     });
 
-    setRegisteredPin(created.voterPin);
+    if (created) {
+      setRegistrationSubmitted(true);
+      setRegisteredPin(null);
+    }
   };
 
   const copyPin = (pin: string) => {
@@ -156,58 +189,60 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
         </div>
 
         {/* Success Confirmation Card */}
-        {registeredPin ? (
-          <div className="bg-white border-2 border-[#86efac] rounded-3xl p-6 sm:p-10 shadow-lg text-center max-w-2xl mx-auto space-y-6 animate-in fade-in">
-            <div className="w-16 h-16 rounded-full bg-[#dcfce7] text-[#15803d] flex items-center justify-center mx-auto shadow-inner">
-              <CheckCircle2 className="w-10 h-10" />
+        {registrationSubmitted ? (
+          <div className="bg-white border-2 border-[#fde68a] rounded-3xl p-6 sm:p-10 shadow-lg text-center max-w-2xl mx-auto space-y-6 animate-in fade-in">
+            <div className="w-16 h-16 rounded-full bg-[#fef3c7] text-[#b45309] flex items-center justify-center mx-auto shadow-inner">
+              <Clock className="w-10 h-10" />
             </div>
 
             <div>
-              <span className="bg-[#dcfce7] text-[#15803d] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                Accreditation Approved
+              <span className="bg-[#fef3c7] text-[#b45309] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                Awaiting Admin Review
               </span>
               <h2 className="text-2xl sm:text-3xl font-bold text-[#131b2e] mt-3 tracking-tight">
-                You are Ready to Vote!
+                Registration Submitted Successfully
               </h2>
               <p className="text-sm text-[#424653] mt-1.5 max-w-md mx-auto">
-                Your matriculation number has been cleared and accredited on the official BAMSSA 2026 voter roll.
+                Your details have been received. ELECO must approve your eligibility before your student PIN is generated and you can log in to vote.
               </p>
             </div>
 
-            {/* Generated PIN Display */}
-            <div className="bg-[#f2f3ff] border border-[#c2c6d5] p-6 rounded-2xl space-y-2.5 max-w-md mx-auto">
-              <span className="text-xs font-bold text-[#737785] uppercase tracking-wider block">
-                Your 4-Digit Biometric Voter PIN
-              </span>
-              <div className="text-4xl font-extrabold text-[#003f93] tracking-[0.3em] flex items-center justify-center gap-3">
-                <span>{registeredPin}</span>
-                <button
-                  onClick={() => copyPin(registeredPin)}
-                  className="text-xs p-2 bg-white border border-[#c2c6d5] hover:bg-[#eaedff] text-[#0055c2] rounded-xl transition-colors shadow-2xs cursor-pointer"
-                  title="Copy PIN"
-                >
-                  {copiedPin ? <Check className="w-4 h-4 text-[#15803d]" /> : <Copy className="w-4 h-4" />}
-                </button>
+            {registeredPin && (
+              <div className="bg-[#f2f3ff] border border-[#c2c6d5] p-6 rounded-2xl space-y-2.5 max-w-md mx-auto">
+                <span className="text-xs font-bold text-[#737785] uppercase tracking-wider block">
+                  Your 4-Digit Voter PIN
+                </span>
+                <div className="text-4xl font-extrabold text-[#003f93] tracking-[0.3em] flex items-center justify-center gap-3">
+                  <span>{registeredPin}</span>
+                  <button
+                    onClick={() => copyPin(registeredPin)}
+                    className="text-xs p-2 bg-white border border-[#c2c6d5] hover:bg-[#eaedff] text-[#0055c2] rounded-xl transition-colors shadow-2xs cursor-pointer"
+                    title="Copy PIN"
+                  >
+                    {copiedPin ? <Check className="w-4 h-4 text-[#15803d]" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-[#ba1a1a] font-medium">
+                  Keep this PIN confidential. You will need it to cast your ballot in the booth.
+                </p>
               </div>
-              <p className="text-xs text-[#ba1a1a] font-medium">
-                Keep this PIN confidential. You will need it to cast your ballot in the booth.
-              </p>
-            </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2 max-w-md mx-auto">
-              <button
-                onClick={onSuccessNavigateToVote}
-                className="flex-1 bg-[#003f93] hover:bg-[#002f70] text-white font-bold py-3.5 px-5 rounded-xl text-sm sm:text-base transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Cast Ballot</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
               {onNavigateToAccreditationStatus && (
                 <button
                   onClick={onNavigateToAccreditationStatus}
                   className="flex-1 bg-white border border-[#c2c6d5] hover:bg-[#eaedff] text-[#003f93] font-bold py-3.5 px-5 rounded-xl text-sm sm:text-base transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>View Status</span>
+                  <span>Check Status</span>
+                </button>
+              )}
+              {onOpenEligibility && (
+                <button
+                  onClick={onOpenEligibility}
+                  className="flex-1 bg-[#003f93] hover:bg-[#002f70] text-white font-bold py-3.5 px-5 rounded-xl text-sm sm:text-base transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Eligibility Page</span>
                 </button>
               )}
             </div>
@@ -273,6 +308,25 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
                         required
                         className="w-full h-12 px-4 rounded-xl border border-[#c2c6d5] focus:border-[#003f93] focus:ring-2 focus:ring-[#003f93]/10 transition-all text-sm text-[#131b2e] bg-[#faf8ff] placeholder:text-[#737785]"
                       />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label htmlFor="registration_department" className="text-xs font-bold text-[#424653] uppercase tracking-wider block">
+                        Department
+                      </label>
+                      <select
+                        id="registration_department"
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value as BMSDepartment)}
+                        required
+                        className="w-full h-12 px-4 rounded-xl border border-[#c2c6d5] focus:border-[#003f93] focus:ring-2 focus:ring-[#003f93]/10 transition-all text-sm text-[#131b2e] bg-[#faf8ff]"
+                      >
+                        <option value="Human Anatomy">Human Anatomy</option>
+                        <option value="Human Physiology">Human Physiology</option>
+                        <option value="Pharmacology">Pharmacology</option>
+                        <option value="Medical Biochemistry">Medical Biochemistry</option>
+                        <option value="Medicine & Surgery">Medicine &amp; Surgery</option>
+                      </select>
                     </div>
                   </div>
                 </section>
@@ -383,7 +437,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileChange}
-                    accept="image/png, image/jpeg, application/pdf"
+                    accept="image/png, image/jpeg, image/webp"
                     className="hidden"
                   />
 
@@ -425,7 +479,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
                           Click to upload or drag and drop
                         </h3>
                         <p className="text-xs text-[#737785]">
-                          PNG, JPG or PDF (Max. 5MB)
+                          PNG, JPG or WebP (Max. 5MB)
                         </p>
                       </>
                     )}
@@ -436,7 +490,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
                     <div>
                       <h4 className="text-sm font-bold text-[#131b2e] mb-0.5">Secure Verification</h4>
                       <p className="text-xs text-[#424653] leading-relaxed">
-                        Your documents are encrypted and only used for electoral accreditation.
+                        Your document is used by ELECO for electoral accreditation review.
                       </p>
                     </div>
                   </div>

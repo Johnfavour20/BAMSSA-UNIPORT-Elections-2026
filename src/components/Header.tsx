@@ -8,6 +8,7 @@ interface HeaderProps {
   onOpenEligibility: () => void;
   onOpenElecoModal: () => void;
   onOpenVoterModal: () => void;
+  onOpenGuide: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenEligibility,
   onOpenElecoModal,
   onOpenVoterModal,
+  onOpenGuide,
 }) => {
   const { currentVoter, logoutVoter, isAdminLoggedIn, logoutAdmin } = useElection();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -25,7 +27,8 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'elections', label: 'Elections', action: () => setCurrentView('elections') },
     { id: 'eligibility', label: 'Eligibility', action: () => setCurrentView('eligibility') },
     { id: 'live-monitor', label: 'Live Monitor', action: () => setCurrentView('live-monitor') },
-    { id: 'results', label: 'Results', action: () => setCurrentView('live-monitor') },
+    { id: 'results', label: 'Results', action: () => setCurrentView('results') },
+    { id: 'guide', label: 'Guide', action: onOpenGuide },
     { 
       id: 'about', 
       label: 'About', 
@@ -61,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({
           <img
             alt="BAMSSA Logo"
             className="h-9 w-9 rounded-lg object-contain ring-2 ring-[#dfe7ff] sm:h-10 sm:w-10"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDA9DvvsvOSf0bD4hnzLJ8fOuOc26kxMSibbEFYOiTOnbmnkZF3Niej3JjshkKLJ-nG31Nan0dnDGxNMhYPZOLQRrn9B_gaYDbWTw8FpsC3wl255Zod6WC2bkn3zgtXSKITlrxh6T-GIrnonAw_OkjURVxxWhyLCkFDsWg7UZ6mGoERaI6jiNfBcA_TiLx5rUK7po01U2DGfL4Vuc_ydugilMknknO_p3sOnV1DBvUb2pKXdgWJn8UQ"
+            src="/assets/nreerety-removebg-preview.png"
           />
           <span className="truncate text-sm font-extrabold tracking-[-0.02em] text-[#003f93] sm:text-base lg:text-lg">
             BAMSSA ELECTIONS
@@ -124,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
                     className="h-full w-full object-cover"
                     src={
                       currentVoter.avatarUrl ||
-                      'https://lh3.googleusercontent.com/aida-public/AB6AXuDWlMIrte2-MY7oXEDW1oStZ78EmWlv4m3sSYLK3jxk6iviAh2APlIjBtH6qRbIpEZuT48yc96koIrkawgTaEmX4tiYmwYAE1WFNKaPiAmfJlEQ9_QZhqehvPio0EWIPvVU6wpj7NW74lSnOieXvHoj4ngQ8y-kwhUZyHs5XAVoLHIY8-8YRw0w5zo3nZcknPHLHndesYlIWEIbhAkh9jcbjgXiTvEtCkKcmt7bZ7kLtalKhKgajSBR'
+                      'https://lh3.googleusercontent.com/aida-public/AB6AXuDWlMIrte2-MY7oXEDW1oStZ78EmWlv4m3sSYLK3jxk6iviAh2APlIjBtH6qRbIpEZuT48yc96koIrkawgTaEmX4tiYmwYAE1WFNKaPiAmfJlEQ9_QZhqehvPio0EWIPvVU6wpj7NW74lSnOieXvHoj4ngQ8y-kwhUZyHs5XAVoLHIY8-8YRw0w5zo3nZcknPHLHndesYlIWEIbhAkh9jcbjgXiTvEtCkKmt7bZ7kLtalKhKgajSBR'
                     }
                   />
                 </div>

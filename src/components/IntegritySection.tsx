@@ -1,16 +1,17 @@
 import React from 'react';
 import { ShieldCheck, UserCheck, Eye, Scale, Lock, Key } from 'lucide-react';
+import electoosImage from '../public/electoos.jpg';
 
 export const IntegritySection: React.FC = () => {
   const pillars = [
     {
       title: 'Secure Voting',
-      desc: 'End-to-end encryption ensures your vote is confidential and tamper-proof.',
+      desc: 'A controlled voting process keeps ballot choices confidential and supports accountable election administration.',
       icon: ShieldCheck,
     },
     {
       title: 'Accredited Voters',
-      desc: 'Strict biometric and academic record validation prevents fraudulent participation.',
+      desc: 'Academic record and eligibility checks help ensure that only approved students participate.',
       icon: UserCheck,
     },
     {
@@ -28,16 +29,16 @@ export const IntegritySection: React.FC = () => {
   return (
     <section id="bamssa-integrity-section" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-[#faf8ff]">
       <div className="container mx-auto max-w-[1280px] grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
-        {/* Left Column Image (Biometrics / Tablet) */}
+        {/* Left Column Image */}
         <div className="order-2 md:order-1 rounded-[12px] overflow-hidden border border-[#c2c6d5] shadow-xs h-full min-h-[380px] lg:min-h-[440px] relative group">
           <div
             className="w-full h-full min-h-[380px] bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
             style={{
-              backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCoqahoMPSqooLEo0BJiQk56embbinOL8-sSrdaoFLyRDkz_MDowmP61jo_-3Rbty5Pz6tsp_aTfp06Cy5dnwNlIINqrXuY7g7_U9BsY2qFgP1o6HFXUgXCA-1D8HEaATYMR0a7XvnnkF4EXmADd4gueOvS6iISgzb7_dtgGvq7P2H-7iMk45JuHCKYJqNLu3aQyXvNjnvgVdMRIewcXjihEtUjJKPd_MYSFK0kzkM-vdWDue9UFob')`
+              backgroundImage: `url('${electoosImage}')`
             }}
           ></div>
 
-          {/* Secure Biometric Badge Overlay */}
+          {/* Secure verification badge overlay */}
           <div className="absolute top-4 right-4 bg-[#131b2e]/85 backdrop-blur-md border border-white/20 text-white px-3.5 py-1.5 rounded-none text-xs font-semibold flex items-center gap-2">
             <Lock className="w-3.5 h-3.5 text-[#8ab0fe]" />
             <span>Secure Voter Verification</span>

@@ -12,8 +12,7 @@ import {
   ArrowRight, 
   ArrowLeft, 
   Info, 
-  Printer, 
-  QrCode, 
+  Printer,
   RefreshCw,
   FileCheck,
   UserCheck,
@@ -80,10 +79,10 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
     }
   }, [currentVoter]);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
-    const res = loginVoter(matricInput, pinInput);
+    const res = await loginVoter(matricInput, pinInput);
     if (!res.success) {
       setAuthError(res.message);
     }
@@ -124,25 +123,23 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
     }
   };
 
-  const handleSubmitBallot = () => {
+  const handleSubmitBallot = async () => {
     setSubmitting(true);
-    setTimeout(() => {
-      const res = castBallot(selectedVotes);
-      setSubmitting(false);
-      if (res.success) {
-        setReceiptHash(res.receiptHash);
-        setSubmissionTime(new Date().toISOString());
-        setBoothStep('RECEIPT');
-        
-        // Trigger celebratory confetti
-        confetti({
-          particleCount: 120,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#0055c2', '#2563eb', '#8ab0fe', '#15803d', '#f59e0b']
-        });
-      }
-    }, 600);
+    const res = await castBallot(selectedVotes);
+    setSubmitting(false);
+    if (res.success) {
+      setReceiptHash(res.receiptHash);
+      setSubmissionTime(new Date().toISOString());
+      setBoothStep('RECEIPT');
+      confetti({
+        particleCount: 120,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#0055c2', '#2563eb', '#8ab0fe', '#15803d', '#f59e0b']
+      });
+    } else {
+      setAuthError(res.message);
+    }
   };
 
   const handlePrintReceipt = () => {
@@ -227,36 +224,14 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
 
               <button
                 type="submit"
-                className="w-full bg-[#0055c2] hover:bg-[#003f93] text-white font-semibold py-3.5 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-98 text-sm"
+                className="w-full bg-[#0055c2] hover:bg-[#003f93] border border-[#BFDBFE] text-white font-semibold py-3.5 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-98 text-sm"
               >
                 <Lock className="w-4 h-4" />
                 <span>Verify Credentials &amp; Unlock Ballot</span>
               </button>
             </form>
 
-            {/* Quick Demo Pre-fill */}
-            <div className="border-t border-[#eaedff] pt-4">
-              <span className="text-[11px] font-bold text-[#737785] uppercase tracking-wider block mb-2">
-                Quick Test Voter Login
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setMatricInput('U2022/5570012');
-                  setPinInput('4829');
-                  loginVoter('U2022/5570012', '4829');
-                }}
-                className="w-full text-left p-3 bg-[#f2f3ff] hover:bg-[#eaedff] border border-[#c2c6d5] rounded-xl transition-colors flex items-center justify-between text-xs cursor-pointer"
-              >
-                <div>
-                  <div className="font-bold text-[#003f93]">Chidera Somtochukwu Anyanwu</div>
-                  <div className="text-[#424653]">Matric: U2022/5570012 (PIN: 4829)</div>
-                </div>
-                <span className="bg-[#0055c2] text-white text-[10px] font-bold px-2 py-1 rounded-md">
-                  One-Click Test
-                </span>
-              </button>
-            </div>
+
           </div>
 
           <div className="bg-[#f2f3ff] border-t border-[#c2c6d5] px-6 py-3 text-center text-xs text-[#737785]">
@@ -279,10 +254,10 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <span className="bg-[#dcfce7] text-[#15803d] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-2">
-              Official Digital Ballot Stamped
+              Official Ballot Receipt
             </span>
             <h2 className="text-2xl font-bold text-white tracking-tight">
-              BAMSSA 2026 Verified Vote Receipt
+              BAMSSA 2026 Ballot Receipt
             </h2>
             <p className="text-xs text-white/80 mt-1">
               Basic Medical Science Students' Association • University of Port Harcourt
@@ -296,10 +271,10 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
               <ShieldCheck className="w-5 h-5 text-[#0055c2] shrink-0 mt-0.5" />
               <div className="text-xs text-[#131b2e] leading-relaxed">
                 <p className="font-bold text-sm text-[#003f93] mb-0.5">
-                  1-Student-1-Ballot Confirmed &amp; Securely Recorded
+                  1-Student-1-Ballot Confirmed &amp; Recorded
                 </p>
                 <p className="text-[#424653]">
-                  Your ballot has been securely aggregated into the live ELECO vote ledger. In accordance with Article IV of the BAMSSA Electoral Guidelines, ballot choices are permanently decoupled from voter identities.
+                  Your ballot has been accepted into the live ELECO tally record. In accordance with Article IV of the BAMSSA Electoral Guidelines, ballot choices are decoupled from voter identities in the official result process.
                 </p>
               </div>
             </div>
@@ -321,26 +296,25 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
                     timeStyle: 'medium',
                   })}
                 </span>
-                <span className="text-[#15803d] font-semibold block mt-1">Status: Authenticated &amp; Recorded</span>
+                <span className="text-[#15803d] font-semibold block mt-1">Status: Recorded in Election Log</span>
               </div>
             </div>
 
-            {/* Digital Verification Box */}
-            <div className="p-4 bg-[#131b2e] text-white rounded-xl space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#8ab0fe] uppercase tracking-wider flex items-center gap-1.5">
-                  <QrCode className="w-4 h-4" />
-                  Official Ballot Verification Code
+            {/* Official Receipt Reference */}
+            <div className="p-4 bg-[#f2f3ff] border border-[#c2c6d5] rounded-xl">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold text-[#003f93] uppercase tracking-wider">
+                  Official Receipt Reference
                 </span>
-                <span className="bg-white/10 text-white text-[10px] font-mono px-2 py-0.5 rounded">
-                  Verified
+                <span className="bg-[#dcfce7] text-[#15803d] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Recorded
                 </span>
               </div>
-              <div className="font-mono text-xs sm:text-sm text-[#8ab0fe] break-all bg-black/40 p-3 rounded-lg border border-white/10 select-all">
+              <div className="mt-2 font-mono text-sm sm:text-base text-[#003f93] break-all bg-white p-3 rounded-lg border border-[#c2c6d5] select-all">
                 {receiptHash}
               </div>
-              <p className="text-[11px] text-white/60">
-                Retain this digital verification code for your personal voter confirmation records.
+              <p className="mt-2 text-[11px] text-[#424653]">
+                Keep this reference for your personal confirmation record.
               </p>
             </div>
 
@@ -714,7 +688,7 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
                     VOTING IS LIVE
                   </span>
                 </h1>
-                <p className="text-sm text-[#424653]">20 August 2026</p>
+                <p className="text-sm text-[#424653]">4 September 2026</p>
               </div>
 
               {/* Progress Bar Header */}

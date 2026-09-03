@@ -145,7 +145,7 @@ export const VoterDashboardView: React.FC<VoterDashboardViewProps> = ({
                   </p>
                   <p className="text-base sm:text-lg text-[#131b2e] font-medium flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-[#737785]" />
-                    20 Aug 2026
+                    4 Sept 2026
                   </p>
                 </div>
                 <div>
@@ -374,7 +374,6 @@ export const VoterDashboardView: React.FC<VoterDashboardViewProps> = ({
                 <ChevronRight className="w-4 h-4 text-[#737785] group-hover:translate-x-0.5 transition-transform" />
               </button>
 
-              {/* Live Monitor Link */}
               <button
                 onClick={onNavigateToLiveMonitor}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-[#f8fafc] hover:border-[#003f93]/30 transition-all group cursor-pointer text-left"
@@ -385,6 +384,21 @@ export const VoterDashboardView: React.FC<VoterDashboardViewProps> = ({
                   </div>
                   <span className="text-xs sm:text-sm font-semibold text-[#131b2e]">
                     Live Monitor
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#737785] group-hover:translate-x-0.5 transition-transform" />
+              </button>
+
+              <button
+                onClick={() => window.location.assign('/results')}
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-[#f8fafc] hover:border-[#003f93]/30 transition-all group cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-[#F1F5F9] flex items-center justify-center text-[#003f93] group-hover:bg-white group-hover:shadow-2xs transition-colors">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-semibold text-[#131b2e]">
+                    Final Results
                   </span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-[#737785] group-hover:translate-x-0.5 transition-transform" />

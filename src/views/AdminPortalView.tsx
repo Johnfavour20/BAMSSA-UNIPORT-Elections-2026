@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import { useElection } from '../context/ElectionContext';
-import { ElectionStatus, BMSDepartment, AcademicLevel, Candidate, Voter } from '../types';
+import { ElectionStatus, BMSDepartment, AcademicLevel, Candidate, ElectionPosition, Voter } from '../types';
 import { 
   ShieldCheck, 
   Settings, 
@@ -58,6 +59,7 @@ import {
 
 interface AdminPortalViewProps {
   onLogout: () => void;
+  onOpenGuide: () => void;
 }
 
 type AdminTab = 
@@ -72,10 +74,22 @@ type AdminTab =
   | 'audit'
   | 'settings';
 
-export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) => {
+export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOpenGuide }) => {
   const {
     status,
+    adminName,
+    adminEmail,
+    adminAvatarUrl,
+    updateAdminProfile,
+    commissionMembers,
+    updateCommissionMembers,
+    endTime,
+    durationMinutes,
+    resultsStatus,
+    publishResults,
+    adminRequest,
     setElectionStatus,
+    setElectionDuration,
     voters,
     candidates,
     positions,
@@ -85,23 +99,73 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
     totalBallotsCast,
     turnoutPercentage,
     addCandidate,
+    addPosition,
     registerVoter,
     accreditVoter,
     rejectVoter,
     adjustCandidateVotes,
+    deleteVoter,
+    deletePosition,
+    deleteCandidate,
     resetElectionData,
-    simulateVotes,
   } = useElection();
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
   const [activeTab, setActiveTab] = useState<AdminTab>('verification');
   const [voterSearch, setVoterSearch] = useState('');
   const [voterDeptFilter, setVoterDeptFilter] = useState<string>('ALL');
   const [showAddVoter, setShowAddVoter] = useState(false);
   const [showAddCandidate, setShowAddCandidate] = useState(false);
+  const [showAddPosition, setShowAddPosition] = useState(false);
+  const [newPositionTitle, setNewPositionTitle] = useState('');
+  const [newPositionDescription, setNewPositionDescription] = useState('');
+  const [newPositionMaxSelections, setNewPositionMaxSelections] = useState(1);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [resultSearch, setResultSearch] = useState('');
   const [resultPositionFilter, setResultPositionFilter] = useState('ALL');
+  const [profileName, setProfileName] = useState(adminName);
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(adminAvatarUrl);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [editableCommissionMembers, setEditableCommissionMembers] = useState(commissionMembers);
+  const [savingCommissionMembers, setSavingCommissionMembers] = useState(false);
+
+  useEffect(() => {
+    setProfileName(adminName);
+    setProfileAvatar(adminAvatarUrl);
+    setIsEditingProfile(false);
+  }, [adminName, adminAvatarUrl]);
+
+  useEffect(() => {
+    setEditableCommissionMembers(commissionMembers);
+  }, [commissionMembers]);
+
+  const handleProfileImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      showToast('Choose a JPG, PNG, or WebP image under 2 MB.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setProfileAvatar(typeof reader.result === 'string' ? reader.result : null);
+    reader.readAsDataURL(file);
+  };
+
+  const saveProfile = async () => {
+    setSavingProfile(true);
+    const result = await updateAdminProfile(profileName, profileAvatar);
+    setSavingProfile(false);
+    showToast(result.success ? 'Administrator profile updated.' : result.message || 'Unable to update profile.', result.success ? 'success' : 'error');
+  };
+
+  const saveCommissionMembers = async () => {
+    setSavingCommissionMembers(true);
+    const result = await updateCommissionMembers(editableCommissionMembers);
+    setSavingCommissionMembers(false);
+    showToast(result.success ? 'Electoral Commission roster updated.' : result.message || 'Unable to update roster.', result.success ? 'success' : 'error');
+  };
 
   // Voter Verification Specific State
   const [verifActiveTab, setVerifActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
@@ -128,22 +192,59 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
 
   // Settings State
   const [adminReviewCompleted, setAdminReviewCompleted] = useState(false);
-  const [isSimulating, setIsSimulating] = useState(false);
-
   // New Candidate Form State
   const [newCandName, setNewCandName] = useState('');
-  const [newCandPosId, setNewCandPosId] = useState(positions[0]?.id || 'pres');
+  const [newCandPosId, setNewCandPosId] = useState('');
   const [newCandDept, setNewCandDept] = useState<BMSDepartment>('Human Anatomy');
   const [newCandLevel, setNewCandLevel] = useState<AcademicLevel>('400L');
   const [newCandTagline, setNewCandTagline] = useState('');
   const [newCandPhoto, setNewCandPhoto] = useState('');
   const [newCandManifesto, setNewCandManifesto] = useState('');
 
+  useEffect(() => {
+    if (positions.length > 0 && !positions.some((position) => position.id === newCandPosId)) {
+      setNewCandPosId(positions[0].id);
+    }
+  }, [positions, newCandPosId]);
+
   // New Voter Form State
   const [newVoterName, setNewVoterName] = useState('');
   const [newVoterMatric, setNewVoterMatric] = useState('');
   const [newVoterDept, setNewVoterDept] = useState<BMSDepartment>('Human Anatomy');
   const [newVoterLevel, setNewVoterLevel] = useState<AcademicLevel>('300L');
+  const [newVoterIdCard, setNewVoterIdCard] = useState('');
+  const [isCreatingVoter, setIsCreatingVoter] = useState(false);
+  const [liveAuditLogs, setLiveAuditLogs] = useState(auditLogs);
+  const [auditSearch, setAuditSearch] = useState('');
+  const [auditDateFilter, setAuditDateFilter] = useState('Any Date');
+  const [auditAdminFilter, setAuditAdminFilter] = useState('All Admins');
+  const [auditActionFilter, setAuditActionFilter] = useState('All Actions');
+  const [auditSeverityFilter, setAuditSeverityFilter] = useState('All Severities');
+
+  const auditSeverity = (category: string) => category === 'SECURITY' ? 'Critical' : category === 'SYSTEM' ? 'Warning' : 'Information';
+
+  // Certification state
+  const [certificationData, setCertificationData] = useState<any>(null);
+  const [certifyConfirmCheckbox, setCertifyConfirmCheckbox] = useState(false);
+  const [isCertifying, setIsCertifying] = useState(false);
+  const [certificationLoading, setCertificationLoading] = useState(false);
+  const [showImportResults, setShowImportResults] = useState(false);
+  const [showManualResults, setShowManualResults] = useState(false);
+  const [importRows, setImportRows] = useState<Array<{ position: string; candidate: string; votes: number | null; error?: string }>>([]);
+  const [importFileName, setImportFileName] = useState('');
+  const [manualPositionId, setManualPositionId] = useState(positions[0]?.id || '');
+  const [manualVotes, setManualVotes] = useState<Record<string, string>>({});
+  const [clockNow, setClockNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setClockNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const remainingSeconds = status === 'LIVE' && endTime
+    ? Math.max(0, Math.floor((new Date(endTime).getTime() - clockNow) / 1000))
+    : 0;
+  const remainingTime = `${String(Math.floor(remainingSeconds / 3600)).padStart(2, '0')}:${String(Math.floor((remainingSeconds % 3600) / 60)).padStart(2, '0')}:${String(remainingSeconds % 60).padStart(2, '0')}`;
 
   // Stats calculation
   const approvedVotersCount = voters.filter(v => v.isAccredited && v.verificationStatus !== 'rejected').length;
@@ -151,16 +252,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
   const rejectedVotersCount = voters.filter(v => v.verificationStatus === 'rejected').length;
   const totalSubmissionsCount = voters.length;
 
-  // Display benchmark counts if dynamic list is smaller
-  const displayPendingCount = Math.max(128, pendingVotersCount);
-  const displayApprovedCount = Math.max(1042, approvedVotersCount);
-  const displayRejectedCount = Math.max(36, rejectedVotersCount);
-  const displayTotalCount = displayPendingCount + displayApprovedCount + displayRejectedCount;
-  const totalRegisteredCount = displayTotalCount;
+  const displayPendingCount = pendingVotersCount;
+  const displayApprovedCount = approvedVotersCount;
+  const displayRejectedCount = rejectedVotersCount;
+  const displayTotalCount = totalSubmissionsCount;
+  const totalRegisteredCount = totalSubmissionsCount;
 
-  const approvedPct = totalSubmissionsCount > 0 ? Math.round((approvedVotersCount / totalSubmissionsCount) * 100) : 86;
-  const pendingPct = totalSubmissionsCount > 0 ? Math.round((pendingVotersCount / totalSubmissionsCount) * 100) : 11;
-  const rejectedPct = Math.max(0, 100 - approvedPct - pendingPct);
+  const approvedPct = totalSubmissionsCount > 0 ? Math.round((approvedVotersCount / totalSubmissionsCount) * 100) : 0;
+  const pendingPct = totalSubmissionsCount > 0 ? Math.round((pendingVotersCount / totalSubmissionsCount) * 100) : 0;
+  const rejectedPct = totalSubmissionsCount > 0 ? Math.max(0, 100 - approvedPct - pendingPct) : 0;
 
   const getInitials = (name: string) => {
     const parts = name.trim().split(/\s+/);
@@ -177,8 +277,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
     }, 4000);
   };
 
-  const handleApproveVoter = (voter: Voter) => {
-    const res = accreditVoter(voter.matricNumber);
+  const handleApproveVoter = async (voter: Voter) => {
+    const res = await accreditVoter(voter.matricNumber);
     if (res.success) {
       showToast(`Accreditation approved for ${voter.fullName}. Official 4-digit voting PIN issued.`, 'success');
       setSelectedReviewVoter((prev) => prev ? { ...prev, isAccredited: true, verificationStatus: 'approved', voterPin: res.pin || '4021' } : null);
@@ -187,14 +287,119 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
     }
   };
 
-  const handleRejectVoter = (voter: Voter) => {
-    const res = rejectVoter(voter.matricNumber, rejectionReasonInput);
+  const handleRejectVoter = async (voter: Voter) => {
+    const res = await rejectVoter(voter.matricNumber, rejectionReasonInput);
     if (res.success) {
       showToast(`Accreditation submission for ${voter.fullName} has been rejected.`, 'info');
       setShowRejectionModal(false);
       setSelectedReviewVoter((prev) => prev ? { ...prev, isAccredited: false, verificationStatus: 'rejected', rejectionReason: rejectionReasonInput } : null);
     }
   };
+
+  const handleDeleteVoter = async (voter: Voter) => {
+    if (!window.confirm(`Delete voter ${voter.fullName}? This removes the voter from the registry.`)) return;
+    const result = await deleteVoter(voter.id);
+    showToast(result.success ? `Voter ${voter.fullName} deleted.` : result.message || 'Unable to delete voter.', result.success ? 'success' : 'error');
+  };
+
+  const handleDeletePosition = async (position: ElectionPosition) => {
+    if (!window.confirm(`Delete position ${position.title}? Positions with candidates cannot be deleted.`)) return;
+    const result = await deletePosition(position.id);
+    showToast(result.success ? `Position ${position.title} deleted.` : result.message || 'Unable to delete position.', result.success ? 'success' : 'error');
+  };
+
+  const handleDeleteCandidate = async (candidate: Candidate) => {
+    if (!window.confirm(`Delete candidate ${candidate.fullName}? This action cannot be undone.`)) return;
+    const result = await deleteCandidate(candidate.id);
+    showToast(result.success ? `Candidate ${candidate.fullName} deleted.` : result.message || 'Unable to delete candidate.', result.success ? 'success' : 'error');
+  };
+
+  // Certification handlers
+  const fetchCertificationData = async () => {
+    setCertificationLoading(true);
+    try {
+      const response = await adminRequest(`${API_BASE}/admin/certification-readiness`);
+      if (response.ok) {
+        const data = await response.json();
+        setCertificationData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching certification data:', error);
+    }
+    setCertificationLoading(false);
+  };
+
+  const handleReviewPosition = async (positionId: string) => {
+    try {
+      const response = await adminRequest(`${API_BASE}/admin/review-position`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ positionId })
+      });
+      if (response.ok) {
+        showToast(`Position reviewed successfully.`, 'success');
+        await fetchCertificationData();
+      }
+    } catch (error) {
+      console.error('Error reviewing position:', error);
+      showToast('Error reviewing position.', 'error');
+    }
+  };
+
+  const handleCertifyElection = async () => {
+    if (!certifyConfirmCheckbox) return;
+    setIsCertifying(true);
+    try {
+      const response = await adminRequest(`${API_BASE}/admin/approve-results`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (response.ok) {
+        showToast('Election certified successfully. Results now published.', 'success');
+        setElectionStatus('CERTIFIED');
+        await fetchCertificationData();
+        setCertifyConfirmCheckbox(false);
+      } else {
+        showToast('Error certifying election.', 'error');
+      }
+    } catch (error) {
+      console.error('Error certifying election:', error);
+      showToast('Error certifying election.', 'error');
+    }
+    setIsCertifying(false);
+  };
+
+  // Fetch certification data when tab changes
+  useEffect(() => {
+    if (activeTab !== 'certification') return;
+    fetchCertificationData();
+    const interval = window.setInterval(fetchCertificationData, 5000);
+    return () => window.clearInterval(interval);
+  }, [activeTab]);
+
+  const filteredAuditLogs = liveAuditLogs.filter((log) => {
+    const query = auditSearch.trim().toLowerCase();
+    const matchesSearch = !query || [log.id, log.actor, log.action, log.category, log.details || ''].some((value) => value.toLowerCase().includes(query));
+    const matchesAdmin = auditAdminFilter === 'All Admins' || log.actor === auditAdminFilter;
+    const matchesAction = auditActionFilter === 'All Actions' || log.action === auditActionFilter;
+    const matchesSeverity = auditSeverityFilter === 'All Severities' || auditSeverity(log.category) === auditSeverityFilter;
+    const timestamp = new Date(log.timestamp).getTime();
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const matchesDate = auditDateFilter === 'Any Date'
+      || (auditDateFilter === 'Today' && timestamp >= startOfToday)
+      || (auditDateFilter === 'Last 7 Days' && timestamp >= Date.now() - 7 * 24 * 60 * 60 * 1000);
+    return matchesSearch && matchesAdmin && matchesAction && matchesSeverity && matchesDate;
+  });
+
+  const auditAdmins = Array.from(new Set(liveAuditLogs.map((log) => log.actor)));
+  const auditActions = Array.from(new Set(liveAuditLogs.map((log) => log.action)));
+  const readinessStatus = certificationData?.status || status;
+  const totalCertificationPositions = certificationData?.totalPositions || 0;
+  const reviewedCertificationPositions = certificationData?.reviewedPositions || 0;
+  const allPositionsReviewed = totalCertificationPositions > 0 && reviewedCertificationPositions === totalCertificationPositions;
+  const electionClosedForCertification = readinessStatus === 'CLOSED' || readinessStatus === 'CERTIFIED';
+  const certificationUnlocked = electionClosedForCertification && allPositionsReviewed && certifyConfirmCheckbox && readinessStatus !== 'CERTIFIED';
 
   // Filtered Verification Table List
   const filteredVerificationVoters = voters.filter((v) => {
@@ -262,11 +467,111 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
     setElectionStatus(newStatus);
   };
 
-  const handleCreateCandidate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCandName.trim()) return;
+  const handleResultsFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('The results file must be 10 MB or smaller.', 'error');
+      return;
+    }
+    try {
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
+      const parsed = rows.map((row) => {
+        const position = String(row.Position || row.position || '').trim();
+        const candidate = String(row.Candidate || row.candidate || '').trim();
+        const rawVotes = row.Votes ?? row.votes;
+        const votes = rawVotes === '' || rawVotes === undefined ? null : Number(rawVotes);
+        const positionExists = positions.some((item) => item.title.toLowerCase() === position.toLowerCase());
+        const candidateExists = candidates.some((item) => item.fullName.toLowerCase() === candidate.toLowerCase() && positions.find((positionItem) => positionItem.id === item.positionId)?.title.toLowerCase() === position.toLowerCase());
+        let error = !positionExists ? 'Position does not exist.' : !candidateExists ? 'Candidate does not belong to this position.' : votes === null || !Number.isInteger(votes) || votes < 0 ? 'Vote count must be a non-negative whole number.' : undefined;
+        return { position, candidate, votes: Number.isNaN(votes as number) ? null : votes, error };
+      });
+      setImportFileName(file.name);
+      setImportRows(parsed);
+      setShowImportResults(true);
+    } catch {
+      showToast('Unable to read this results file.', 'error');
+    }
+    event.target.value = '';
+  };
 
-    addCandidate({
+  const commitImportedResults = async () => {
+    if (!importRows.length || importRows.some((row) => row.error)) return;
+    for (const row of importRows) {
+      const position = positions.find((item) => item.title.toLowerCase() === row.position.toLowerCase());
+      const candidate = candidates.find((item) => item.fullName.toLowerCase() === row.candidate.toLowerCase() && item.positionId === position?.id);
+      if (candidate && row.votes !== null) await adjustCandidateVotes(candidate.id, row.votes - candidate.votesCount);
+    }
+    setShowImportResults(false);
+    showToast('Valid results imported successfully.', 'success');
+  };
+
+  const openManualResults = () => {
+    const position = positions.find((item) => item.id === manualPositionId) || positions[0];
+    if (position) {
+      setManualPositionId(position.id);
+      setManualVotes(Object.fromEntries(candidates.filter((candidate) => candidate.positionId === position.id).map((candidate) => [candidate.id, String(candidate.votesCount)])));
+    }
+    setShowManualResults(true);
+  };
+
+  const saveManualResults = async () => {
+    for (const candidate of candidates.filter((item) => item.positionId === manualPositionId)) {
+      const nextValue = Math.max(0, Number(manualVotes[candidate.id] || 0));
+      await adjustCandidateVotes(candidate.id, nextValue - candidate.votesCount);
+    }
+    setShowManualResults(false);
+    showToast('Position results saved successfully.', 'success');
+  };
+
+  const handlePublishResults = async () => {
+    const result = await publishResults();
+    showToast(result.success ? 'Results are now visible to students.' : result.message || 'Unable to publish results.', result.success ? 'success' : 'error');
+  };
+
+  const handleCreatePosition = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPositionTitle.trim()) return;
+
+    await addPosition({
+      title: newPositionTitle.trim(),
+      description: newPositionDescription.trim() || 'New contested office for the BAMSSA election.',
+      maxSelections: Number(newPositionMaxSelections) || 1,
+    });
+
+    setNewPositionTitle('');
+    setNewPositionDescription('');
+    setNewPositionMaxSelections(1);
+    setShowAddPosition(false);
+  };
+
+  const handleCandidatePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file for the candidate photo.', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      setNewCandPhoto(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCreateCandidate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCandName.trim() || !newCandPosId) {
+      showToast('Enter a candidate name and choose a valid position.', 'error');
+      return;
+    }
+
+    await addCandidate({
       fullName: newCandName,
       positionId: newCandPosId,
       department: newCandDept,
@@ -282,29 +587,54 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
     setNewCandPhoto('');
     setNewCandManifesto('');
     setShowAddCandidate(false);
+    showToast(`${newCandName} was added to ${positions.find((position) => position.id === newCandPosId)?.title || 'the selected position'}.`, 'success');
   };
 
-  const handleCreateVoter = (e: React.FormEvent) => {
+  const handleCreateVoter = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newVoterName.trim() || !newVoterMatric.trim()) return;
+    if (!newVoterName.trim() || !newVoterMatric.trim() || !newVoterIdCard) {
+      showToast('Enter the voter details and upload a student ID or course form.', 'error');
+      return;
+    }
 
-    registerVoter({
+    setIsCreatingVoter(true);
+    const voter = await registerVoter({
       fullName: newVoterName,
       matricNumber: newVoterMatric,
       department: newVoterDept,
       level: newVoterLevel,
       email: `${newVoterMatric.toLowerCase().replace('/', '')}@uniport.edu.ng`,
       phone: '+234 800 000 0000',
+      idCardUrl: newVoterIdCard,
     });
+    setIsCreatingVoter(false);
+    if (!voter) {
+      showToast('Voter registration was rejected by the backend.', 'error');
+      return;
+    }
 
     setNewVoterName('');
     setNewVoterMatric('');
+    setNewVoterIdCard('');
     setShowAddVoter(false);
+    showToast(`${newVoterName} was enrolled and is awaiting approval.`, 'success');
+  };
+
+  const handleVoterIdCard = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      showToast('Choose a JPG, PNG, or WebP image under 5 MB.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setNewVoterIdCard(typeof reader.result === 'string' ? reader.result : '');
+    reader.readAsDataURL(file);
   };
 
   const exportAuditCSV = () => {
     const headers = 'ID,Timestamp,Actor,Action,Category,ReceiptHash,Details\n';
-    const rows = auditLogs
+    const rows = liveAuditLogs
       .map(
         (l) =>
           `"${l.id}","${l.timestamp}","${l.actor}","${l.action}","${l.category}","${l.encryptedHash}","${l.details || ''}"`
@@ -318,11 +648,42 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
     a.click();
   };
 
-  const handleSimulateVotes = () => {
-    setIsSimulating(true);
-    simulateVotes(25);
-    setTimeout(() => setIsSimulating(false), 500);
-  };
+  useEffect(() => {
+    setLiveAuditLogs(auditLogs);
+  }, [auditLogs]);
+
+  useEffect(() => {
+    if (activeTab !== 'audit') return;
+
+    let cancelled = false;
+    const refreshAuditLogs = async () => {
+      try {
+        const response = await adminRequest('/api/election');
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled) {
+          setLiveAuditLogs((data.audit_logs || []).map((log: any) => ({
+            id: log.id,
+            timestamp: log.timestamp,
+            action: log.action,
+            actor: log.actor,
+            encryptedHash: log.encrypted_hash || '',
+            category: log.category,
+            details: log.details,
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching audit logs:', error);
+      }
+    };
+
+    refreshAuditLogs();
+    const interval = window.setInterval(refreshAuditLogs, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [activeTab]);
 
   const navItems: { id: AdminTab; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -348,8 +709,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
         {/* Brand Header */}
         <div className={`mb-6 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between px-3'}`}>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#003f93] text-white flex items-center justify-center shrink-0 shadow-xs">
-              <ShieldCheck className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-white border border-[#c2c6d5] flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
+              <img
+                src="/assets/nreerety-removebg-preview.png"
+                alt="BAMSSA logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             {!isSidebarCollapsed && (
               <div>
@@ -400,8 +765,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
             type="button"
             onClick={() => {
               if (window.confirm('WARNING: Are you sure you want to reset the entire election? All cast votes, voter accreditations, and audit logs will be reset to factory defaults.')) {
-                resetElectionData();
-                showToast('Election system reset successfully.', 'info');
+                void resetElectionData().then((result) => {
+                  showToast(
+                    result.success ? 'Election system reset successfully.' : (result.message || 'Unable to reset the election.'),
+                    result.success ? 'info' : 'error'
+                  );
+                });
               }
             }}
             className={`w-full bg-[#DC2626] hover:bg-red-700 text-white text-xs font-bold py-2.5 ${isSidebarCollapsed ? 'px-0 justify-center' : 'px-3 justify-center'} rounded-lg flex items-center gap-2 transition-colors cursor-pointer shadow-xs`}
@@ -534,7 +903,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
               <button 
                 type="button"
                 className="p-1.5 rounded-full hover:bg-[#f2f3ff] hover:text-[#003f93] transition-colors cursor-pointer"
-                title="Help & Documentation"
+                  title="Open admin guide"
+                  onClick={onOpenGuide}
               >
                 <HelpCircle className="w-4 h-4" />
               </button>
@@ -543,11 +913,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
             {/* Admin Profile Area */}
             <div className="flex items-center gap-2.5 border-l border-[#c2c6d5] pl-3 sm:pl-4">
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-[#003f93]">Administrator</p>
+                <p className="text-xs font-bold text-[#003f93]">{adminName}</p>
                 <p className="text-[10px] text-[#424653] font-semibold">ELECO Admin</p>
               </div>
               <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwcb5GF6mVDXZeAfT2anjio3BSKXg0Zr8LG6FA7oEOdxGAzyk85jPNPbwd3Mag8sEySTU1S673zuvdfwCC5aKbrRqKjolRUEZxc8Qz_dgu4EL2jG_xqBDU0ROfrCrtJyRFxWfMUTitZXpHC6S4MpZe_CdIEkxofJP1ZdO9KmfXpy2xhATWAmaNsHwDAV4FzIXeIEz69DcEs8Gpy_z-0k3CPPOgInDfN1Tqh7XBqML8RyBIcFG4uG-v"
+                src={adminAvatarUrl || '/assets/nreerety-removebg-preview.png'}
                 alt="Admin Avatar"
                 className="w-8 h-8 rounded-full border border-[#c2c6d5] object-cover"
               />
@@ -565,7 +935,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
               {/* Welcome Area */}
               <div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-[#131b2e] tracking-tight">
-                  Good morning, John.
+                  Good morning, {adminName}.
                 </h1>
                 <p className="text-sm sm:text-base text-[#424653] mt-1">
                   Here's the current overview of the BAMSSA 2026 election.
@@ -590,7 +960,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                         <p className="text-xs sm:text-sm text-[#424653] flex items-center gap-2 flex-wrap">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-4 h-4 text-[#737785]" />
-                            <span>20 August 2026</span>
+                            <span>4 September 2026</span>
                           </span>
                           <span className="text-[#c2c6d5]">|</span>
                           <span className="flex items-center gap-1">
@@ -612,7 +982,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                           Time Remaining
                         </p>
                         <p className="text-4xl sm:text-5xl font-extrabold text-[#003f93] tracking-tight">
-                          {status === 'LIVE' ? 'Polls Active' : '3 Days'}
+                          {status === 'LIVE' ? remainingTime : status === 'CLOSED' ? 'Voting closed' : 'Not started'}
                         </p>
                       </div>
 
@@ -1515,6 +1885,18 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                     </div>
                   </div>
 
+                  <label className="block text-xs font-semibold text-[#424653]">
+                    Student ID Card or Course Form
+                    <input
+                      type="file"
+                      required
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleVoterIdCard}
+                      className="w-full mt-1 px-3 py-2 text-xs border border-[#c2c6d5] rounded-lg bg-white"
+                    />
+                    <span className="mt-1 block text-[11px] font-normal text-[#737785]">JPG, PNG, or WebP up to 5 MB.</span>
+                  </label>
+
                   <div className="flex justify-end gap-2">
                     <button
                       type="button"
@@ -1525,9 +1907,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-1.5 text-xs bg-[#003f93] text-white font-bold rounded-lg shadow-xs"
+                      disabled={isCreatingVoter}
+                      className="px-4 py-1.5 text-xs bg-[#003f93] text-white font-bold rounded-lg shadow-xs disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Save &amp; Enroll
+                      {isCreatingVoter ? 'Enrolling...' : 'Save & Enroll'}
                     </button>
                   </div>
                 </form>
@@ -1599,15 +1982,20 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                           )}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          {!voter.isAccredited && (
-                            <button
-                              type="button"
-                              onClick={() => accreditVoter(voter.matricNumber)}
-                              className="text-[#0055c2] font-bold hover:underline text-[11px] cursor-pointer"
-                            >
-                              Accredit
+                          <div className="flex items-center justify-end gap-3">
+                            {!voter.isAccredited && (
+                              <button
+                                type="button"
+                                onClick={() => accreditVoter(voter.matricNumber)}
+                                className="text-[#0055c2] font-bold hover:underline text-[11px] cursor-pointer"
+                              >
+                                Accredit
+                              </button>
+                            )}
+                            <button type="button" onClick={() => handleDeleteVoter(voter)} title="Delete voter" aria-label={`Delete ${voter.fullName}`} className="text-[#93000a] hover:text-[#ba1a1a] p-1 cursor-pointer">
+                              <Trash2 className="w-4 h-4" />
                             </button>
-                          )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1626,11 +2014,60 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                   <h2 className="text-3xl font-bold text-[#131b2e]">Positions</h2>
                   <p className="text-sm text-[#424653] mt-1 max-w-[600px]">Manage the offices contested in the BAMSSA UNIPORT Chapter General Election 2026.</p>
                 </div>
-                <button className="bg-[#0055c2] hover:bg-[#00429a] text-white px-5 py-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => setShowAddPosition(!showAddPosition)}
+                  className="bg-[#0055c2] hover:bg-[#00429a] text-white px-5 py-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                >
                   <Plus className="w-[18px] h-[18px]" />
                   Add Position
                 </button>
               </div>
+
+              {showAddPosition && (
+                <form onSubmit={handleCreatePosition} className="p-6 bg-[#faf8ff] border border-[#c2c6d5] rounded-xl shadow-xs space-y-4">
+                  <h4 className="text-sm font-bold text-[#131b2e]">Create New Position</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="text-xs font-semibold text-[#424653]">Position Title</label>
+                      <input
+                        type="text"
+                        required
+                        value={newPositionTitle}
+                        onChange={(e) => setNewPositionTitle(e.target.value)}
+                        placeholder="e.g. Assistant Welfare"
+                        className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-[#424653]">Max Selections</label>
+                      <select
+                        value={newPositionMaxSelections}
+                        onChange={(e) => setNewPositionMaxSelections(Number(e.target.value))}
+                        className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white"
+                      >
+                        <option value={1}>1</option>
+                        <option value={2}>2</option>
+                        <option value={3}>3</option>
+                      </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-semibold text-[#424653]">Description</label>
+                      <textarea
+                        value={newPositionDescription}
+                        onChange={(e) => setNewPositionDescription(e.target.value)}
+                        rows={3}
+                        placeholder="Describe the office and the responsibilities attached to it."
+                        className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button type="button" onClick={() => setShowAddPosition(false)} className="px-5 py-2 text-sm text-[#131b2e] border border-[#c2c6d5] font-semibold hover:bg-[#f2f3ff] rounded-lg cursor-pointer">Cancel</button>
+                    <button type="submit" className="px-5 py-2 text-sm bg-[#0055c2] hover:bg-[#003f93] text-white font-bold rounded-lg shadow-xs transition-colors cursor-pointer">Save Position</button>
+                  </div>
+                </form>
+              )}
 
               {/* Context Bar */}
               <div className="bg-[#faf8ff] border border-[#c2c6d5] rounded-lg p-3 flex flex-wrap gap-8 mb-8 shadow-xs">
@@ -1715,8 +2152,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                               )}
                             </td>
                             <td className="p-5 align-middle text-right">
-                              <button className="text-[#424653] hover:text-[#003f93] transition-colors p-2 rounded-full hover:bg-[#eaedff] cursor-pointer">
-                                <MoreVertical className="w-5 h-5" />
+                              <button type="button" onClick={() => handleDeletePosition(pos)} title="Delete position" aria-label={`Delete ${pos.title}`} className="text-[#93000a] hover:text-[#ba1a1a] transition-colors p-2 rounded-full hover:bg-[#ffdad6] cursor-pointer">
+                                <Trash2 className="w-5 h-5" />
                               </button>
                             </td>
                           </tr>
@@ -1806,8 +2243,20 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                       <input type="text" value={newCandTagline} onChange={(e) => setNewCandTagline(e.target.value)} placeholder="e.g. Advancing Academic Excellence & Welfare" className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white outline-hidden focus:border-[#0055c2]" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-[#424653]">Photo URL (Optional)</label>
-                      <input type="url" value={newCandPhoto} onChange={(e) => setNewCandPhoto(e.target.value)} placeholder="https://..." className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white outline-hidden focus:border-[#0055c2]" />
+                      <label className="text-xs font-semibold text-[#424653]">Candidate Photo</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCandidatePhotoUpload}
+                        className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white outline-hidden focus:border-[#0055c2] file:mr-3 file:rounded-md file:border-0 file:bg-[#eaf1ff] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#003f93]"
+                      />
+                      <p className="mt-2 text-[11px] text-[#424653]">Upload a clear portrait. It will be displayed alongside the candidate’s name.</p>
+                      {newCandPhoto && (
+                        <div className="mt-3 flex items-center gap-3 rounded-lg border border-[#c2c6d5] bg-white p-2">
+                          <img src={newCandPhoto} alt="Candidate preview" className="w-12 h-12 rounded-full object-cover border border-[#c2c6d5]" />
+                          <span className="text-xs font-medium text-[#131b2e]">Preview ready</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex justify-end gap-3 pt-2">
@@ -1911,8 +2360,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                                 </td>
                                 <td className="py-3 px-5 text-sm text-[#424653]">{isUnopposed ? 'Unopposed' : 'Contested'}</td>
                                 <td className="py-3 px-5 text-right">
-                                  <button className="text-[#424653] hover:text-[#003f93] transition-colors p-2 rounded-full hover:bg-[#eaedff] cursor-pointer">
-                                    <MoreVertical className="w-5 h-5" />
+                                  <button type="button" onClick={() => handleDeleteCandidate(c)} title="Delete candidate" aria-label={`Delete ${c.fullName}`} className="text-[#93000a] hover:text-[#ba1a1a] transition-colors p-2 rounded-full hover:bg-[#ffdad6] cursor-pointer">
+                                    <Trash2 className="w-5 h-5" />
                                   </button>
                                 </td>
                               </tr>
@@ -1944,7 +2393,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                                   <div className="text-xs text-[#424653] font-mono">BAM/24/{c.id.replace('cand-','').padStart(3, '0')}</div>
                                 </div>
                               </div>
-                              <button className="text-[#424653] p-1 cursor-pointer hover:bg-[#f2f3ff] rounded-full"><MoreVertical className="w-5 h-5" /></button>
+                              <button type="button" onClick={() => handleDeleteCandidate(c)} title="Delete candidate" aria-label={`Delete ${c.fullName}`} className="text-[#93000a] p-1 cursor-pointer hover:bg-[#ffdad6] rounded-full"><Trash2 className="w-5 h-5" /></button>
                             </div>
                             <div className="flex flex-wrap gap-2 mt-2">
                               <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-[#e2e7ff] text-[#131b2e] border border-[#c2c6d5]/50">{pos?.title}</span>
@@ -2018,10 +2467,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                   <p className="text-base text-[#424653]">Monitor election activity, voter participation, and operational status in real time.</p>
                 </div>
                 <div className="flex items-center gap-3 text-[#424653] text-sm">
-                  {/* We use RotateCw here as a refresh button, hooking into the simulate feature for testing */}
-                  <button onClick={handleSimulateVotes} disabled={isSimulating || status === 'pending'} className="flex items-center gap-1 hover:text-[#003f93] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" title="Simulate Votes (Requires Active Election)">
-                    <RotateCw className={`w-[18px] h-[18px] ${isSimulating ? 'animate-spin text-[#003f93]' : ''}`} />
-                  </button>
                   <span>Last updated: Just now</span>
                 </div>
               </div>
@@ -2033,15 +2478,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                   <div>
                     <h3 className="text-lg font-semibold text-[#131b2e] mb-2">BAMSSA 2026 GENERAL ELECTIONS</h3>
                     <div className="flex flex-wrap gap-3 text-sm text-[#424653]">
-                      <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> 20 August 2026</span>
+                      <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> 4 September 2026</span>
                       <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> 8:00 AM – 4:00 PM</span>
                     </div>
                   </div>
                   <div className="bg-[#f2f3ff] p-3 rounded-lg border border-[#c2c6d5] text-center md:text-left w-full md:w-auto">
                     <p className="text-sm text-[#424653]">
-                      {status === 'pending' 
+                      {status === 'STANDBY'
                         ? 'Voting has not started. Live participation data will appear when voting begins.' 
-                        : status === 'active' 
+                        : status === 'LIVE'
                           ? 'Voting is live. Ballots are being recorded securely.'
                           : 'Voting has concluded. Final results are being tabulated.'}
                     </p>
@@ -2055,7 +2500,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                 </div>
                 <div className="col-span-12 md:col-span-3 bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
                   <h4 className="text-xs font-bold text-[#424653] uppercase tracking-wider mb-3">Accredited</h4>
-                  {status === 'pending' ? (
+                  {status === 'STANDBY' ? (
                     <>
                       <p className="text-4xl lg:text-[48px] font-bold text-[#c2c6d5] leading-tight">—</p>
                       <p className="text-sm text-[#737785] mt-2">Not started</p>
@@ -2066,7 +2511,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                 </div>
                 <div className="col-span-12 md:col-span-3 bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
                   <h4 className="text-xs font-bold text-[#424653] uppercase tracking-wider mb-3">Ballots Cast</h4>
-                  {status === 'pending' ? (
+                  {status === 'STANDBY' ? (
                     <>
                       <p className="text-4xl lg:text-[48px] font-bold text-[#c2c6d5] leading-tight">—</p>
                       <p className="text-sm text-[#737785] mt-2">Not started</p>
@@ -2077,7 +2522,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                 </div>
                 <div className="col-span-12 md:col-span-3 bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
                   <h4 className="text-xs font-bold text-[#424653] uppercase tracking-wider mb-3">Turnout</h4>
-                  {status === 'pending' ? (
+                  {status === 'STANDBY' ? (
                     <>
                       <p className="text-4xl lg:text-[48px] font-bold text-[#c2c6d5] leading-tight">—</p>
                       <p className="text-sm text-[#737785] mt-2">Not started</p>
@@ -2088,7 +2533,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                 </div>
 
                 {/* Main Activity Area (Conditional) */}
-                {status === 'pending' ? (
+                {status === 'STANDBY' ? (
                   <>
                     {/* Empty State Card (Voting Activity) */}
                     <div className="col-span-12 md:col-span-6 bg-white border border-[#c2c6d5] rounded-xl p-8 flex flex-col items-center justify-center min-h-[300px] text-center shadow-[0px_4px_6px_-1px_rgba(15,23,42,0.03),0px_2px_4px_-2px_rgba(15,23,42,0.02)]">
@@ -2171,6 +2616,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                   <span className="bg-[#F1F5F9] text-[#475569] px-2 py-0.5 rounded font-bold text-[10px] uppercase tracking-wider border border-[#E2E8F0]">{status}</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-[#424653]">
+                  <span className="font-bold text-[#003f93]">Results: {resultsStatus}</span>
                   <span>Last updated: Just now</span>
                   <button
                     type="button"
@@ -2180,6 +2626,23 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                     <RotateCw className="w-4 h-4" />
                   </button>
                 </div>
+              </div>
+
+              <div className="bg-white border border-[#c2c6d5] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-bold text-[#131b2e]">{resultsStatus === 'PUBLISHED' || resultsStatus === 'CERTIFIED' ? `Results ${resultsStatus.toLowerCase()}` : 'Results ready for publication'}</h3>
+
+              <div className="flex flex-wrap justify-end gap-3">
+                <button type="button" onClick={openManualResults} disabled={resultsStatus === 'CERTIFIED'} className="inline-flex items-center gap-2 rounded-lg border border-[#c2c6d5] bg-white px-4 py-2.5 text-sm font-bold text-[#131b2e] hover:bg-[#f2f3ff] disabled:cursor-not-allowed disabled:opacity-50">
+                  <Edit3 className="h-4 w-4" />
+                  Enter Results Manually
+                </button>
+              </div>
+                  <p className="text-sm text-[#424653] mt-1">{resultsStatus === 'DRAFT' ? `${positions.length} positions configured. Publish only after reviewing the recorded totals.` : 'Students can view the published results on the public Results page.'}</p>
+                </div>
+                <button type="button" onClick={handlePublishResults} disabled={status === 'LIVE' || resultsStatus !== 'DRAFT'} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0055c2] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#003f93] disabled:cursor-not-allowed disabled:opacity-50">
+                  {resultsStatus === 'DRAFT' ? 'Publish Results to Student Portal' : 'Results Published'}
+                </button>
               </div>
 
               <div className="bg-[#f2f3ff] border border-[#c2c6d5] rounded-lg p-4 flex gap-3 items-start">
@@ -2203,8 +2666,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                 </div>
                 <div className="bg-white border border-[#c2c6d5] rounded-lg p-5 shadow-xs">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[#424653] mb-1">Ballots Recorded</p>
-                  <p className="text-4xl font-extrabold text-[#131b2e]">{candidates.reduce((sum, c) => sum + c.votesCount, 0)}</p>
-                  <p className="text-[11px] text-[#424653] mt-1">Live tally</p>
+                  <p className="text-4xl font-extrabold text-[#131b2e]">{totalBallotsCast}</p>
+                  <p className="text-[11px] text-[#424653] mt-1">Live ballots</p>
                 </div>
                 <div className="bg-white border border-[#c2c6d5] rounded-lg p-5 shadow-xs">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[#424653] mb-1">Admin Adjustments</p>
@@ -2247,7 +2710,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                     <thead>
                       <tr className="bg-[#f2f3ff] border-b border-[#c2c6d5]">
                         <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-left">Position</th>
-                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-left">Candidate</th>
+                        <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-left">{resultsStatus === 'CERTIFIED' ? 'Winner' : 'Result'}</th>
                         <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-right">Recorded Votes</th>
                         <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-center">Admin Control</th>
                         <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-[#424653] text-center">Status</th>
@@ -2278,7 +2741,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                                   <div className="flex items-center gap-3">
                                     <span className="font-semibold">{candidate.fullName}</span>
                                     {candidate.votesCount === Math.max(...posCandidates.map((item) => item.votesCount)) && candidate.votesCount > 0 && (
-                                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded">LEADING</span>
+                                      <span className="bg-[#d9e2ff] text-[#003f93] text-[10px] font-bold px-1.5 py-0.5 rounded">{resultsStatus === 'CERTIFIED' ? 'WINNER' : 'UNOFFICIAL RESULT'}</span>
                                     )}
                                   </div>
                                 </td>
@@ -2291,7 +2754,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                                     <button
                                       type="button"
                                       onClick={() => adjustCandidateVotes(candidate.id, -1)}
-                                      className="w-8 h-8 rounded-lg border border-[#c2c6d5] bg-[#f8fafc] text-[#131b2e] hover:bg-[#eaedff] transition-colors cursor-pointer"
+                                      disabled={status === 'CERTIFIED'}
+                                      className="w-8 h-8 rounded-lg border border-[#c2c6d5] bg-[#f8fafc] text-[#131b2e] hover:bg-[#eaedff] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                                       aria-label={`Decrease votes for ${candidate.fullName}`}
                                     >
                                       −
@@ -2300,17 +2764,19 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                                       type="number"
                                       min={0}
                                       value={candidate.votesCount}
+                                        disabled={status === 'CERTIFIED'}
                                       onChange={(e) => {
                                         const nextValue = Number(e.target.value);
                                         if (Number.isNaN(nextValue)) return;
                                         adjustCandidateVotes(candidate.id, Math.max(0, nextValue) - candidate.votesCount);
                                       }}
-                                      className="w-20 border border-[#c2c6d5] rounded-lg px-2 py-1.5 text-center text-sm font-semibold text-[#131b2e] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]"
+                                      className="w-20 border border-[#c2c6d5] rounded-lg px-2 py-1.5 text-center text-sm font-semibold text-[#131b2e] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2] disabled:cursor-not-allowed disabled:opacity-50"
                                     />
                                     <button
                                       type="button"
                                       onClick={() => adjustCandidateVotes(candidate.id, 1)}
-                                      className="w-8 h-8 rounded-lg border border-[#c2c6d5] bg-[#f8fafc] text-[#131b2e] hover:bg-[#eaedff] transition-colors cursor-pointer"
+                                      disabled={status === 'CERTIFIED'}
+                                      className="w-8 h-8 rounded-lg border border-[#c2c6d5] bg-[#f8fafc] text-[#131b2e] hover:bg-[#eaedff] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                                       aria-label={`Increase votes for ${candidate.fullName}`}
                                     >
                                       +
@@ -2376,33 +2842,29 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                       <ShieldCheck className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-extrabold text-[#131b2e] mb-1">NOT READY FOR CERTIFICATION</h3>
+                      <h3 className="text-2xl font-extrabold text-[#131b2e] mb-1">{readinessStatus === 'CERTIFIED' ? 'CERTIFIED RESULTS' : certificationUnlocked ? 'READY FOR CERTIFICATION' : 'NOT READY FOR CERTIFICATION'}</h3>
                       <p className="text-sm text-[#424653] max-w-xl">
-                        The election is currently in Standby phase. Voting must conclude and results must be processed before certification.
+                        {readinessStatus === 'CERTIFIED' ? 'These results have been certified and are available to the public.' : `Election status: ${readinessStatus}. Close the election and review every position before certification.`}
                       </p>
                     </div>
                   </div>
 
                   <div className="bg-[#f2f3ff] px-4 py-2 rounded-lg border border-[#c2c6d5] flex items-center gap-2 text-xs font-bold text-[#424653]">
-                    <Lock className="w-4 h-4 text-[#737785]" />
-                    Certification Locked
+                    {certificationUnlocked ? <CheckCircle2 className="w-4 h-4 text-[#003f93]" /> : <Lock className="w-4 h-4 text-[#737785]" />}
+                    {readinessStatus === 'CERTIFIED' ? 'Certification Complete' : certificationUnlocked ? 'Certification Unlocked' : 'Certification Locked'}
                   </div>
                 </div>
 
                 <div className="relative mt-6 mb-4">
                   <div className="absolute top-4 left-4 right-4 h-1 bg-[#dae2fd] rounded-full" />
-                  <div className="absolute top-4 left-4 h-1 bg-[#0055c2] rounded-full" style={{ width: '25%' }} />
+                  <div className="absolute top-4 left-4 h-1 bg-[#0055c2] rounded-full" style={{ width: readinessStatus === 'CERTIFIED' ? '100%' : readinessStatus === 'CLOSED' ? '75%' : readinessStatus === 'LIVE' ? '50%' : '25%' }} />
 
                   <div className="flex justify-between relative z-10 px-1">
                     {[
-                      { label: 'Draft', complete: true },
-                      { label: 'Scheduled', complete: true },
-                      { label: 'Standby', complete: true, active: true },
-                      { label: 'Live', complete: false },
-                      { label: 'Closed', complete: false },
-                      { label: 'Counting', complete: false },
-                      { label: 'Certified', complete: false },
-                      { label: 'Published', complete: false },
+                      { label: 'Standby', complete: ['ACCREDITATION_OPEN', 'LIVE', 'CLOSED', 'CERTIFIED'].includes(readinessStatus), active: readinessStatus === 'STANDBY' },
+                      { label: 'Live', complete: ['CLOSED', 'CERTIFIED'].includes(readinessStatus), active: readinessStatus === 'LIVE' },
+                      { label: 'Closed', complete: ['CLOSED', 'CERTIFIED'].includes(readinessStatus), active: readinessStatus === 'CLOSED' },
+                      { label: 'Certified', complete: readinessStatus === 'CERTIFIED', active: readinessStatus === 'CERTIFIED' },
                     ].map((step) => (
                       <div key={step.label} className="flex flex-col items-center gap-2 w-24">
                         <div
@@ -2434,11 +2896,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                   <h3 className="text-lg font-bold text-[#131b2e] px-1">Election Overview</h3>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { label: 'Positions', value: '12', icon: ListOrdered },
-                      { label: 'Candidates', value: '36', icon: UserPlus },
-                      { label: 'Ballots Recorded', value: '—', icon: Vote, dim: true },
-                      { label: 'Reviewed', value: '0/12', icon: CheckCircle2, accent: 'text-[#93000a]' },
-                      { label: 'Adjustments', value: '—', icon: Sliders },
+                      { label: 'Positions', value: String(totalCertificationPositions), icon: ListOrdered },
+                      { label: 'Candidates', value: String(candidates.length), icon: UserPlus },
+                      { label: 'Ballots Recorded', value: String(certificationData?.ballotsCast || 0), icon: Vote },
+                      { label: 'Reviewed', value: `${reviewedCertificationPositions}/${totalCertificationPositions}`, icon: CheckCircle2, accent: allPositionsReviewed ? 'text-[#003f93]' : 'text-[#93000a]' },
+                      { label: 'Adjustments', value: String(liveAuditLogs.filter((log) => log.action.toLowerCase().includes('adjust')).length), icon: Sliders },
                     ].map((item) => {
                       const Icon = item.icon;
                       return (
@@ -2447,7 +2909,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                             <Icon className={`w-4 h-4 ${item.accent || 'text-[#003f93]'}`} />
                             <span>{item.label}</span>
                           </div>
-                          <div className={`text-3xl font-extrabold ${item.dim ? 'text-[#737785]' : 'text-[#131b2e]'}`}>
+                          <div className="text-3xl font-extrabold text-[#131b2e]">
                             {item.value}
                           </div>
                         </div>
@@ -2462,18 +2924,18 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                       <CheckSquare className="w-4 h-4 text-[#003f93]" />
                       Certification Readiness
                     </h3>
-                    <span className="text-[11px] font-bold text-[#424653] bg-[#f2f3ff] border border-[#c2c6d5] rounded-full px-2.5 py-1">0 / 8 Complete</span>
+                    <span className="text-[11px] font-bold text-[#424653] bg-[#f2f3ff] border border-[#c2c6d5] rounded-full px-2.5 py-1">{allPositionsReviewed ? `${totalCertificationPositions} / ${totalCertificationPositions}` : `${reviewedCertificationPositions} / ${totalCertificationPositions}`} Complete</span>
                   </div>
 
                   <div className="space-y-3">
                     {[
-                      { label: 'Voting period officially closed', state: 'Pending' },
-                      { label: 'All cast ballots successfully processed', state: 'Pending' },
-                      { label: 'Results calculated and tabulated', state: 'Pending' },
-                      { label: 'Candidate and position structure verified', state: 'Verified' },
-                      { label: 'Administrative adjustments audited', state: 'Pending' },
+                      { label: 'Voting period officially closed', state: electionClosedForCertification ? 'Verified' : 'Pending' },
+                      { label: 'All cast ballots successfully processed', state: certificationData?.ballotsProcessed ? 'Verified' : 'Pending' },
+                      { label: 'Results calculated and tabulated', state: certificationData?.resultsCalculated ? 'Verified' : 'Pending' },
+                      { label: 'Candidate and position structure verified', state: candidates.length > 0 && totalCertificationPositions > 0 ? 'Verified' : 'Pending' },
+                      { label: 'Administrative adjustments audited', state: 'Verified' },
                       { label: 'Any result discrepancies resolved', state: 'Pending' },
-                      { label: 'Individual position results reviewed (0/12)', state: 'Not Ready' },
+                      { label: `Individual position results reviewed (${reviewedCertificationPositions}/${totalCertificationPositions})`, state: allPositionsReviewed ? 'Verified' : 'Not Ready' },
                     ].map((item, idx) => (
                       <div key={item.label} className="flex items-center justify-between gap-3 p-3 rounded-xl border border-[#c2c6d5] bg-[#faf8ff]">
                         <div className="flex items-center gap-3 text-left">
@@ -2532,38 +2994,34 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                       </tr>
                     </thead>
                     <tbody>
-                      {[
-                        { pos: 'President', candidates: 4, votes: '—', state: 'Awaiting Data' },
-                        { pos: 'Vice President', candidates: 3, votes: '—', state: 'Awaiting Data' },
-                        { pos: 'General Secretary', candidates: 2, votes: '—', state: 'Awaiting Data' },
-                      ].map((item) => (
-                        <tr key={item.pos} className="border-t border-[#eaedff] bg-white text-sm">
-                          <td className="px-4 py-4 font-bold text-[#131b2e]">{item.pos}</td>
-                          <td className="px-4 py-4 text-[#424653]">{item.candidates}</td>
-                          <td className="px-4 py-4 text-[#424653]">{item.votes}</td>
+                      {(certificationData?.positionResults || positions.map((position) => ({ positionId: position.id, candidates: [], isReviewed: false }))).map((item: any) => {
+                        const position = positions.find((candidatePosition) => candidatePosition.id === item.positionId);
+                        const totalVotes = item.candidates.reduce((total: number, candidate: any) => total + (candidate.votes_count || 0), 0);
+                        return (
+                        <tr key={item.positionId} className="border-t border-[#eaedff] bg-white text-sm">
+                          <td className="px-4 py-4 font-bold text-[#131b2e]">{position?.title || item.positionId}</td>
+                          <td className="px-4 py-4 text-[#424653]">{item.candidates.length}</td>
+                          <td className="px-4 py-4 text-[#424653]">{totalVotes}</td>
                           <td className="px-4 py-4">
-                            <span className="inline-flex items-center gap-1 rounded border border-[#c2c6d5] bg-[#f2f3ff] text-[#424653] text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
-                              <Clock className="w-3.5 h-3.5" />
-                              {item.state}
+                            <span className={`inline-flex items-center gap-1 rounded border text-[10px] font-bold px-2 py-1 uppercase tracking-wider ${item.isReviewed ? 'border-[#adc6ff] bg-[#d9e2ff] text-[#003f93]' : 'border-[#c2c6d5] bg-[#f2f3ff] text-[#424653]'}`}>
+                              {item.isReviewed ? <Check className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                              {item.isReviewed ? 'Reviewed' : 'Pending Review'}
                             </span>
                           </td>
                           <td className="px-4 py-4 text-right">
                             <button
                               type="button"
-                              disabled
-                              className="inline-flex items-center gap-1 text-[#737785] text-xs font-bold cursor-not-allowed opacity-60"
+                              onClick={() => handleReviewPosition(item.positionId)}
+                              disabled={item.isReviewed || readinessStatus === 'CERTIFIED'}
+                              className={`inline-flex items-center gap-1 text-xs font-bold ${item.isReviewed || readinessStatus === 'CERTIFIED' ? 'text-[#737785] cursor-not-allowed' : 'text-[#0055c2] hover:text-[#003f93] cursor-pointer'}`}
                             >
-                              View Result
+                              {item.isReviewed ? 'Reviewed' : 'Review'}
                               <ChevronRight className="w-4 h-4" />
                             </button>
                           </td>
                         </tr>
-                      ))}
-                      <tr>
-                        <td colSpan={5} className="px-4 py-3 text-center text-sm text-[#737785] italic border-t border-[#eaedff] bg-[#faf8ff]">
-                          ... 9 more positions hidden
-                        </td>
-                      </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -2606,7 +3064,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                   </div>
                   <div className="mt-4 flex items-start gap-2 bg-[#f2f3ff] border border-[#c2c6d5] rounded-xl p-3 text-xs text-[#424653]">
                     <ShieldCheck className="w-4 h-4 text-[#003f93] mt-0.5 shrink-0" />
-                    <p>Actions performed here are permanently logged in the immutable audit trail associated with your administrative identity.</p>
+                    <p>Actions performed here are permanently recorded for accountability and review.</p>
                   </div>
                 </div>
               </div>
@@ -2617,23 +3075,24 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                 </div>
                 <h2 className="text-2xl font-extrabold text-[#131b2e]">Formal Election Certification</h2>
                 <p className="max-w-2xl mx-auto mt-4 text-sm text-[#424653] italic border-l-4 border-[#c2c6d5] bg-[#faf8ff] p-3 rounded-r text-left">
-                  “I hereby declare that I have rigorously reviewed the tabulated results for this election. I confirm that the election was conducted in accordance with BAMSSA regulations, all ballots have been accounted for, and I authorize these results as the official and final outcome.”
+                  “I confirm that I have reviewed all position results and authorize these results as official.”
                 </p>
                 <div className="mt-6 flex items-center justify-center gap-2 text-xs font-bold text-[#424653]">
-                  <input type="checkbox" className="h-4 w-4 rounded border-[#c2c6d5] text-[#0055c2]" disabled />
+                  <input type="checkbox" checked={certifyConfirmCheckbox} onChange={(event) => setCertifyConfirmCheckbox(event.target.checked)} disabled={readinessStatus === 'CERTIFIED'} className="h-4 w-4 rounded border-[#c2c6d5] text-[#0055c2]" />
                   <label>I confirm that I have reviewed the election results and authorize certification.</label>
                 </div>
                 <button
                   type="button"
-                  disabled
-                  className="mt-6 inline-flex items-center justify-center gap-2 bg-[#f2f3ff] text-[#737785] border border-[#c2c6d5] rounded-xl px-6 py-3 text-xs font-bold cursor-not-allowed"
+                  onClick={handleCertifyElection}
+                  disabled={!certificationUnlocked || isCertifying}
+                  className={`mt-6 inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-xs font-bold border ${certificationUnlocked ? 'bg-[#0055c2] text-white border-[#0055c2] hover:bg-[#003f93] cursor-pointer' : 'bg-[#f2f3ff] text-[#737785] border-[#c2c6d5] cursor-not-allowed'}`}
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  Certify Election Results
+                  {isCertifying ? 'Certifying...' : readinessStatus === 'CERTIFIED' ? 'Results Certified' : 'Certify Election Results'}
                 </button>
                 <p className="mt-3 text-[11px] text-[#93000a] flex items-center justify-center gap-1">
                   <Info className="w-3.5 h-3.5" />
-                  All checklist items must be completed before certification is unlocked.
+                  {readinessStatus === 'CERTIFIED' ? 'Certified results are now available to students.' : !electionClosedForCertification ? 'Close the election before certification.' : !allPositionsReviewed ? 'Review every position before certification.' : 'Confirm the declaration to unlock certification.'}
                 </p>
               </div>
 
@@ -2664,7 +3123,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                 <div>
                   <h1 className="text-4xl sm:text-5xl font-extrabold text-[#131b2e] tracking-tight">Audit Logs</h1>
                   <p className="mt-2 text-base text-[#424653] max-w-2xl">
-                    Review administrative and system activity recorded throughout the election. All events are time-stamped and securely appended.
+                    Review administrative and system activity recorded throughout the election. All events are time-stamped and permanently recorded.
                   </p>
                 </div>
 
@@ -2680,10 +3139,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {[
-                  { label: 'Total Events', value: '1,284', icon: ListOrdered, iconColor: 'text-[#003f93]' },
-                  { label: 'Today', value: '46', icon: Calendar, iconColor: 'text-[#335da5]' },
-                  { label: 'Admin Actions', value: '32', icon: UserCheck, iconColor: 'text-[#003ba1]' },
-                  { label: 'Security Events', value: '4', icon: ShieldCheck, iconColor: 'text-[#93000a]' },
+                  { label: 'Total Events', value: liveAuditLogs.length.toLocaleString(), icon: ListOrdered, iconColor: 'text-[#003f93]' },
+                  { label: 'Today', value: liveAuditLogs.filter((log) => new Date(log.timestamp).toDateString() === new Date().toDateString()).length.toLocaleString(), icon: Calendar, iconColor: 'text-[#335da5]' },
+                  { label: 'Admin Actions', value: liveAuditLogs.filter((log) => log.category === 'ADMIN').length.toLocaleString(), icon: UserCheck, iconColor: 'text-[#003ba1]' },
+                  { label: 'Security Events', value: liveAuditLogs.filter((log) => log.category === 'SECURITY').length.toLocaleString(), icon: ShieldCheck, iconColor: 'text-[#93000a]' },
                 ].map(({ label, value, icon: Icon, iconColor }) => (
                   <div key={label} className="bg-white border border-[#c2c6d5] rounded-xl p-4 flex items-center justify-between shadow-[0_2px_6px_rgba(15,23,42,0.03)]">
                     <div>
@@ -2704,29 +3163,38 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                     <input
                       type="text"
                       placeholder="Search activity, administrator, candidate, or reference ID"
+                      value={auditSearch}
+                      onChange={(event) => setAuditSearch(event.target.value)}
                       className="w-full pl-10 pr-4 py-2 border border-[#c2c6d5] rounded-lg bg-[#fafbff] text-[#131b2e] text-sm focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]"
                     />
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
-                    {['Any Date', 'All Admins', 'All Actions', 'All Severities'].map((option, idx) => (
+                    {[auditDateFilter, auditAdminFilter, auditActionFilter, auditSeverityFilter].map((option, idx) => (
                       <select
                         key={option}
+                        value={option}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          if (idx === 0) setAuditDateFilter(value);
+                          if (idx === 1) setAuditAdminFilter(value);
+                          if (idx === 2) setAuditActionFilter(value);
+                          if (idx === 3) setAuditSeverityFilter(value);
+                        }}
                         className="min-w-[140px] px-3 py-2 border border-[#c2c6d5] rounded-lg bg-[#fafbff] text-[#131b2e] text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#d9e2ff] focus:border-[#0055c2]"
                         defaultValue={option}
                       >
                         <option>{option}</option>
                         {idx === 0 && <option>Today</option>}
                         {idx === 0 && <option>Last 7 Days</option>}
-                        {idx === 1 && <option>Election Administrator</option>}
-                        {idx === 2 && <option>Result Adjustment</option>}
-                        {idx === 2 && <option>Results Reviewed</option>}
+                        {idx === 1 && auditAdmins.map((admin) => <option key={admin}>{admin}</option>)}
+                        {idx === 2 && auditActions.map((action) => <option key={action}>{action}</option>)}
                         {idx === 3 && <option>Information</option>}
                         {idx === 3 && <option>Warning</option>}
                         {idx === 3 && <option>Critical</option>}
                       </select>
                     ))}
-                    <button type="button" className="px-4 py-2 text-[#424653] hover:text-[#131b2e] text-sm font-bold transition-colors cursor-pointer">
+                    <button type="button" onClick={() => { setAuditSearch(''); setAuditDateFilter('Any Date'); setAuditAdminFilter('All Admins'); setAuditActionFilter('All Actions'); setAuditSeverityFilter('All Severities'); }} className="px-4 py-2 text-[#424653] hover:text-[#131b2e] text-sm font-bold transition-colors cursor-pointer">
                       Clear Filters
                     </button>
                   </div>
@@ -2746,26 +3214,21 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#eaedff]">
-                      {[
-                        { timestamp: 'Oct 24, 2025 14:32:05', admin: 'Election Administrator', action: 'Result Adjustment', target: 'John Doe (President)', details: '+1', severity: 'Information', ref: 'AUD-2026-00482' },
-                        { timestamp: 'Oct 24, 2025 14:30:12', admin: 'ELECO Chair', action: 'Results Reviewed', target: 'President', details: 'Results reviewed and marked ready for certification', severity: 'Information', ref: 'AUD-2026-00481' },
-                        { timestamp: 'Oct 24, 2025 14:15:45', admin: 'Election Administrator', action: 'Candidate Status Changed', target: 'Jane Smith', details: 'Pending Review -> Approved', severity: 'Information', ref: 'AUD-2026-00480' },
-                        { timestamp: 'Oct 24, 2025 13:42:01', admin: 'Verification Officer', action: 'Voter Approved', target: 'U2022/5530042', details: 'Voter eligibility approved', severity: 'Information', ref: 'AUD-2026-00479' },
-                      ].map((row) => (
-                        <tr key={row.ref} className="hover:bg-[#faf8ff] transition-colors">
-                          <td className="px-4 py-3 text-sm text-[#424653] whitespace-nowrap">{row.timestamp}</td>
-                          <td className="px-4 py-3 text-sm font-medium text-[#131b2e] whitespace-nowrap">{row.admin}</td>
+                      {filteredAuditLogs.map((row) => (
+                        <tr key={row.id} className="hover:bg-[#faf8ff] transition-colors">
+                          <td className="px-4 py-3 text-sm text-[#424653] whitespace-nowrap">{new Date(row.timestamp).toLocaleString()}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-[#131b2e] whitespace-nowrap">{row.actor}</td>
                           <td className="px-4 py-3 text-sm text-[#131b2e] whitespace-nowrap">{row.action}</td>
-                          <td className="px-4 py-3 text-sm text-[#131b2e] whitespace-nowrap">{row.target}</td>
-                          <td className="px-4 py-3 text-sm text-[#424653] hidden md:table-cell max-w-[220px] truncate">{row.details}</td>
+                          <td className="px-4 py-3 text-sm text-[#131b2e] whitespace-nowrap">{row.category}</td>
+                          <td className="px-4 py-3 text-sm text-[#424653] hidden md:table-cell max-w-[220px] truncate">{row.details || 'No additional details'}</td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[12px] font-bold bg-[#dbeafe] text-[#1e40af] border border-[#bfdbfe]">
-                              {row.severity}
+                              {auditSeverity(row.category)}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-2">
-                              <span className="font-mono text-[13px] text-[#737785]">{row.ref}</span>
+                              <span className="font-mono text-[13px] text-[#737785]">{row.id}</span>
                               <button type="button" className="p-1.5 rounded text-[#737785] hover:bg-[#f2f3ff] hover:text-[#003f93] transition-colors cursor-pointer" aria-label="View audit details">
                                 <ArrowRight className="w-4 h-4" />
                               </button>
@@ -2779,28 +3242,17 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
 
                 <div className="p-4 border-t border-[#eaedff] bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <p className="text-[12px] text-[#424653]">
-                    Showing <span className="font-bold text-[#131b2e]">1-25</span> of <span className="font-bold text-[#131b2e]">1,284</span> events
+                    Showing <span className="font-bold text-[#131b2e]">{filteredAuditLogs.length ? `1-${filteredAuditLogs.length}` : '0'}</span> of <span className="font-bold text-[#131b2e]">{liveAuditLogs.length.toLocaleString()}</span> events
                   </p>
 
-                  <div className="flex items-center gap-2">
-                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded border border-[#c2c6d5] bg-[#f8fafc] text-[#737785] cursor-not-allowed opacity-50" aria-label="Previous page">
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded bg-[#0055c2] text-white font-bold text-sm">1</button>
-                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded border border-[#c2c6d5] bg-[#f8fafc] text-[#131b2e] text-sm">2</button>
-                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded border border-[#c2c6d5] bg-[#f8fafc] text-[#131b2e] text-sm">3</button>
-                    <span className="px-1 text-[#424653]">...</span>
-                    <button type="button" className="w-8 h-8 flex items-center justify-center rounded border border-[#c2c6d5] bg-[#f8fafc] text-[#737785]" aria-label="Next page">
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <span className="text-[12px] text-[#737785]">Updates automatically every 5 seconds</span>
                 </div>
               </div>
 
               <div className="flex items-start gap-3 p-4 bg-white border border-[#c2c6d5] rounded-xl">
                 <Info className="w-5 h-5 text-[#737785] mt-0.5 shrink-0" />
                 <p className="text-base text-[#424653] leading-relaxed">
-                  Audit logs provide a chronological record of important election-system activity. Records are retained for accountability and review. <span className="font-bold text-[#131b2e]">Append-only record.</span>
+                  Audit logs provide a chronological record of important election-system activity. Records are retained for accountability and review.
                 </p>
               </div>
             </div>
@@ -2820,12 +3272,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                   <button type="button" className="flex items-center justify-center w-10 h-10 rounded-full bg-transparent text-[#3d4f68] hover:bg-[#eef2ff] transition-colors cursor-pointer" aria-label="Notifications">
                     <Bell className="w-5 h-5" />
                   </button>
-                  <button type="button" className="flex items-center justify-center w-10 h-10 rounded-full bg-transparent text-[#3d4f68] hover:bg-[#eef2ff] transition-colors cursor-pointer" aria-label="Help">
+                  <button type="button" onClick={onOpenGuide} className="flex items-center justify-center w-10 h-10 rounded-full bg-transparent text-[#3d4f68] hover:bg-[#eef2ff] transition-colors cursor-pointer" aria-label="Open admin guide">
                     <HelpCircle className="w-5 h-5" />
                   </button>
                   <div className="w-10 h-10 rounded-full overflow-hidden border border-[#c7d4f7] bg-[#dfe8ff]">
                     <img
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4T_ycLwD7VbJrZ6Ec1wy_4WU_zPGqRkhUsli689vGlUn_rvx0aTEPKEzpuWAgiF3Vv47abbxl4SjEtXyX_bSQJYft3qQmq_YQeglfMb3Xh50cwlHccBPikQbzoBY3qpThEnb9TfURd2CqbsKcHDXzu81g2LE6olMtL1XsSUhS7mm9uosYuO3bcTk-GDwpmfszznRuTwDKcT1iUdsNUK8axyP96ztEalL9Zn_7KrmGc66-HQexnXmw"
+                      src={adminAvatarUrl || '/assets/nreerety-removebg-preview.png'}
                       alt="Admin profile"
                       className="w-full h-full object-cover"
                     />
@@ -2871,11 +3323,36 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                   <section className="flex-1 bg-white rounded-[20px] border border-[#d5dcee] shadow-sm p-5 sm:p-6">
                     <h3 className="text-[22px] font-bold text-[#1c2945] pb-4 border-b border-[#e7ebf7]">Profile Information</h3>
 
+                    <div className="mt-6 rounded-xl border border-[#d5dcee] bg-[#f7f9ff] p-4">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                          <h4 className="text-base font-bold text-[#1c2945]">Election Controls</h4>
+                          <p className="mt-1 text-sm text-[#4a5a73]">Choose the voting time, then start or stop the election.</p>
+                        </div>
+                        <div className="flex flex-wrap items-end gap-3">
+                          <label className="text-xs font-bold text-[#4a5a73]">
+                            Voting time
+                            <select value={durationMinutes} disabled={status === 'LIVE'} onChange={async (event) => {
+                              const result = await setElectionDuration(Number(event.target.value));
+                              if (!result.success) showToast(result.message || 'Unable to change voting time.', 'error');
+                            }} className="mt-1 block rounded-lg border border-[#c2c6d5] bg-white px-3 py-2 text-sm text-[#131b2e] disabled:cursor-not-allowed disabled:opacity-50">
+                              <option value={120}>2 hours</option>
+                              <option value={150}>2 hours 30 minutes</option>
+                            </select>
+                          </label>
+                          <button type="button" onClick={() => handleStatusChange(status === 'LIVE' ? 'CLOSED' : 'LIVE')} disabled={status === 'CERTIFIED'} className={`rounded-lg px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 ${status === 'LIVE' ? 'bg-[#ba1a1a] hover:bg-[#93000a]' : 'bg-[#0055c2] hover:bg-[#003f93]'}`}>
+                            {status === 'LIVE' ? 'Stop Election' : 'Start Election'}
+                          </button>
+                        </div>
+                      </div>
+                      {status === 'LIVE' && <p className="mt-3 text-sm font-semibold text-[#93000a]">Time left: {remainingTime}</p>}
+                    </div>
+
                     <div className="mt-6 flex flex-col md:flex-row gap-8 md:items-start">
                       <div className="flex justify-center md:justify-start">
                         <div className="relative w-32 h-32 rounded-full overflow-hidden border-[3px] border-[#dfe8ff] bg-[#e7ebff]">
                           <img
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBld01zp49OdHRGNHJ3_-kZDsyOmrn8wDUKxG1_ItOPwX2OAPU2fd6GBflxUcWA9R-AS28wzVSz7TtLTZRLmkhTv1E1YV8dV87sUE1cCuuG_91bt_6pBGLcd7BZJL2lFAoL2Vsi7x4bz6_s3ksdfT-s-sG-PtYJ7b31i0Mz_g3KXoi8uRaiVEvWp6DwdVLptsQunr4v6bHHylirI73BENitqgjupZRfwwSi9aGh29C177qWr-JJIOU"
+                            src={profileAvatar || '/assets/nreerety-removebg-preview.png'}
                             alt="Admin profile"
                             className="w-full h-full object-cover"
                           />
@@ -2887,14 +3364,14 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                           <div>
                             <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#4a5a73] mb-2">Full Name</label>
                             <div className="rounded-xl border border-[#d5dcee] bg-[#f8faff] px-4 py-3 text-base font-medium text-[#1c2945] min-h-[48px] flex items-center">
-                              Election Administrator
+                              {adminName}
                             </div>
                           </div>
 
                           <div>
                             <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#4a5a73] mb-2">Email Address</label>
                             <div className="rounded-xl border border-[#d5dcee] bg-[#f8faff] px-4 py-3 text-base font-medium text-[#1c2945] min-h-[48px] flex items-center">
-                              admin@example.com
+                              {adminEmail || 'Managed by the Electoral Commission'}
                             </div>
                           </div>
                         </div>
@@ -2919,21 +3396,43 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
                           </div>
                         </div>
 
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#4a5a73]">
+                            Display Name
+                            <input value={profileName} disabled={!isEditingProfile} onChange={(event) => setProfileName(event.target.value)} className="mt-2 w-full rounded-xl border border-[#d5dcee] bg-white px-4 py-3 text-base font-medium normal-case tracking-normal text-[#1c2945] outline-none focus:border-[#0b59c6] disabled:bg-[#f8faff] disabled:cursor-not-allowed" />
+                          </label>
+                          <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#4a5a73]">
+                            Profile Picture
+                            <input type="file" accept="image/jpeg,image/png,image/webp" disabled={!isEditingProfile} onChange={handleProfileImage} className="mt-2 block w-full rounded-xl border border-[#d5dcee] bg-white px-3 py-2 text-xs normal-case tracking-normal text-[#1c2945] disabled:bg-[#f8faff] disabled:cursor-not-allowed" />
+                          </label>
+                        </div>
+
                         <div className="flex items-start gap-3 rounded-xl border border-[#d5dcee] bg-[#f7f9ff] px-4 py-3 text-[#4a5a73]">
                           <Info className="w-5 h-5 mt-0.5 text-[#0b59c6] shrink-0" />
-                          <p className="text-base leading-relaxed">
-                            Role and permissions are managed by an authorized administrator. Contact IT support for changes.
-                          </p>
+                          <p className="text-sm leading-relaxed">Your name and picture are shown only in the administrator portal.</p>
                         </div>
 
                         <div className="flex justify-end pt-2">
                           <button
                             type="button"
+                            onClick={() => {
+                              if (isEditingProfile) {
+                                void saveProfile();
+                              } else {
+                                setIsEditingProfile(true);
+                              }
+                            }}
+                            disabled={savingProfile || (isEditingProfile && !profileName.trim())}
                             className="inline-flex items-center gap-2 rounded-xl bg-[#0b59c6] hover:bg-[#0a4ea8] text-white px-5 py-3 text-sm font-bold shadow-sm transition-colors cursor-pointer"
                           >
                             <Settings className="w-4 h-4" />
-                            Edit Profile
+                            {savingProfile ? 'Saving...' : isEditingProfile ? 'Save Profile' : 'Edit Profile'}
                           </button>
+                          {isEditingProfile && !savingProfile && (
+                            <button type="button" onClick={() => { setProfileName(adminName); setProfileAvatar(adminAvatarUrl); setIsEditingProfile(false); }} className="inline-flex items-center gap-2 rounded-xl border border-[#c2c6d5] bg-white px-5 py-3 text-sm font-bold text-[#1c2945] shadow-sm transition-colors hover:bg-[#f8faff]">
+                              Cancel
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -2949,6 +3448,36 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout }) =>
 
 
       {/* REJECTION REASON CONFIRMATION MODAL */}
+      {showImportResults && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-3xl rounded-xl border border-[#c2c6d5] bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div><h2 className="text-xl font-bold text-[#131b2e]">Review Imported Results</h2><p className="mt-1 text-sm text-[#424653]">File: {importFileName}. Check all rows before importing.</p></div>
+              <button type="button" onClick={() => setShowImportResults(false)} aria-label="Close import preview" className="p-2 text-[#737785] hover:bg-[#f2f3ff]"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="mt-4 flex gap-4 text-sm text-[#424653]"><span>Rows detected: <strong>{importRows.length}</strong></span><span>Errors: <strong className={importRows.some((row) => row.error) ? 'text-[#ba1a1a]' : 'text-[#003f93]'}>{importRows.filter((row) => row.error).length}</strong></span></div>
+            <div className="mt-4 max-h-80 overflow-auto border border-[#e2e8f0]">
+              <table className="w-full text-left text-sm"><thead className="bg-[#f2f3ff] text-xs uppercase text-[#424653]"><tr><th className="p-3">Position</th><th className="p-3">Candidate</th><th className="p-3">Votes</th><th className="p-3">Status</th></tr></thead><tbody>{importRows.map((row, index) => <tr key={`${row.position}-${row.candidate}-${index}`} className="border-t border-[#e2e8f0]"><td className="p-3">{row.position || 'Missing'}</td><td className="p-3">{row.candidate || 'Missing'}</td><td className="p-3">{row.votes ?? '—'}</td><td className={`p-3 font-semibold ${row.error ? 'text-[#ba1a1a]' : 'text-[#003f93]'}`}>{row.error || 'Valid'}</td></tr>)}</tbody></table>
+            </div>
+            <div className="mt-5 flex justify-end gap-3"><button type="button" onClick={() => setShowImportResults(false)} className="rounded-lg border border-[#c2c6d5] px-4 py-2 text-sm font-bold text-[#131b2e]">Cancel</button><button type="button" onClick={commitImportedResults} disabled={!importRows.length || importRows.some((row) => row.error)} className="rounded-lg bg-[#0055c2] px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">Import Valid Results</button></div>
+          </div>
+        </div>
+      )}
+
+      {showManualResults && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-xl rounded-xl border border-[#c2c6d5] bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between"><div><h2 className="text-xl font-bold text-[#131b2e]">Enter Election Results</h2><p className="mt-1 text-sm text-[#424653]">Enter vote counts for the selected position.</p></div><button type="button" onClick={() => setShowManualResults(false)} aria-label="Close manual results" className="p-2 text-[#737785] hover:bg-[#f2f3ff]"><X className="h-5 w-5" /></button></div>
+            {positions.length > 0 ? <>
+              <label className="mt-5 block text-sm font-bold text-[#424653]">Position<select value={manualPositionId} onChange={(event) => { const next = event.target.value; setManualPositionId(next); setManualVotes(Object.fromEntries(candidates.filter((candidate) => candidate.positionId === next).map((candidate) => [candidate.id, String(candidate.votesCount)]))); }} className="mt-1 block w-full rounded-lg border border-[#c2c6d5] bg-white px-3 py-2 font-normal text-[#131b2e]">{positions.map((position) => <option key={position.id} value={position.id}>{position.title}</option>)}</select></label>
+              <div className="mt-5 space-y-3">{candidates.filter((candidate) => candidate.positionId === manualPositionId).map((candidate) => <label key={candidate.id} className="flex items-center justify-between gap-4 text-sm font-semibold text-[#131b2e]">{candidate.fullName}<input type="number" min="0" value={manualVotes[candidate.id] ?? '0'} onChange={(event) => setManualVotes((current) => ({ ...current, [candidate.id]: event.target.value }))} className="w-28 rounded-lg border border-[#c2c6d5] px-3 py-2 text-right" /></label>)}</div>
+            </> : <p className="mt-5 rounded-lg border border-[#c2c6d5] bg-[#f8fafc] p-4 text-sm text-[#424653]">No election positions are configured yet. Add a position before entering results.</p>}
+            <div className="mt-5 border-t border-[#e2e8f0] pt-4 text-sm text-[#424653]">Total votes: <strong>{Object.values(manualVotes).reduce((sum, value) => sum + (Number(value) || 0), 0).toLocaleString()}</strong></div>
+            <div className="mt-5 flex justify-end gap-3"><button type="button" onClick={() => setShowManualResults(false)} className="rounded-lg border border-[#c2c6d5] px-4 py-2 text-sm font-bold text-[#131b2e]">Cancel</button><button type="button" onClick={saveManualResults} disabled={!positions.length} className="rounded-lg bg-[#0055c2] px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">Save Position Result</button></div>
+          </div>
+        </div>
+      )}
+
       {showRejectionModal && selectedReviewVoter && (
         <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-[#c2c6d5] max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in duration-150">

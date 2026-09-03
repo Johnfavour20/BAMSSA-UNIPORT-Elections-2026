@@ -26,11 +26,9 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
   onNavigateToRegister,
 }) => {
   const { checkEligibility, voters } = useElection();
-  const [queryInput, setQueryInput] = useState('U2021/5530001');
-  const [searchedVoter, setSearchedVoter] = useState<Voter | null>(() => {
-    return checkEligibility('U2021/5530001') || voters[0] || null;
-  });
-  const [hasSearched, setHasSearched] = useState(true);
+  const [queryInput, setQueryInput] = useState('');
+  const [searchedVoter, setSearchedVoter] = useState<Voter | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
 
   const maskName = (name: string) => {
@@ -101,36 +99,6 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
                 <p className="text-sm text-slate-600">Use the information associated with your BAMSSA/student record.</p>
               </div>
 
-              {/* Quick Preset Selector for Demo testing */}
-              <div className="mb-5 bg-slate-50 border border-slate-200/80 rounded-2xl p-3">
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-[#2563eb]" /> Quick Sample Records (Click to test)
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemo('U2021/5530001')}
-                    className="text-xs px-2.5 py-1 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg text-slate-700 font-medium transition-colors cursor-pointer"
-                  >
-                    U2021/5530001 (John Doe)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemo('U2022/5570012')}
-                    className="text-xs px-2.5 py-1 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg text-slate-700 font-medium transition-colors cursor-pointer"
-                  >
-                    U2022/5570012 (Chidera)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemo('student@uniport.edu.ng')}
-                    className="text-xs px-2.5 py-1 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg text-slate-700 font-medium transition-colors cursor-pointer"
-                  >
-                    student@uniport.edu.ng
-                  </button>
-                </div>
-              </div>
-
               <form onSubmit={handleSearch} className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2" htmlFor="identifier">
@@ -164,20 +132,24 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
 
             {/* Results Area (Inside Left Column) */}
             {hasSearched && searchedVoter && (
-              <div className="bg-green-50 border border-green-200 rounded-3xl p-6 sm:p-8 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className={`${searchedVoter.isAccredited ? 'bg-green-50 border-green-200' : searchedVoter.verificationStatus === 'rejected' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'} border rounded-3xl p-6 sm:p-8 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                 <div className="flex items-center gap-3 mb-6">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                  <h4 className="text-xl font-bold text-green-900">Voter Verified</h4>
+                  {searchedVoter.isAccredited ? (
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  ) : searchedVoter.verificationStatus === 'rejected' ? (
+                    <AlertCircle className="w-8 h-8 text-red-600" />
+                  ) : (
+                    <Clock className="w-8 h-8 text-amber-600" />
+                  )}
+                  <h4 className={`text-xl font-bold ${searchedVoter.isAccredited ? 'text-green-900' : searchedVoter.verificationStatus === 'rejected' ? 'text-red-900' : 'text-amber-900'}`}>
+                    {searchedVoter.isAccredited ? 'Approved & Ready to Vote' : searchedVoter.verificationStatus === 'rejected' ? 'Registration Rejected' : 'Awaiting Admin Approval'}
+                  </h4>
                 </div>
 
                 <div className="bg-white rounded-xl p-5 border border-green-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
                   <div className="space-y-1">
                     <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">Name</p>
-                    <p className="text-base font-bold text-slate-900">
-                      {searchedVoter.fullName.toLowerCase() === 'john doe' 
-                        ? 'JO*** DO**' 
-                        : maskName(searchedVoter.fullName)}
-                    </p>
+                    <p className="text-base font-bold text-slate-900">{maskName(searchedVoter.fullName)}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">Level</p>
@@ -185,21 +157,40 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">Status</p>
-                    <div className="flex items-center gap-1.5 bg-green-100 text-green-800 px-2.5 py-1 rounded-md text-sm font-bold w-fit">
-                      <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                      {searchedVoter.isAccredited ? 'Accredited' : 'Eligible to Accredit'}
+                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-bold w-fit ${searchedVoter.isAccredited ? 'bg-green-100 text-green-800' : searchedVoter.verificationStatus === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>
+                      <span className={`w-2 h-2 rounded-full ${searchedVoter.isAccredited ? 'bg-green-500' : searchedVoter.verificationStatus === 'rejected' ? 'bg-red-500' : 'bg-amber-500'}`}></span>
+                      {searchedVoter.isAccredited ? 'Approved' : searchedVoter.verificationStatus === 'rejected' ? 'Rejected' : 'Pending'}
                     </div>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => onNavigateToLogin(searchedVoter)}
-                  className="w-full bg-green-600 text-white px-6 py-4 rounded-xl text-base font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-                >
-                  Proceed to Login
-                  <ArrowRight className="w-5 h-5" />
-                </button>
+                {searchedVoter.isAccredited && searchedVoter.voterPin && (
+                  <div className="bg-white rounded-xl p-4 border border-green-200 mb-6">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Official 4-Digit PIN</p>
+                    <div className="text-3xl font-black tracking-[0.35em] text-[#003f93]">{searchedVoter.voterPin}</div>
+                  </div>
+                )}
+
+                {searchedVoter.verificationStatus === 'rejected' && searchedVoter.rejectionReason && (
+                  <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                    <span className="font-bold">Reason:</span> {searchedVoter.rejectionReason}
+                  </div>
+                )}
+
+                {searchedVoter.isAccredited ? (
+                  <button
+                    type="button"
+                    onClick={() => onNavigateToLogin(searchedVoter)}
+                    className="w-full bg-green-600 text-white px-6 py-4 rounded-xl text-base font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                  >
+                    Proceed to Login
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <div className="w-full bg-slate-100 text-slate-700 px-6 py-4 rounded-xl text-base font-semibold text-center">
+                    {searchedVoter.verificationStatus === 'rejected' ? 'Please contact ELECO for re-submission.' : 'Your approval is pending. Please wait for the admin to verify your record.'}
+                  </div>
+                )}
               </div>
             )}
 
@@ -221,18 +212,6 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
                   >
                     Register as a Voter
                     <ArrowRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQueryInput('U2021/5530001');
-                      const found = checkEligibility('U2021/5530001');
-                      setSearchedVoter(found);
-                      setErrorStatus(null);
-                    }}
-                    className="bg-white border border-slate-200 text-slate-700 px-5 py-3 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    Load Sample Accredited Voter
                   </button>
                 </div>
               </div>

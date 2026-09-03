@@ -126,7 +126,7 @@ export const GuidelinesView: React.FC<GuidelinesViewProps> = ({
               Need Immediate Electoral Assistance?
             </h4>
             <p className="text-xs text-[#424653] mt-1">
-              ELECO ICT Help Desk is stationed at the BMS Faculty Building, Choba Campus.
+              ELECO ICT Help Desk is stationed at the BMS Faculty Building, Abuja Campus.
             </p>
             <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-[#131b2e] font-medium">
               <span className="flex items-center gap-1.5">
