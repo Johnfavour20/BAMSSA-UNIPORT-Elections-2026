@@ -27,6 +27,7 @@ import { VoterLoginView } from './views/VoterLoginView';
 import { ForgotPasswordView } from './views/ForgotPasswordView';
 import { VoterDashboardView } from './views/VoterDashboardView';
 import { AccreditationStatusView } from './views/AccreditationStatusView';
+import { Voter } from './types';
 import { AdminLoginView } from './views/AdminLoginView';
 
 const VIEW_TO_PATH: Record<string, string> = {
@@ -67,6 +68,7 @@ function ElectionAppContent() {
   const [showElecoAdminModal, setShowElecoAdminModal] = useState(false);
   const [showOnboardingTour, setShowOnboardingTour] = useState(() => localStorage.getItem('election_onboarding_completed') !== 'true');
   const [showAdminOnboardingTour, setShowAdminOnboardingTour] = useState(false);
+  const [selectedAccreditationVoter, setSelectedAccreditationVoter] = useState<Voter | null>(null);
 
   const closeOnboardingTour = () => {
     localStorage.setItem('election_onboarding_completed', 'true');
@@ -195,7 +197,10 @@ function ElectionAppContent() {
                 onSuccessNavigateToVote={() => setCurrentView('vote')}
                 onOpenEligibility={() => setCurrentView('eligibility')}
                 onNavigateToLogin={() => setCurrentView('login')}
-                onNavigateToAccreditationStatus={() => setCurrentView('accreditation-status')}
+                onNavigateToAccreditationStatus={(voter) => {
+                  setSelectedAccreditationVoter(voter);
+                  setCurrentView('accreditation-status');
+                }}
               />
             }
           />
@@ -216,6 +221,7 @@ function ElectionAppContent() {
             path="/accreditation-status"
             element={
               <AccreditationStatusView
+                voter={selectedAccreditationVoter}
                 onNavigateToDashboard={() => setCurrentView(currentVoter ? 'dashboard' : 'home')}
                 onNavigateToElectionDetails={() => setCurrentView('elections')}
               />

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useElection } from '../context/ElectionContext';
-import { BMSDepartment, AcademicLevel } from '../types';
+import { BMSDepartment, AcademicLevel, Voter } from '../types';
 import { 
   User, 
   GraduationCap, 
@@ -26,7 +26,7 @@ interface RegistrationViewProps {
   onSuccessNavigateToVote: () => void;
   onOpenEligibility?: () => void;
   onNavigateToLogin?: () => void;
-  onNavigateToAccreditationStatus?: () => void;
+  onNavigateToAccreditationStatus?: (voter: Voter) => void;
 }
 
 export const RegistrationView: React.FC<RegistrationViewProps> = ({
@@ -56,6 +56,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
 
   // Result state
   const [registrationSubmitted, setRegistrationSubmitted] = useState(false);
+  const [registeredVoter, setRegisteredVoter] = useState<Voter | null>(null);
   const [registeredPin, setRegisteredPin] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedPin, setCopiedPin] = useState(false);
@@ -161,6 +162,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
     });
 
     if (created) {
+      setRegisteredVoter(created);
       setRegistrationSubmitted(true);
       setRegisteredPin(null);
     }
@@ -231,7 +233,8 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
             <div className="flex flex-col sm:flex-row gap-3 pt-2 max-w-md mx-auto">
               {onNavigateToAccreditationStatus && (
                 <button
-                  onClick={onNavigateToAccreditationStatus}
+                  onClick={() => registeredVoter && onNavigateToAccreditationStatus(registeredVoter)}
+                  disabled={!registeredVoter}
                   className="flex-1 bg-white border border-[#c2c6d5] hover:bg-[#eaedff] text-[#003f93] font-bold py-3.5 px-5 rounded-xl text-sm sm:text-base transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Check Status</span>

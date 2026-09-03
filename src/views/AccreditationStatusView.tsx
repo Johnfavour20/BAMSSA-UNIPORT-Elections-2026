@@ -1,5 +1,6 @@
 import React from 'react';
 import { useElection } from '../context/ElectionContext';
+import { Voter } from '../types';
 import { 
   Clock, 
   Calendar, 
@@ -13,23 +14,33 @@ import {
 } from 'lucide-react';
 
 interface AccreditationStatusViewProps {
+  voter?: Voter | null;
   onNavigateToDashboard: () => void;
   onNavigateToElectionDetails: () => void;
 }
 
 export const AccreditationStatusView: React.FC<AccreditationStatusViewProps> = ({
+  voter,
   onNavigateToDashboard,
   onNavigateToElectionDetails,
 }) => {
   const { currentVoter, voters } = useElection();
-  const liveVoter = currentVoter ? voters.find((voter) => voter.id === currentVoter.id) || currentVoter : null;
+  const trackedVoter = voter || currentVoter;
+  const liveVoter = trackedVoter ? voters.find((item) => item.id === trackedVoter.id || item.matricNumber === trackedVoter.matricNumber) || trackedVoter : null;
   const isRejected = liveVoter?.verificationStatus === 'rejected';
   const isAccredited = Boolean(liveVoter?.isAccredited);
 
-  // Voter details (fallback to design mock data if not logged in)
-  const voterName = liveVoter?.fullName || 'John Doe';
-  const matricNo = liveVoter?.matricNumber || 'BMS/2022/12345';
-  const level = liveVoter?.level || '400';
+  if (!liveVoter) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] bg-[#F8FAFC] px-4 py-12 text-center text-[#424653]">
+        No registration is selected. Submit a registration or sign in to view its accreditation status.
+      </div>
+    );
+  }
+
+  const voterName = liveVoter.fullName;
+  const matricNo = liveVoter.matricNumber;
+  const level = liveVoter.level;
   const statusLabel = isRejected ? 'Rejected' : isAccredited ? 'Approved' : 'Submitted';
   const statusHeading = isRejected ? 'ACCREDITATION REJECTED' : isAccredited ? 'ACCREDITATION APPROVED' : 'ACCREDITATION PENDING';
   const statusMessage = isRejected
