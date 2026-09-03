@@ -16,6 +16,7 @@ if BASE_DIR not in sys.path:
 
 
 DB_PATH = os.environ.get('BAMSSA_DB_PATH', os.path.join(BASE_DIR, 'election_demo.db'))
+os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
 ADMIN_PASSCODE = os.environ.get('BAMSSA_ADMIN_PASSCODE')
 ADMIN_NAME = os.environ.get('BAMSSA_ADMIN_NAME', 'Administrator').strip() or 'Administrator'
 ADMIN_EMAILS = {email.strip().lower() for email in os.environ.get('BAMSSA_ADMIN_EMAILS', '').split(',') if email.strip()}
