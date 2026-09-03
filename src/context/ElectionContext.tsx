@@ -60,7 +60,10 @@ interface ElectionContextType {
 
 const ElectionContext = createContext<ElectionContextType | undefined>(undefined);
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+const configuredApiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '');
+const API_BASE = configuredApiBase
+  ? (configuredApiBase.endsWith('/api') ? configuredApiBase : `${configuredApiBase}/api`)
+  : '/api';
 
 const STORAGE_KEYS = {
   STATUS: 'bamssa_election_status_2026',
