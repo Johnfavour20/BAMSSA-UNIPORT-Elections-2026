@@ -331,19 +331,19 @@ export const VoterDashboardView: React.FC<VoterDashboardViewProps> = ({
             <ul className="space-y-1">
               <li className="flex justify-between items-center py-2.5 border-b border-slate-100">
                 <span className="text-xs sm:text-sm text-[#424653]">Voter Registration</span>
-                <span className="text-xs sm:text-sm font-semibold text-[#131b2e]">01-10 Aug</span>
+                <span className="text-xs sm:text-sm font-semibold text-[#131b2e]">4 Sep</span>
               </li>
               <li className="flex justify-between items-center py-2.5 border-b border-slate-100">
                 <span className="text-xs sm:text-sm text-[#424653]">Accreditation</span>
-                <span className="text-xs sm:text-sm font-semibold text-[#131b2e]">11-17 Aug</span>
+                <span className="text-xs sm:text-sm font-semibold text-[#131b2e]">4 Sep</span>
               </li>
               <li className="flex justify-between items-center py-2.5 border-b border-slate-100 bg-[#F1F5F9] -mx-2 px-3 rounded-lg">
                 <span className="text-xs sm:text-sm text-[#003f93] font-bold">Election Day</span>
-                <span className="text-xs sm:text-sm font-bold text-[#003f93]">20 Aug</span>
+                <span className="text-xs sm:text-sm font-bold text-[#003f93]">4 Sep</span>
               </li>
               <li className="flex justify-between items-center py-2.5">
                 <span className="text-xs sm:text-sm text-[#424653]">Results Declaration</span>
-                <span className="text-xs sm:text-sm font-semibold text-[#131b2e]">22 Aug</span>
+                <span className="text-xs sm:text-sm font-semibold text-[#131b2e]">4 Sep</span>
               </li>
             </ul>
           </section>

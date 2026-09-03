@@ -193,7 +193,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
                 Registration
               </h3>
               <p className="text-sm text-[#424653]">
-                Aug 1 – Aug 10
+                Sep 4, 2026
               </p>
             </div>
 
@@ -204,7 +204,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
                 Accreditation
               </h3>
               <p className="text-sm text-[#424653]">
-                Aug 11 – Aug 17
+                Sep 4, 2026
               </p>
             </div>
 
@@ -216,7 +216,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
                 Voting Day
               </h3>
               <p className="text-sm text-white/80 relative z-10">
-                Aug 20, 8 AM - 4 PM
+                Sep 4, 8 AM - 4 PM
               </p>
             </div>
 
@@ -227,7 +227,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
                 Results
               </h3>
               <p className="text-sm text-[#424653]">
-                Aug 20, 5 PM
+                Sep 4, 5 PM
               </p>
             </div>
           </div>
