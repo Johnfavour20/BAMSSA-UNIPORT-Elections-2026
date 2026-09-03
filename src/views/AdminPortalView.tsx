@@ -134,6 +134,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
   const [editableCommissionMembers, setEditableCommissionMembers] = useState(commissionMembers);
   const [savingCommissionMembers, setSavingCommissionMembers] = useState(false);
   const [commissionMembersDirty, setCommissionMembersDirty] = useState(false);
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
 
   useEffect(() => {
     setProfileName(adminName);
@@ -150,12 +151,24 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
   const handleProfileImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
-      showToast('Choose a JPG, PNG, or WebP image under 2 MB.', 'error');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      showToast('Choose a JPG, PNG, or WebP image.', 'error');
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => setProfileAvatar(typeof reader.result === 'string' ? reader.result : null);
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return;
+      const image = new Image();
+      image.onload = () => {
+        const scale = Math.min(1, 1200 / Math.max(image.width, image.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        canvas.getContext('2d')?.drawImage(image, 0, 0, canvas.width, canvas.height);
+        setProfileAvatar(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      image.src = reader.result;
+    };
     reader.readAsDataURL(file);
   };
 
@@ -765,28 +778,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
           })}
         </ul>
 
-        {/* Destructive CTA & Bottom Menu Items */}
+        {/* Bottom Menu Items */}
         <div className={`mt-auto border-t border-[#c2c6d5] pt-3 space-y-2 ${isSidebarCollapsed ? 'px-0' : ''}`}>
-          {/* Destructive Reset Election CTA */}
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm('WARNING: Are you sure you want to reset the entire election? All cast votes, voter accreditations, and audit logs will be reset to factory defaults.')) {
-                void resetElectionData().then((result) => {
-                  showToast(
-                    result.success ? 'Election system reset successfully.' : (result.message || 'Unable to reset the election.'),
-                    result.success ? 'info' : 'error'
-                  );
-                });
-              }
-            }}
-            className={`w-full bg-[#DC2626] hover:bg-red-700 text-white text-xs font-bold py-2.5 ${isSidebarCollapsed ? 'px-0 justify-center' : 'px-3 justify-center'} rounded-lg flex items-center gap-2 transition-colors cursor-pointer shadow-xs`}
-            title={isSidebarCollapsed ? 'Reset Election' : undefined}
-          >
-            <AlertTriangle className="w-4 h-4 text-white" />
-            {!isSidebarCollapsed && <span>Reset Election</span>}
-          </button>
-
           <button
             type="button"
             onClick={() => {
@@ -3371,6 +3364,23 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                       {status === 'LIVE' && <p className="mt-3 text-sm font-semibold text-[#93000a]">Time left: {remainingTime}</p>}
                     </div>
 
+                    <div className="mt-6 rounded-xl border border-[#fecaca] bg-[#fff7f7] p-4">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <h4 className="text-base font-bold text-[#991b1b]">Danger Zone</h4>
+                          <p className="mt-1 text-sm text-[#7f1d1d]">Reset the election only when you are ready to remove all election records.</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowResetConfirmation(true)}
+                          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#dc2626] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#b91c1c]"
+                        >
+                          <AlertTriangle className="h-4 w-4" />
+                          Reset Election
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="mt-6 flex flex-col md:flex-row gap-8 md:items-start">
                       <div className="flex justify-center md:justify-start">
                         <div className="relative w-32 h-32 rounded-full overflow-hidden border-[3px] border-[#dfe8ff] bg-[#e7ebff]">
@@ -3469,6 +3479,26 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
       </div>
 
 
+
+      {showResetConfirmation && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div role="alertdialog" aria-modal="true" aria-labelledby="reset-election-title" className="w-full max-w-md rounded-2xl border border-[#fecaca] bg-white p-6 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fee2e2] text-[#b91c1c]">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 id="reset-election-title" className="text-xl font-bold text-[#7f1d1d]">Reset entire election?</h2>
+                <p className="mt-2 text-sm leading-relaxed text-[#424653]">This will permanently remove candidates, positions, voters, votes, statistics, results, and audit records. This action cannot be undone.</p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => setShowResetConfirmation(false)} className="rounded-lg border border-[#c2c6d5] px-4 py-2.5 text-sm font-bold text-[#131b2e] hover:bg-[#f8fafc]">Cancel</button>
+              <button type="button" onClick={() => { setShowResetConfirmation(false); void resetElectionData().then((result) => showToast(result.success ? 'Election system reset successfully.' : (result.message || 'Unable to reset the election.'), result.success ? 'info' : 'error')); }} className="rounded-lg bg-[#dc2626] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#b91c1c]">Yes, Reset Election</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* REJECTION REASON CONFIRMATION MODAL */}
       {showImportResults && (
