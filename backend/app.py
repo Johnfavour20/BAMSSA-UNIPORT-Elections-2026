@@ -37,6 +37,8 @@ def get_db_connection() -> sqlite3.Connection:
 
 @app.before_request
 def require_admin_session() -> Any:
+    if request.method == 'OPTIONS':
+        return None
     protected_paths = {
         '/api/voters/accredit',
         '/api/voters/reject',
