@@ -441,10 +441,13 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const adminFetch = (url: string, options: RequestInit = {}) => fetch(url, {
+  const adminFetch = (url: string, options: RequestInit = {}) => fetch(
+    url.startsWith('http') ? url : `${API_BASE}${url.startsWith('/api') ? url.slice(4) : url}`,
+    {
     ...options,
     headers: { ...(options.headers || {}), 'X-Admin-Session': adminSession || '' },
-  });
+    },
+  );
 
   const accreditVoter = async (matricNumber: string) => {
     const trimmed = matricNumber.trim().toUpperCase();
