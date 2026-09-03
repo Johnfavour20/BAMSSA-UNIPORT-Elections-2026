@@ -33,6 +33,7 @@ export const LiveMonitorView: React.FC<LiveMonitorViewProps> = ({
     endTime,
     positions,
     candidates,
+    commissionMembers,
     totalEligible,
     totalBallotsCast,
     turnoutPercentage,
@@ -326,10 +327,7 @@ export const LiveMonitorView: React.FC<LiveMonitorViewProps> = ({
             <div className="bg-white border border-[#c2c6d5] rounded-xl p-5 shadow-sm">
               <h3 className="mb-4 text-xl font-bold text-[#131b2e]">Electoral Commission</h3>
               <div className="space-y-4">
-                {[
-                  { initials: 'EC', name: 'Dr. Samuel Ojo', role: 'Chief Electoral Officer' },
-                  { initials: 'RO', name: 'Prof. Grace Nnamdi', role: 'Returning Officer' },
-                ].map((person) => (
+                {commissionMembers.map((person) => (
                   <div key={person.name} className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#eaeefc] text-[11px] font-bold text-[#424653]">
                       {person.initials}
