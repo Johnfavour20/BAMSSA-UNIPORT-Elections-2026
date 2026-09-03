@@ -440,7 +440,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
       const matches =
         v.fullName.toLowerCase().includes(query) ||
         v.matricNumber.toLowerCase().includes(query) ||
-        v.email.toLowerCase().includes(query) ||
+        v.email?.toLowerCase().includes(query) ||
         v.department.toLowerCase().includes(query);
       if (!matches) return false;
     }
