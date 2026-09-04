@@ -112,7 +112,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
 
   const configuredApiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '');
   const API_BASE = configuredApiBase
-    ? (configuredApiBase.endsWith('/api') ? configuredApiBase : `${configuredApiBase}/api`)
+    ? (configuredApiBase.endsWith('/api')
+      ? configuredApiBase
+      : `${configuredApiBase.replace(/\/election$/, '')}/api`)
     : '/api';
   const [activeTab, setActiveTab] = useState<AdminTab>('verification');
   const [voterSearch, setVoterSearch] = useState('');

@@ -20,7 +20,10 @@ os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
 ADMIN_PASSCODE = os.environ.get('BAMSSA_ADMIN_PASSCODE')
 ADMIN_NAME = os.environ.get('BAMSSA_ADMIN_NAME', 'Administrator').strip() or 'Administrator'
 ADMIN_EMAILS = {email.strip().lower() for email in os.environ.get('BAMSSA_ADMIN_EMAILS', '').split(',') if email.strip()}
-CORS_ORIGINS = [origin.strip() for origin in os.environ.get('BAMSSA_CORS_ORIGINS', 'http://localhost:3000').split(',') if origin.strip()]
+CORS_ORIGINS = [origin.strip() for origin in os.environ.get(
+    'BAMSSA_CORS_ORIGINS',
+    'http://localhost:3000,https://bamssa-uniport-elections-2026.vercel.app,https://*.vercel.app',
+).split(',') if origin.strip()]
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": CORS_ORIGINS}})

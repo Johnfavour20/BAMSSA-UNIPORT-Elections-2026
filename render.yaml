@@ -20,4 +20,4 @@ services:
       - key: BAMSSA_ADMIN_EMAILS
         sync: false
       - key: BAMSSA_CORS_ORIGINS
-        sync: false
+        value: https://bamssa-uniport-elections-2026.vercel.app,https://*.vercel.app

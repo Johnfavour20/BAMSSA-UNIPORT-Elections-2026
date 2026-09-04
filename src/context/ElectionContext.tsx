@@ -62,7 +62,9 @@ const ElectionContext = createContext<ElectionContextType | undefined>(undefined
 
 const configuredApiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '');
 const API_BASE = configuredApiBase
-  ? (configuredApiBase.endsWith('/api') ? configuredApiBase : `${configuredApiBase}/api`)
+  ? (configuredApiBase.endsWith('/api')
+    ? configuredApiBase
+    : `${configuredApiBase.replace(/\/election$/, '')}/api`)
   : '/api';
 
 const STORAGE_KEYS = {
