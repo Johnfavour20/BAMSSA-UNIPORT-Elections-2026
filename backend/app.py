@@ -529,7 +529,11 @@ def before_request() -> None:
 
 @app.get('/api/health')
 def health() -> Any:
-    return jsonify({'ok': True, 'time': utc_now_iso()})
+    return jsonify({
+        'ok': True,
+        'time': utc_now_iso(),
+        'storage': 'postgresql' if DATABASE_URL else 'sqlite',
+    })
 
 
 @app.get('/favicon.svg')
