@@ -51,6 +51,8 @@ class DatabaseConnection:
         if self.postgres:
             query = query.replace('BEGIN IMMEDIATE', 'BEGIN')
             query = query.replace('MAX(0, eligible - ?', 'GREATEST(0, eligible - %s')
+            query = query.replace('MAX(0, accredited - ?', 'GREATEST(0, accredited - %s')
+            query = query.replace('MAX(0, voted - ?', 'GREATEST(0, voted - %s')
             query = query.replace('?', '%s')
         return self._connection.execute(query, parameters)
 
@@ -1001,7 +1003,7 @@ def register_voter() -> Any:
         return jsonify({'success': False, 'message': 'Voter already exists.'}), 409
 
     now = utc_now_iso()
-    conn.execute(
+    insert_cursor = conn.execute(
         """
         INSERT INTO voters (
             id, matric_number, full_name, department, level, email, phone,
@@ -1009,6 +1011,7 @@ def register_voter() -> Any:
             voted_time, ballot_receipt_hash, avatar_url, verification_status,
             registered_at, rejection_reason, id_card_url, registration_id, review_notes
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (matric_number) DO NOTHING
         """,
         (
             f"voter-{int(datetime.now(timezone.utc).timestamp() * 1000)}",
@@ -1034,6 +1037,9 @@ def register_voter() -> Any:
             None,
         ),
     )
+    if insert_cursor.rowcount == 0:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Voter already exists.'}), 409
     conn.execute(
             "INSERT INTO department_stats (department, eligible, accredited, voted) VALUES (?, ?, ?, ?) ON CONFLICT(department) DO UPDATE SET eligible = department_stats.eligible + 1",
         (payload['department'], 1, 0, 0),
@@ -1053,7 +1059,10 @@ def accredit_voter() -> Any:
 
     conn = get_db_connection()
     conn.execute('BEGIN IMMEDIATE')
-    voter = conn.execute("SELECT * FROM voters WHERE UPPER(matric_number) = ?", (matric_number,)).fetchone()
+    voter_query = "SELECT * FROM voters WHERE UPPER(matric_number) = ?"
+    if conn.postgres:
+        voter_query += " FOR UPDATE"
+    voter = conn.execute(voter_query, (matric_number,)).fetchone()
     if voter is None:
         conn.close()
         return jsonify({'success': False, 'message': 'Voter not found.'}), 404
@@ -1161,7 +1170,10 @@ def cast_ballot() -> Any:
         return jsonify({'success': False, 'message': 'Ballot selections are invalid.'}), 400
 
     conn = get_db_connection()
-    voter = conn.execute("SELECT * FROM voters WHERE id = ?", (voter_id,)).fetchone()
+    voter_query = "SELECT * FROM voters WHERE id = ?"
+    if conn.postgres:
+        voter_query += " FOR UPDATE"
+    voter = conn.execute(voter_query, (voter_id,)).fetchone()
     if voter is None:
         conn.close()
         return jsonify({'success': False, 'message': 'Voter not found.'}), 404
