@@ -157,7 +157,7 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
               <Vote className="w-6 h-6" />
             </div>
             <h2 className="text-xl font-bold text-white tracking-tight">
-              BAMSSA 2026 Ballot Booth
+              FABAMSSA 2026 Ballot Booth
             </h2>
             <p className="text-xs text-white/80 mt-1">
               Confidential Electronic Voting Authentication
@@ -257,10 +257,10 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
               Official Ballot Receipt
             </span>
             <h2 className="text-2xl font-bold text-white tracking-tight">
-              BAMSSA 2026 Ballot Receipt
+              FABAMSSA 2026 Ballot Receipt
             </h2>
             <p className="text-xs text-white/80 mt-1">
-              Basic Medical Science Students' Association • University of Port Harcourt
+              Faculty of Basic Medical Science Students Association (FABAMSSA) • University of Port Harcourt
             </p>
           </div>
 
@@ -274,7 +274,7 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
                   1-Student-1-Ballot Confirmed &amp; Recorded
                 </p>
                 <p className="text-[#424653]">
-                  Your ballot has been accepted into the live ELECO tally record. In accordance with Article IV of the BAMSSA Electoral Guidelines, ballot choices are decoupled from voter identities in the official result process.
+                  Your ballot has been accepted into the live ELECO tally record. In accordance with Article IV of the FABAMSSA Electoral Guidelines, ballot choices are decoupled from voter identities in the official result process.
                 </p>
               </div>
             </div>
@@ -374,7 +374,7 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
             <div className="bg-[#f2f3ff] p-4 sm:p-5 rounded-2xl border border-[#c2c6d5] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-xs">
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-[#131b2e] mb-0.5">
-                  BAMSSA General Elections 2026
+                  FABAMSSA General Elections 2026
                 </h2>
                 <p className="text-xs sm:text-sm text-[#424653]">
                   Verify your selections for all positions.
@@ -672,7 +672,7 @@ export const VotingBoothView: React.FC<VotingBoothViewProps> = ({
             <div className="mb-8 border-b border-[#c2c6d5] pb-6">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
                 <h1 className="text-lg sm:text-xl font-bold text-[#131b2e] flex items-center gap-2.5 flex-wrap">
-                  BAMSSA GENERAL ELECTIONS 2026
+                  FABAMSSA GENERAL ELECTIONS 2026
                   <span className="inline-flex items-center gap-1.5 bg-[#DBEAFE] text-[#1E40AF] px-2.5 py-0.5 rounded-full text-xs font-bold">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#1E40AF]"></span>
                     VOTING IS LIVE

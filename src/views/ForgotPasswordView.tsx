@@ -47,7 +47,7 @@ export const ForgotPasswordView: React.FC<ForgotPasswordViewProps> = ({
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white border border-slate-200 shadow-2xs mb-3 sm:mb-4 overflow-hidden">
             <img
               className="w-full h-full object-contain p-1"
-              alt="BAMSSA Medical Emblem"
+              alt="FABAMSSA Medical Emblem"
               src="/assets/nreerety-removebg-preview.png"
             />
           </div>
@@ -63,7 +63,7 @@ export const ForgotPasswordView: React.FC<ForgotPasswordViewProps> = ({
           </h1>
           
           <p className="text-xs sm:text-sm text-[#424653] text-center leading-relaxed">
-            Enter the email address or matriculation number associated with your BAMSSA voter account and we'll help you regain access.
+            Enter the email address or matriculation number associated with your FABAMSSA voter account and we'll help you regain access.
           </p>
         </div>
 

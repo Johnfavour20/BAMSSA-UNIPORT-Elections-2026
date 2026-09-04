@@ -21,7 +21,7 @@ export const AboutSection: React.FC = () => {
             <div className="relative overflow-hidden rounded-2xl border border-[#c2c6d5]/80 bg-white p-5 shadow-[0_16px_35px_rgba(15,23,42,0.04)] sm:p-6">
               <div className="absolute left-0 top-0 h-full w-1.5 bg-[#0055c2]" />
               <p className="pl-3 text-[15px] leading-[1.8] text-[#1e293b] sm:text-[17px]">
-                The BAMSSA Electoral Commission (ELECO) is committed to conducting free, fair, and credible elections. We leverage technology to ensure every medical student's voice is heard and accurately recorded.
+                The FABAMSSA Electoral Committee (ELECO) is committed to conducting free, fair, and credible elections. We leverage technology to ensure every medical student's voice is heard and accurately recorded.
               </p>
             </div>
 

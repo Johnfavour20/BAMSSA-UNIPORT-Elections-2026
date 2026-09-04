@@ -63,7 +63,7 @@ export const VoterLoginView: React.FC<VoterLoginViewProps> = ({
           <div className="flex flex-col items-center text-center mb-5">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#eaedff] border border-slate-200 mb-3 sm:mb-4 flex items-center justify-center shadow-2xs overflow-hidden">
               <img
-                alt="BAMSSA Logo"
+                alt="FABAMSSA Logo"
                 className="w-full h-full object-cover"
                 src="/assets/nreerety-removebg-preview.png"
               />

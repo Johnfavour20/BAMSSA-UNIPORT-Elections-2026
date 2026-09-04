@@ -62,12 +62,12 @@ export const Header: React.FC<HeaderProps> = ({
           }}
         >
           <img
-            alt="BAMSSA Logo"
+            alt="FABAMSSA Logo"
             className="h-9 w-9 rounded-lg object-contain ring-2 ring-[#dfe7ff] sm:h-10 sm:w-10"
             src="/assets/nreerety-removebg-preview.png"
           />
           <span className="truncate text-sm font-extrabold tracking-[-0.02em] text-[#003f93] sm:text-base lg:text-lg">
-            BAMSSA ELECTIONS
+            FABAMSSA ELECTIONS
           </span>
         </div>
 

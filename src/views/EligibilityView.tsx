@@ -86,7 +86,7 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
             Check Your Eligibility
           </h2>
           <p className="text-base text-slate-600 leading-relaxed">
-            Confirm that you're registered and eligible to participate in the BAMSSA 2026 General Executive Council Elections.
+            Confirm that you're registered and eligible to participate in the FABAMSSA 2026 General Executive Council Elections.
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
             <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm">
               <div className="mb-6 border-b border-slate-100 pb-5">
                 <h3 className="text-xl font-bold text-slate-900 mb-1.5">Enter Your Student Details</h3>
-                <p className="text-sm text-slate-600">Use the information associated with your BAMSSA/student record.</p>
+                <p className="text-sm text-slate-600">Use the information associated with your FABAMSSA/student record.</p>
               </div>
 
               <form onSubmit={handleSearch} className="space-y-6">

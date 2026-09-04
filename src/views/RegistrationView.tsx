@@ -186,7 +186,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
             Voter Registration
           </h1>
           <p className="text-sm text-[#424653] leading-relaxed">
-            Submit your official UNIPORT student details to get accredited for the BAMSSA 2026 elections.
+            Submit your official UNIPORT student details to get accredited for the FABAMSSA 2026 elections.
           </p>
         </div>
 

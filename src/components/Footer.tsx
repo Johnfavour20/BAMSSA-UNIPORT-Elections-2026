@@ -23,22 +23,24 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
               <img
-                alt="BAMSSA Logo"
+                alt="FABAMSSA Logo"
                 className="h-11 w-11 object-contain rounded-md"
                 src="/assets/nreerety-removebg-preview.png"
               />
               <div>
-                <h2 className="text-xl font-bold text-[#003f93] leading-none">BAMSSA UNIPORT</h2>
+                <h2 className="text-xl font-bold text-[#003f93] leading-none">FABAMSSA UNIPORT</h2>
                 <span className="inline-block mt-1 bg-[#0055c2] text-white text-[10px] px-2 py-0.5 rounded-none font-bold">
                   2026
                 </span>
               </div>
             </div>
             <p className="text-sm text-[#424653] leading-relaxed">
-              Official democratic voting portal for the Basic Medical Science Students' Association, University of Port Harcourt Chapter. Built for zero-compromise ballot secrecy and live transparency.
+              Official democratic voting portal for the Faculty of Basic Medical Science Students Association (FABAMSSA), University of Port Harcourt Chapter. Built for zero-compromise ballot secrecy and live transparency.
             </p>
-            <div className="text-xs text-[#737785] pt-2">
-              Faculty of Basic Medical Sciences • College of Health Sciences
+            <div className="text-xs text-[#737785] pt-1 space-y-1">
+              <p className="italic font-medium text-[#003f93]">Motto: Structural &amp; Functional Pathway to Modern Medicine</p>
+              <p>Faculty of Basic Medical Sciences • College of Health Sciences</p>
+              <p className="text-[11px] text-[#737785]">Secretariat: East-West Road, P.O. Box 5353, Choba, Port Harcourt, Rivers State</p>
             </div>
           </div>
 
@@ -136,10 +138,10 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="border-t border-[#c2c6d5]/70 pt-8 flex flex-col lg:flex-row justify-between items-center gap-4 text-center lg:text-left">
           <div className="flex flex-col gap-1">
             <p className="text-xs font-semibold text-[#131b2e]">
-              © 2026 BAMSSA Electoral Commission (ELECO).
+              © 2026 FABAMSSA Electoral Committee (ELECO).
             </p>
             <p className="text-[11px] text-[#737785]">
-              Official Electoral Platform • Secure &amp; Confidential Voting
+              Official Electoral Platform • University of Port Harcourt Chapter
             </p>
           </div>
 

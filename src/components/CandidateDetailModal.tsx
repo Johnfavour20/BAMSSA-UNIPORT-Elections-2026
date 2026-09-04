@@ -111,7 +111,7 @@ export const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
               <CheckCircle2 className="w-4 h-4 text-[#15803d]" />
               <span className="font-semibold text-[#131b2e]">Screened &amp; Certified by ELECO</span>
             </div>
-            <span className="text-[11px] text-[#737785]">BAMSSA Constitution 2026/2027</span>
+            <span className="text-[11px] text-[#737785]">FABAMSSA Constitution 2026/2027</span>
           </div>
         </div>
 

@@ -10,7 +10,7 @@ interface OnboardingTourProps {
 
 const VOTER_STEPS = [
   {
-    title: 'Welcome to BAMSSA Elections',
+    title: 'Welcome to FABAMSSA Elections',
     description: 'This short guide shows you how to check your status, register, vote, and follow official election updates.',
     icon: ShieldCheck,
     view: 'home',

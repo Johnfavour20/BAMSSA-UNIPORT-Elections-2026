@@ -74,13 +74,19 @@ export const GuidelinesView: React.FC<GuidelinesViewProps> = ({
 
         {/* Title Header */}
         <div className="text-center max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#eaedff] text-[#003f93] rounded-md text-xs font-bold uppercase tracking-wider mb-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#eaedff] text-[#003f93] rounded-md text-xs font-bold uppercase tracking-wider mb-2">
             <BookOpen className="w-3.5 h-3.5" />
             <span>Official Electoral Guidelines &amp; Charter</span>
           </div>
+          <p className="text-xs font-bold uppercase tracking-widest text-[#0055c2] mb-1">
+            Faculty of Basic Medical Science Students Association (FABAMSSA) • UNIPORT Chapter
+          </p>
           <h2 className="text-3xl font-bold text-[#131b2e] tracking-tight">
-            BAMSSA UNIPORT Elections 2026/2027
+            FABAMSSA UNIPORT Elections 2026/2027
           </h2>
+          <p className="text-xs italic text-[#003f93] font-medium mt-1">
+            MOTTO: Structural &amp; Functional Pathway to Modern Medicine
+          </p>
           <p className="text-sm text-[#424653] mt-2">
             In line with <strong>Article 15, Section 15.4</strong> of the FABAMSSA Constitution — Rules and Regulations governing the conduct of all aspirants during any Faculty of Basic Medical Sciences Students Association Election.
           </p>
@@ -232,7 +238,7 @@ export const GuidelinesView: React.FC<GuidelinesViewProps> = ({
             <div className="p-4 bg-[#faf8ff] border border-[#c2c6d5]/70 rounded-xl">
               <h4 className="text-sm font-bold text-[#131b2e] mb-1">Can I vote from my mobile phone or laptop?</h4>
               <p className="text-xs text-[#424653] leading-relaxed">
-                Yes. The BAMSSA 2026 electoral system is fully responsive and compatible with mobile smartphones, tablets, and computers across any modern browser.
+                Yes. The FABAMSSA 2026 electoral system is fully responsive and compatible with mobile smartphones, tablets, and computers across any modern browser.
               </p>
             </div>
             <div className="p-4 bg-[#faf8ff] border border-[#c2c6d5]/70 rounded-xl">

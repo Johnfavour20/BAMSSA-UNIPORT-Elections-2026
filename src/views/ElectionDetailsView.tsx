@@ -91,7 +91,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6 relative z-10">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-[#003f93] bg-[#eaedff] px-2.5 py-1 rounded-md tracking-wider uppercase">
-                BAMSSA UNIPORT
+                FABAMSSA UNIPORT
               </span>
               <span className="text-xs font-semibold text-[#737785] uppercase tracking-wider">
                 • Election 2026
@@ -106,10 +106,10 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
           {/* Main Title & Subtitle */}
           <div className="mb-8 relative z-10">
             <h1 className="text-3xl md:text-5xl font-bold text-[#131b2e] tracking-tight mb-2 leading-tight">
-              BAMSSA UNIPORT Chapter
+              FABAMSSA UNIPORT Chapter
             </h1>
             <p className="text-base md:text-lg font-medium text-[#424653]">
-              General Executive Council Elections
+              Faculty of Basic Medical Science Students Association • General Executive Elections
             </p>
           </div>
 
@@ -176,7 +176,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
             Overview
           </h2>
           <p className="text-base md:text-lg text-[#424653] leading-relaxed">
-            The BAMSSA UNIPORT 2026/2027 tenure elections represent a critical juncture for our student body. We are committed to an electoral process that prioritizes academic integrity, utmost security, and institutional authority. This election will employ advanced protocols to ensure absolute ballot secrecy while maintaining transparent, verifiable audit logs. Your participation shapes the future of our association.
+            The FABAMSSA UNIPORT 2026/2027 tenure elections represent a critical juncture for our student body. We are committed to an electoral process that prioritizes academic integrity, utmost security, and institutional authority. This election will employ advanced protocols to ensure absolute ballot secrecy while maintaining transparent, verifiable audit logs. Your participation shapes the future of our association.
           </p>
         </section>
 
@@ -316,13 +316,13 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
           )}
         </section>
 
-        {/* 5. Authentic BAMSSA Faculty Constituency Banner (BAMSSA Identity Moment) */}
+        {/* 5. Authentic FABAMSSA Faculty Constituency Banner */}
         <section className="bg-gradient-to-r from-[#eaedff] via-[#f2f3ff] to-[#e2e7ff] border border-[#b0c6ff]/60 rounded-2xl p-6 sm:p-8 relative overflow-hidden">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
             <div className="space-y-2 max-w-xl">
               <div className="flex items-center gap-2">
                 <img
-                  alt="BAMSSA Logo"
+                  alt="FABAMSSA Logo"
                   className="h-7 w-7 object-contain rounded-md"
                   src="/assets/nreerety-removebg-preview.png"
                 />
@@ -334,7 +334,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
                 Constituent Departmental Electorate
               </h3>
               <p className="text-xs md:text-sm text-[#424653] leading-relaxed">
-                Eligible students across the Anatomy and Psychology departments participate in this general electoral mandate.
+                Eligible students across the Anatomy and Physiology departments participate in this general electoral mandate.
               </p>
             </div>
 
@@ -346,15 +346,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
               </div>
               <div className="bg-white/80 backdrop-blur-xs border border-[#c2c6d5]/70 rounded-lg px-3 py-2 text-xs font-semibold text-[#003f93] flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#0055c2]" />
-                <span>Psychology</span>
-              </div>
-              <div className="bg-white/80 backdrop-blur-xs border border-[#c2c6d5]/70 rounded-lg px-3 py-2 text-xs font-semibold text-[#003f93] flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0055c2]" />
-                <span>Anatomy</span>
-              </div>
-              <div className="bg-white/80 backdrop-blur-xs border border-[#c2c6d5]/70 rounded-lg px-3 py-2 text-xs font-semibold text-[#003f93] flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0055c2]" />
-                <span>Psychology</span>
+                <span>Physiology</span>
               </div>
             </div>
           </div>
@@ -381,7 +373,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-[#0055c2] shrink-0 mt-0.5" />
-                <span>Fully accredited by the BAMSSA Electoral Commission (ELECO).</span>
+                <span>Fully accredited by the FABAMSSA Electoral Committee (ELECO).</span>
               </li>
             </ul>
           </div>
@@ -450,7 +442,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
           {/* Electoral Guidelines Strip */}
           <div className="bg-[#eaedff]/70 p-6 rounded-xl border border-[#c2c6d5]/70">
             <p className="text-sm md:text-base text-[#424653] leading-relaxed">
-              <strong className="text-[#131b2e]">Electoral Guidelines:</strong> Pursuant to the BAMSSA Constitution, any candidate running unopposed must secure a minimum of 75% affirmative votes to be declared duly elected. All voting records are strictly confidential and securely protected.
+              <strong className="text-[#131b2e]">Electoral Guidelines:</strong> Pursuant to the FABAMSSA Constitution (Article 15, §15.4), all aspirants must meet the eligibility requirements set by the Electoral Committee (ELECO). All voting records are strictly anonymous — ballots are permanently decoupled from voter identities at the point of submission.
             </p>
           </div>
 

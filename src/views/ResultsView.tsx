@@ -276,7 +276,7 @@ export const ResultsView: React.FC = () => {
               </h3>
 
               <p className="mb-4 text-sm leading-relaxed text-[#424653]">
-                These results have been recorded and certified by the BAMSSA Electoral Commission following the election tally process. Ballot records are retained in the official audit log for review.
+                These results have been recorded and certified by the FABAMSSA Electoral Committee (ELECO) following the election tally process. Ballot records are retained in the official audit log for review.
               </p>
 
               <ul className="space-y-3 text-sm text-[#131b2e]">

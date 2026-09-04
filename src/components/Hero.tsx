@@ -16,7 +16,7 @@ const HERO_VIDEOS = [
   },
   {
     url: '/assets/hero/hero-2.mp4',
-    caption: 'BAMSSA Student Assembly & Congress'
+    caption: 'FABAMSSA Student Assembly & Congress'
   },
   {
     url: '/assets/hero/hero-3.mp4',
@@ -138,7 +138,7 @@ export const Hero: React.FC<HeroProps> = ({
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.25 }}
         >
-          YOUR VOICE. YOUR REPRESENTATIVES. YOUR BAMSSA.
+          YOUR VOICE. YOUR REPRESENTATIVES. YOUR FABAMSSA.
         </motion.h2>
 
         {/* Sub-headline */}
@@ -148,7 +148,7 @@ export const Hero: React.FC<HeroProps> = ({
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.35 }}
         >
-          The official, secure voting platform for Basic Medical Science students. Cast your confidential ballot and shape our association's future.
+          The official, secure voting platform for Faculty of Basic Medical Science students (FABAMSSA). Cast your confidential ballot and shape our association's future.
         </motion.p>
 
         {/* Action Buttons */}

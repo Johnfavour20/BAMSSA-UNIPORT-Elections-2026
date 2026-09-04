@@ -741,7 +741,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
             {!isSidebarCollapsed && (
               <div>
                 <h1 className="text-base font-extrabold text-[#003f93] tracking-tight leading-tight whitespace-nowrap">
-                  BAMSSA ELECO
+                  FABAMSSA ELECO
                 </h1>
                 <p className="text-[11px] font-semibold text-[#424653] uppercase tracking-wider whitespace-nowrap">
                   Administrative Portal
@@ -877,7 +877,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
               </div>
             ) : (
               <h2 className="text-base sm:text-lg font-bold text-[#003f93]">
-                BAMSSA Administrative Portal
+                FABAMSSA Administrative Portal
               </h2>
             )}
           </div>
@@ -940,7 +940,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                   Good morning, {adminName}.
                 </h1>
                 <p className="text-sm sm:text-base text-[#424653] mt-1">
-                  Here's the current overview of the BAMSSA 2026 election.
+                  Here's the current overview of the FABAMSSA 2026 election.
                 </p>
               </div>
 
@@ -957,7 +957,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8 relative z-10">
                       <div>
                         <h2 className="text-xl sm:text-2xl font-bold text-[#131b2e] mb-1.5">
-                          BAMSSA General Elections 2026
+                          FABAMSSA General Elections 2026
                         </h2>
                         <p className="text-xs sm:text-sm text-[#424653] flex items-center gap-2 flex-wrap">
                           <span className="flex items-center gap-1">
@@ -1304,7 +1304,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                             { key: 'matricMatches' as const, label: 'Matric No. on ID matches registration' },
                             { key: 'docAuthentic' as const, label: 'Identification document appears valid/authentic' },
                             { key: 'photoMatches' as const, label: 'Photo matches student profile' },
-                            { key: 'eligibilityMet' as const, label: 'Student meets eligibility criteria for BAMSSA' },
+                            { key: 'eligibilityMet' as const, label: 'Student meets eligibility criteria for FABAMSSA' },
                           ]).map(({ key, label }) => (
                             <label key={key} className="flex items-start gap-2.5 cursor-pointer group">
                               <input
@@ -1492,7 +1492,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                     Voter Verification
                   </h2>
                   <p className="text-xs sm:text-sm text-[#424653] mt-1 max-w-2xl">
-                    Review registration submissions and accredit eligible students for the BAMSSA General Elections 2026.
+                    Review registration submissions and accredit eligible students for the FABAMSSA General Elections 2026.
                   </p>
                 </div>
 
@@ -2006,7 +2006,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
               <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
                 <div>
                   <h2 className="text-3xl font-bold text-[#131b2e]">Positions</h2>
-                  <p className="text-sm text-[#424653] mt-1 max-w-[600px]">Manage the offices contested in the BAMSSA UNIPORT Chapter General Election 2026.</p>
+                  <p className="text-sm text-[#424653] mt-1 max-w-[600px]">Manage the offices contested in the FABAMSSA UNIPORT Chapter General Election 2026.</p>
                 </div>
                 <button
                   type="button"
@@ -2065,7 +2065,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
               <div className="bg-[#faf8ff] border border-[#c2c6d5] rounded-lg p-3 flex flex-wrap gap-8 mb-8 shadow-xs">
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-[#737785]" />
-                  <span className="text-sm text-[#424653]">Election: <strong className="text-[#131b2e]">BAMSSA UNIPORT Chapter General Election 2026</strong></span>
+                  <span className="text-sm text-[#424653]">Election: <strong className="text-[#131b2e]">FABAMSSA UNIPORT Chapter General Election 2026</strong></span>
                 </div>
                 <div className="w-[1px] h-[20px] bg-[#c2c6d5] hidden sm:block"></div>
                 <div className="flex items-center gap-3">
@@ -2189,7 +2189,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                         STATUS: {status}
                     </span>
                   </div>
-                  <p className="text-base text-[#424653] max-w-2xl">Review, manage and organize candidates participating in the BAMSSA 2026 General Elections.</p>
+                  <p className="text-base text-[#424653] max-w-2xl">Review, manage and organize candidates participating in the FABAMSSA 2026 General Elections.</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
                   <button className="flex-1 md:flex-none border border-[#c2c6d5] bg-transparent text-[#131b2e] text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#f2f3ff] transition-colors flex items-center justify-center gap-2 cursor-pointer">
