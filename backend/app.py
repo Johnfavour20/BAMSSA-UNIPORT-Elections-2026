@@ -49,10 +49,48 @@ class DatabaseRow(dict):
         return super().__getitem__(key)
 
 
+# ---------------------------------------------------------------------------
+# Connection pool (Postgres / Supabase only)
+# Lazily created on first use so SQLite local-dev is completely unaffected.
+# A single shared pool means each Gunicorn thread borrows and returns the
+# same set of live TCP connections rather than opening a new one per request.
+# ---------------------------------------------------------------------------
+_pg_pool: Any = None  # psycopg_pool.ConnectionPool | None
+
+
+def _get_pg_pool() -> Any:
+    """Return (and lazily create) the shared Postgres connection pool."""
+    global _pg_pool
+    if _pg_pool is None:
+        from psycopg_pool import ConnectionPool  # type: ignore[import]
+
+        def _configure(conn: Any) -> None:
+            """Apply the row_factory to every connection handed out by the pool."""
+            def row_factory(cursor: Any) -> Any:
+                if cursor.description is None:
+                    return lambda values: values
+                columns = [column.name for column in cursor.description]
+                return lambda values: DatabaseRow(zip(columns, values))
+            conn.row_factory = row_factory
+
+        # min_size=1  keeps at least one warm connection alive at all times,
+        # which eliminates the per-request TCP + TLS handshake to Supabase.
+        # max_size is set conservatively for Render's free/starter tier.
+        _pg_pool = ConnectionPool(
+            DATABASE_URL,
+            min_size=1,
+            max_size=5,
+            configure=_configure,
+            open=True,
+        )
+    return _pg_pool
+
+
 class DatabaseConnection:
-    def __init__(self, connection: Any, postgres: bool = False) -> None:
+    def __init__(self, connection: Any, postgres: bool = False, pooled: bool = False) -> None:
         self._connection = connection
         self.postgres = postgres
+        self._pooled = pooled  # True when borrowed from _pg_pool
 
     def execute(self, query: str, parameters: Any = ()) -> Any:
         if self.postgres:
@@ -75,20 +113,20 @@ class DatabaseConnection:
         self._connection.rollback()
 
     def close(self) -> None:
-        self._connection.close()
+        if self._pooled:
+            # Return the connection to the pool instead of closing it.
+            # This is the key change: the underlying TCP socket stays alive
+            # and is immediately available for the next request.
+            _get_pg_pool().putconn(self._connection)
+        else:
+            self._connection.close()
 
 
 def get_db_connection() -> DatabaseConnection:
     if DATABASE_URL:
-        import psycopg
-
-        def row_factory(cursor: Any) -> Any:
-            if cursor.description is None:
-                return lambda values: values
-            columns = [column.name for column in cursor.description]
-            return lambda values: DatabaseRow(zip(columns, values))
-
-        return DatabaseConnection(psycopg.connect(DATABASE_URL, row_factory=row_factory), postgres=True)
+        # Borrow a live connection from the pool (no TCP handshake needed).
+        conn = _get_pg_pool().getconn()
+        return DatabaseConnection(conn, postgres=True, pooled=True)
 
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
