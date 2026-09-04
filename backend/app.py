@@ -16,6 +16,7 @@ if BASE_DIR not in sys.path:
 
 
 DB_PATH = os.environ.get('BAMSSA_DB_PATH', os.path.join(BASE_DIR, 'election_demo.db'))
+DATABASE_URL = os.environ.get('DATABASE_URL')
 os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
 ADMIN_PASSCODE = os.environ.get('BAMSSA_ADMIN_PASSCODE')
 ADMIN_NAME = os.environ.get('BAMSSA_ADMIN_NAME', 'Administrator').strip() or 'Administrator'
@@ -32,10 +33,53 @@ VOTER_SESSIONS: dict[str, str] = {}
 
 DEFAULT_ELECTION_DURATION_MINUTES = 120
 
-def get_db_connection() -> sqlite3.Connection:
+class DatabaseRow(dict):
+    def __getitem__(self, key: Any) -> Any:
+        if isinstance(key, int):
+            return list(self.values())[key]
+        return super().__getitem__(key)
+
+
+class DatabaseConnection:
+    def __init__(self, connection: Any, postgres: bool = False) -> None:
+        self._connection = connection
+        self.postgres = postgres
+
+    def execute(self, query: str, parameters: Any = ()) -> Any:
+        if self.postgres:
+            query = query.replace('BEGIN IMMEDIATE', 'BEGIN')
+            query = query.replace('MAX(0, eligible - ?', 'GREATEST(0, eligible - %s')
+            query = query.replace('?', '%s')
+        return self._connection.execute(query, parameters)
+
+    def executemany(self, query: str, parameters: Any) -> Any:
+        if self.postgres:
+            query = query.replace('?', '%s')
+        return self._connection.executemany(query, parameters)
+
+    def commit(self) -> None:
+        self._connection.commit()
+
+    def rollback(self) -> None:
+        self._connection.rollback()
+
+    def close(self) -> None:
+        self._connection.close()
+
+
+def get_db_connection() -> DatabaseConnection:
+    if DATABASE_URL:
+        import psycopg
+
+        def row_factory(cursor: Any) -> Any:
+            columns = [column.name for column in cursor.description]
+            return lambda values: DatabaseRow(zip(columns, values))
+
+        return DatabaseConnection(psycopg.connect(DATABASE_URL, row_factory=row_factory), postgres=True)
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    return conn
+    return DatabaseConnection(conn)
 
 
 @app.before_request
@@ -108,7 +152,15 @@ def init_db() -> None:
         """
     )
 
-    columns = {row['name'] for row in conn.execute("PRAGMA table_info(election_state)").fetchall()}
+    if conn.postgres:
+        columns = {
+            row['column_name']
+            for row in conn.execute(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = 'election_state'"
+            ).fetchall()
+        }
+    else:
+        columns = {row['name'] for row in conn.execute("PRAGMA table_info(election_state)").fetchall()}
     if 'duration_minutes' not in columns:
         conn.execute("ALTER TABLE election_state ADD COLUMN duration_minutes INTEGER NOT NULL DEFAULT 120")
     for column, definition in {
@@ -228,8 +280,8 @@ def init_db() -> None:
         )
         """
     )
-    conn.execute("INSERT OR IGNORE INTO commission_members (id, initials, name, role, order_index) VALUES ('ec', 'EC', 'Dr. Samuel Ojo', 'Chief Electoral Officer', 1)")
-    conn.execute("INSERT OR IGNORE INTO commission_members (id, initials, name, role, order_index) VALUES ('ro', 'RO', 'Prof. Grace Nnamdi', 'Returning Officer', 2)")
+    conn.execute("INSERT INTO commission_members (id, initials, name, role, order_index) VALUES ('ec', 'EC', 'Dr. Samuel Ojo', 'Chief Electoral Officer', 1) ON CONFLICT (id) DO NOTHING")
+    conn.execute("INSERT INTO commission_members (id, initials, name, role, order_index) VALUES ('ro', 'RO', 'Prof. Grace Nnamdi', 'Returning Officer', 2) ON CONFLICT (id) DO NOTHING")
 
     conn.execute(
         """
@@ -254,15 +306,16 @@ def init_db() -> None:
 
     conn.execute(
         """
-        INSERT OR IGNORE INTO election_state (id, status, start_time, end_time, duration_minutes, admin_passcode, updated_at)
+        INSERT INTO election_state (id, status, start_time, end_time, duration_minutes, admin_passcode, updated_at)
         VALUES (1, 'STANDBY', NULL, NULL, 120, ?, ?)
+        ON CONFLICT (id) DO NOTHING
         """,
         (ADMIN_PASSCODE or secrets.token_urlsafe(24), utc_now_iso()),
     )
 
     for department, stats in get_default_department_stats().items():
         conn.execute(
-            "INSERT OR IGNORE INTO department_stats (department, eligible, accredited, voted) VALUES (?, ?, ?, ?)",
+            "INSERT INTO department_stats (department, eligible, accredited, voted) VALUES (?, ?, ?, ?) ON CONFLICT (department) DO NOTHING",
             (department, stats['eligible'], stats['accredited'], stats['voted']),
         )
 
@@ -1212,7 +1265,7 @@ def review_position() -> Any:
     
     conn = get_db_connection()
     conn.execute(
-        "INSERT OR REPLACE INTO position_reviews (position_id, reviewed_at, reviewed_by) VALUES (?, ?, ?)",
+        "INSERT INTO position_reviews (position_id, reviewed_at, reviewed_by) VALUES (?, ?, ?) ON CONFLICT (position_id) DO UPDATE SET reviewed_at = EXCLUDED.reviewed_at, reviewed_by = EXCLUDED.reviewed_by",
         (position_id, utc_now_iso(), 'ELECO Administrator')
     )
     conn.commit()
