@@ -334,7 +334,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
                 Constituent Departmental Electorate
               </h3>
               <p className="text-xs md:text-sm text-[#424653] leading-relaxed">
-                Eligible students across all four recognized BMS academic departments participate in this general electoral mandate.
+                Eligible students across the Anatomy and Psychology departments participate in this general electoral mandate.
               </p>
             </div>
 
@@ -342,19 +342,19 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
             <div className="grid grid-cols-2 gap-2 w-full md:w-auto shrink-0">
               <div className="bg-white/80 backdrop-blur-xs border border-[#c2c6d5]/70 rounded-lg px-3 py-2 text-xs font-semibold text-[#003f93] flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#0055c2]" />
-                <span>Human Anatomy</span>
+                <span>Anatomy</span>
               </div>
               <div className="bg-white/80 backdrop-blur-xs border border-[#c2c6d5]/70 rounded-lg px-3 py-2 text-xs font-semibold text-[#003f93] flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#0055c2]" />
-                <span>Human Physiology</span>
+                <span>Psychology</span>
               </div>
               <div className="bg-white/80 backdrop-blur-xs border border-[#c2c6d5]/70 rounded-lg px-3 py-2 text-xs font-semibold text-[#003f93] flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#0055c2]" />
-                <span>Pharmacology</span>
+                <span>Anatomy</span>
               </div>
               <div className="bg-white/80 backdrop-blur-xs border border-[#c2c6d5]/70 rounded-lg px-3 py-2 text-xs font-semibold text-[#003f93] flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#0055c2]" />
-                <span>Medical Biochemistry</span>
+                <span>Psychology</span>
               </div>
             </div>
           </div>
@@ -373,7 +373,7 @@ export const ElectionDetailsView: React.FC<ElectionDetailsViewProps> = ({
             <ul className="space-y-4 text-sm md:text-base text-[#424653]">
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-[#0055c2] shrink-0 mt-0.5" />
-                <span>Active students from 100L to 500L levels.</span>
+                <span>Active students from 100L to 300L levels.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-[#0055c2] shrink-0 mt-0.5" />

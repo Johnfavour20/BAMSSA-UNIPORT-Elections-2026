@@ -47,7 +47,7 @@ def test_student_registration_requires_admin_approval():
             json={
                 'matricNumber': 'U2026/9988001',
                 'fullName': 'Ada Jones',
-                'department': 'Human Anatomy',
+                'department': 'Anatomy',
                 'level': '300L',
                 'email': 'ada.jones@uniport.edu.ng',
                 'phone': '08000000000',
@@ -95,7 +95,7 @@ def test_accreditation_assigns_unique_pins(monkeypatch):
                     is_eligible, is_accredited, has_voted, verification_status
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 'pending')
                 """,
-                (voter_id, matric_number, full_name, 'Human Anatomy', '300L', f'{voter_id}@uniport.edu.ng', '08000000000'),
+                (voter_id, matric_number, full_name, 'Anatomy', '300L', f'{voter_id}@uniport.edu.ng', '08000000000'),
             )
         conn.commit()
         conn.close()

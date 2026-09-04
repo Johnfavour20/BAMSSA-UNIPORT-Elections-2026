@@ -153,7 +153,7 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">Level</p>
-                    <p className="text-base font-bold text-slate-900">{searchedVoter.level || '400L'}</p>
+                    <p className="text-base font-bold text-slate-900">{searchedVoter.level || '300L'}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">Status</p>

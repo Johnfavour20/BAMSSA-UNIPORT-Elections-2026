@@ -41,7 +41,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
   const [matricNumber, setMatricNumber] = useState('');
   const [email, setEmail] = useState('');
   const [level, setLevel] = useState<AcademicLevel>('300L');
-  const [department, setDepartment] = useState<BMSDepartment>('Human Anatomy');
+  const [department, setDepartment] = useState<BMSDepartment>('Anatomy');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -324,11 +324,8 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
                         required
                         className="w-full h-12 px-4 rounded-xl border border-[#c2c6d5] focus:border-[#003f93] focus:ring-2 focus:ring-[#003f93]/10 transition-all text-sm text-[#131b2e] bg-[#faf8ff]"
                       >
-                        <option value="Human Anatomy">Human Anatomy</option>
-                        <option value="Human Physiology">Human Physiology</option>
-                        <option value="Pharmacology">Pharmacology</option>
-                        <option value="Medical Biochemistry">Medical Biochemistry</option>
-                        <option value="Medicine & Surgery">Medicine &amp; Surgery</option>
+                        <option value="Anatomy">Anatomy</option>
+                        <option value="Psychology">Psychology</option>
                       </select>
                     </div>
                   </div>
@@ -342,7 +339,7 @@ export const RegistrationView: React.FC<RegistrationViewProps> = ({
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    {(['100L', '200L', '300L', '400L', '500L'] as AcademicLevel[]).map((lvl) => {
+                    {(['100L', '200L', '300L'] as AcademicLevel[]).map((lvl) => {
                       const isSelected = level === lvl;
                       return (
                         <label key={lvl} className="cursor-pointer">

@@ -49,7 +49,7 @@ export const GuidelinesView: React.FC<GuidelinesViewProps> = ({
                 1
               </span>
               <p>
-                <strong>One-Student-One-Ballot Principle:</strong> Every accredited student within the departments of Human Anatomy, Human Physiology, Pharmacology, and Medical Biochemistry is entitled to exactly one non-transferable electronic vote.
+                <strong>One-Student-One-Ballot Principle:</strong> Every accredited student within the Anatomy and Psychology departments is entitled to exactly one non-transferable electronic vote.
               </p>
             </div>
 

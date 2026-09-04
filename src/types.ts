@@ -2,13 +2,10 @@ export type ElectionStatus = 'STANDBY' | 'ACCREDITATION_OPEN' | 'LIVE' | 'CLOSED
 export type ResultsStatus = 'DRAFT' | 'PUBLISHED' | 'CERTIFIED';
 
 export type BMSDepartment = 
-  | 'Human Anatomy'
-  | 'Human Physiology'
-  | 'Pharmacology'
-  | 'Medical Biochemistry'
-  | 'Medicine & Surgery';
+  | 'Anatomy'
+  | 'Psychology';
 
-export type AcademicLevel = '100L' | '200L' | '300L' | '400L' | '500L';
+export type AcademicLevel = '100L' | '200L' | '300L';
 
 export type VerificationStatus = 'pending' | 'approved' | 'rejected';
 

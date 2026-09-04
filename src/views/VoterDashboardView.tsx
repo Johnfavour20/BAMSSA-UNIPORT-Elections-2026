@@ -38,8 +38,8 @@ export const VoterDashboardView: React.FC<VoterDashboardViewProps> = ({
   const voter = currentVoter || {
     matricNumber: 'U2021/5530001',
     fullName: 'John Doe',
-    department: 'Human Anatomy',
-    level: '400L',
+    department: 'Anatomy',
+    level: '300L',
     email: 'student@uniport.edu.ng',
     phone: '+234 802 334 9901',
     isEligible: true,

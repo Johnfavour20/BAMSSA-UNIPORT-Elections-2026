@@ -32,6 +32,8 @@ ADMIN_SESSIONS: dict[str, str] = {}
 VOTER_SESSIONS: dict[str, str] = {}
 
 DEFAULT_ELECTION_DURATION_MINUTES = 120
+ALLOWED_DEPARTMENTS = {'Anatomy', 'Psychology'}
+ALLOWED_LEVELS = {'100L', '200L', '300L'}
 
 class DatabaseRow(dict):
     def __getitem__(self, key: Any) -> Any:
@@ -101,11 +103,8 @@ def require_admin_session() -> Any:
 
 def get_default_department_stats() -> Dict[str, Dict[str, int]]:
     return {
-        'Human Anatomy': {'eligible': 0, 'accredited': 0, 'voted': 0},
-        'Human Physiology': {'eligible': 0, 'accredited': 0, 'voted': 0},
-        'Pharmacology': {'eligible': 0, 'accredited': 0, 'voted': 0},
-        'Medical Biochemistry': {'eligible': 0, 'accredited': 0, 'voted': 0},
-        'Medicine & Surgery': {'eligible': 0, 'accredited': 0, 'voted': 0},
+        'Anatomy': {'eligible': 0, 'accredited': 0, 'voted': 0},
+        'Psychology': {'eligible': 0, 'accredited': 0, 'voted': 0},
     }
 
 
@@ -985,6 +984,8 @@ def register_voter() -> Any:
     required = ['matricNumber', 'fullName', 'department', 'level', 'email', 'phone']
     if not all(payload.get(field) for field in required):
         return jsonify({'success': False, 'message': 'Missing voter registration data.'}), 400
+    if payload['department'] not in ALLOWED_DEPARTMENTS or payload['level'] not in ALLOWED_LEVELS:
+        return jsonify({'success': False, 'message': 'Only Anatomy and Psychology students from 100L to 300L may register.'}), 400
 
     id_card_url = str(payload.get('idCardUrl', '')).strip()
     if not id_card_url.startswith(('data:image/jpeg;base64,', 'data:image/png;base64,', 'data:image/webp;base64,')):

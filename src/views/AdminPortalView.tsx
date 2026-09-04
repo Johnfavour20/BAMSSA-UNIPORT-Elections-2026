@@ -217,8 +217,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
   // New Candidate Form State
   const [newCandName, setNewCandName] = useState('');
   const [newCandPosId, setNewCandPosId] = useState('');
-  const [newCandDept, setNewCandDept] = useState<BMSDepartment>('Human Anatomy');
-  const [newCandLevel, setNewCandLevel] = useState<AcademicLevel>('400L');
+  const [newCandDept, setNewCandDept] = useState<BMSDepartment>('Anatomy');
+  const [newCandLevel, setNewCandLevel] = useState<AcademicLevel>('300L');
   const [newCandTagline, setNewCandTagline] = useState('');
   const [newCandPhoto, setNewCandPhoto] = useState('');
   const [newCandManifesto, setNewCandManifesto] = useState('');
@@ -232,7 +232,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
   // New Voter Form State
   const [newVoterName, setNewVoterName] = useState('');
   const [newVoterMatric, setNewVoterMatric] = useState('');
-  const [newVoterDept, setNewVoterDept] = useState<BMSDepartment>('Human Anatomy');
+  const [newVoterDept, setNewVoterDept] = useState<BMSDepartment>('Anatomy');
   const [newVoterLevel, setNewVoterLevel] = useState<AcademicLevel>('300L');
   const [newVoterIdCard, setNewVoterIdCard] = useState('');
   const [isCreatingVoter, setIsCreatingVoter] = useState(false);
@@ -1627,8 +1627,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                     <option value="100L">100L</option>
                     <option value="200L">200L</option>
                     <option value="300L">300L</option>
-                    <option value="400L">400L</option>
-                    <option value="500L">500L</option>
                   </select>
 
                   <select
@@ -1865,10 +1863,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                         onChange={(e) => setNewVoterDept(e.target.value as BMSDepartment)}
                         className="w-full mt-1 px-3 py-2 text-xs border border-[#c2c6d5] rounded-lg bg-white"
                       >
-                        <option value="Human Anatomy">Human Anatomy</option>
-                        <option value="Human Physiology">Human Physiology</option>
-                        <option value="Medical Biochemistry">Medical Biochemistry</option>
-                        <option value="Pharmacology">Pharmacology</option>
+                        <option value="Anatomy">Anatomy</option>
+                        <option value="Psychology">Psychology</option>
                       </select>
                     </div>
                     <div>
@@ -1881,8 +1877,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                         <option value="100L">100L</option>
                         <option value="200L">200L</option>
                         <option value="300L">300L</option>
-                        <option value="400L">400L</option>
-                        <option value="500L">500L</option>
                       </select>
                     </div>
                   </div>
@@ -1937,10 +1931,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                   className="px-3 py-2 text-xs border border-[#c2c6d5] rounded-xl bg-white font-semibold text-[#424653]"
                 >
                   <option value="ALL">All Departments</option>
-                  <option value="Human Anatomy">Human Anatomy</option>
-                  <option value="Human Physiology">Human Physiology</option>
-                  <option value="Medical Biochemistry">Medical Biochemistry</option>
-                  <option value="Pharmacology">Pharmacology</option>
+                  <option value="Anatomy">Anatomy</option>
+                  <option value="Psychology">Psychology</option>
                 </select>
               </div>
 
@@ -2232,10 +2224,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({ onLogout, onOp
                     <div>
                       <label className="text-xs font-semibold text-[#424653]">Department</label>
                       <select value={newCandDept} onChange={(e) => setNewCandDept(e.target.value as BMSDepartment)} className="w-full mt-1.5 px-3 py-2 text-sm border border-[#c2c6d5] rounded-lg bg-white outline-hidden focus:border-[#0055c2]">
-                        <option value="Human Anatomy">Human Anatomy</option>
-                        <option value="Human Physiology">Human Physiology</option>
-                        <option value="Medical Biochemistry">Medical Biochemistry</option>
-                        <option value="Pharmacology">Pharmacology</option>
+                        <option value="Anatomy">Anatomy</option>
+                        <option value="Psychology">Psychology</option>
                       </select>
                     </div>
                     <div className="sm:col-span-2">

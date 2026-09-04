@@ -79,11 +79,8 @@ const STORAGE_KEYS = {
 };
 
 const EMPTY_DEPT_STATS = (): Record<BMSDepartment, { eligible: number; accredited: number; voted: number }> => ({
-  'Human Anatomy': { eligible: 0, accredited: 0, voted: 0 },
-  'Human Physiology': { eligible: 0, accredited: 0, voted: 0 },
-  Pharmacology: { eligible: 0, accredited: 0, voted: 0 },
-  'Medical Biochemistry': { eligible: 0, accredited: 0, voted: 0 },
-  'Medicine & Surgery': { eligible: 0, accredited: 0, voted: 0 },
+  Anatomy: { eligible: 0, accredited: 0, voted: 0 },
+  Psychology: { eligible: 0, accredited: 0, voted: 0 },
 });
 
 export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
