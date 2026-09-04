@@ -31,6 +31,13 @@ CORS(app, resources={r"/api/*": {"origins": CORS_ORIGINS}})
 ADMIN_SESSIONS: dict[str, str] = {}
 VOTER_SESSIONS: dict[str, str] = {}
 
+
+@app.after_request
+def disable_api_caching(response: Any) -> Any:
+    if request.path.startswith('/api/'):
+        response.headers['Cache-Control'] = 'no-store, max-age=0'
+    return response
+
 DEFAULT_ELECTION_DURATION_MINUTES = 120
 ALLOWED_DEPARTMENTS = {'Anatomy', 'Psychology'}
 ALLOWED_LEVELS = {'100L', '200L', '300L'}

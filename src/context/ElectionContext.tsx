@@ -146,6 +146,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const response = await fetch(`${API_BASE}/election`, {
         headers: adminSession ? { 'X-Admin-Session': adminSession } : undefined,
+        cache: 'no-store',
       });
       if (!response.ok) {
         setStatusState('STANDBY');
