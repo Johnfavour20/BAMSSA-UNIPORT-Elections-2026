@@ -1035,7 +1035,7 @@ def register_voter() -> Any:
         ),
     )
     conn.execute(
-        "INSERT INTO department_stats (department, eligible, accredited, voted) VALUES (?, ?, ?, ?) ON CONFLICT(department) DO UPDATE SET eligible = eligible + 1",
+            "INSERT INTO department_stats (department, eligible, accredited, voted) VALUES (?, ?, ?, ?) ON CONFLICT(department) DO UPDATE SET eligible = department_stats.eligible + 1",
         (payload['department'], 1, 0, 0),
     )
     conn.commit()
@@ -1074,7 +1074,7 @@ def accredit_voter() -> Any:
         (generated_pin, now, voter['id']),
     )
     conn.execute(
-        "INSERT INTO department_stats (department, eligible, accredited, voted) VALUES (?, ?, ?, ?) ON CONFLICT(department) DO UPDATE SET eligible = eligible + 1, accredited = accredited + 1",
+        "INSERT INTO department_stats (department, eligible, accredited, voted) VALUES (?, ?, ?, ?) ON CONFLICT(department) DO UPDATE SET eligible = department_stats.eligible + 1, accredited = department_stats.accredited + 1",
         (voter['department'], 1, 1, 0),
     )
     conn.commit()
