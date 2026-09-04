@@ -72,6 +72,8 @@ def get_db_connection() -> DatabaseConnection:
         import psycopg
 
         def row_factory(cursor: Any) -> Any:
+            if cursor.description is None:
+                return lambda values: values
             columns = [column.name for column in cursor.description]
             return lambda values: DatabaseRow(zip(columns, values))
 
