@@ -107,6 +107,31 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
         </div>
 
+        {/* Faculty Leadership Strip */}
+        <div className="border-t border-[#c2c6d5]/70 pt-8 mb-6">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[#737785] mb-4">Faculty Leadership & Patrons</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs">
+            <div>
+              <p className="font-bold text-[#131b2e]">PROF. O. ADIENBO</p>
+              <p className="text-[#737785]">Dean, Faculty of Basic Medical Sciences</p>
+            </div>
+            <div>
+              <p className="font-bold text-[#131b2e] mb-1">Patrons</p>
+              <ul className="text-[#424653] space-y-0.5">
+                <li>Prof. D. V. Dapper (Physiology)</li>
+                <li>Dr. Bob-Manuel I.F (Anatomy)</li>
+                <li>Dr. Bruno Chinko (Physiology)</li>
+                <li>Dr. Sunny O. (Anatomy)</li>
+                <li>Dr. Josiah S. Hart (Anatomy)</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-bold text-[#131b2e]">Staff Adviser</p>
+              <p className="text-[#424653]">Dr. Iyke Weleh</p>
+            </div>
+          </div>
+        </div>
+
         {/* Bottom Bar */}
         <div className="border-t border-[#c2c6d5]/70 pt-8 flex flex-col lg:flex-row justify-between items-center gap-4 text-center lg:text-left">
           <div className="flex flex-col gap-1">
