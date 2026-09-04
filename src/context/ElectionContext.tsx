@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Candidate, ElectionPosition, Voter, AuditLog, ElectionStatus, ResultsStatus, BMSDepartment, CommissionMember } from '../types';
 
 interface ElectionContextType {
@@ -108,6 +108,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [adminName, setAdminName] = useState('Administrator');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminAvatarUrl, setAdminAvatarUrl] = useState<string | null>(null);
+  const refreshRequestId = useRef(0);
 
   const [departmentStats, setDepartmentStats] = useState<Record<BMSDepartment, { eligible: number; accredited: number; voted: number }>>(EMPTY_DEPT_STATS);
   const [commissionMembers, setCommissionMembers] = useState<CommissionMember[]>([]);
@@ -130,6 +131,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [isAdminLoggedIn]);
 
   const refreshElectionData = async () => {
+    const requestId = ++refreshRequestId.current;
     try {
       const response = await fetch(`${API_BASE}/election`, {
         headers: adminSession ? { 'X-Admin-Session': adminSession } : undefined,
@@ -145,6 +147,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       const payload = await response.json();
+      if (requestId !== refreshRequestId.current) return;
       if (payload.status) {
         setStatusState(payload.status as ElectionStatus);
       }
