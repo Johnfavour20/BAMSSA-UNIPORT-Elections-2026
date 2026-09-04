@@ -11,6 +11,7 @@ interface ElectionContextType {
   certifiedAt: string | null;
   publishResults: () => Promise<{ success: boolean; message?: string }>;
   adminRequest: (url: string, options?: RequestInit) => Promise<Response>;
+  refreshElectionData: () => Promise<void>;
   electionStatus: ElectionStatus;
   setStatus: (status: ElectionStatus) => void;
   setElectionStatus: (status: ElectionStatus) => void;
@@ -97,6 +98,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [candidates, setCandidates] = useState<Candidate[]>([]);
 
   const [voters, setVoters] = useState<Voter[]>([]);
+  const votersRef = useRef<Voter[]>([]);
 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
@@ -191,7 +193,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         })));
       }
       if (payload.voters) {
-        setVoters(payload.voters.map((voter: any) => ({
+        const refreshedVoters = payload.voters.map((voter: any) => ({
           id: voter.id,
           matricNumber: voter.matric_number,
           fullName: voter.full_name,
@@ -213,7 +215,9 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           idCardUrl: voter.id_card_url || undefined,
           registrationId: voter.registration_id || undefined,
           reviewNotes: voter.review_notes || undefined,
-        })));
+        }));
+        votersRef.current = refreshedVoters;
+        setVoters(refreshedVoters);
       }
       if (payload.audit_logs) {
         setAuditLogs(payload.audit_logs.map((log: any) => ({
@@ -330,7 +334,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const trimmed = query.trim().toUpperCase();
     if (!trimmed) return null;
     return (
-      voters.find(
+      votersRef.current.find(
         (v) =>
           v.matricNumber?.toUpperCase() === trimmed ||
           v.email?.toUpperCase() === trimmed ||
@@ -817,6 +821,7 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         certifiedAt,
         publishResults,
         adminRequest: adminFetch,
+        refreshElectionData,
         electionStatus: status,
         setStatus,
         setElectionStatus,

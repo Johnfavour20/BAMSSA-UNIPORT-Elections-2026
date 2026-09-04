@@ -25,7 +25,7 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
   onNavigateToLogin,
   onNavigateToRegister,
 }) => {
-  const { checkEligibility, voters } = useElection();
+  const { checkEligibility, refreshElectionData } = useElection();
   const [queryInput, setQueryInput] = useState('');
   const [searchedVoter, setSearchedVoter] = useState<Voter | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
@@ -41,7 +41,7 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
       .join(' ');
   };
 
-  const handleSearch = (e?: React.FormEvent) => {
+  const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErrorStatus(null);
 
@@ -53,6 +53,7 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
       return;
     }
 
+    await refreshElectionData();
     const found = checkEligibility(input);
     if (found) {
       setSearchedVoter(found);
@@ -64,9 +65,10 @@ export const EligibilityView: React.FC<EligibilityViewProps> = ({
     setHasSearched(true);
   };
 
-  const handleQuickDemo = (val: string) => {
+  const handleQuickDemo = async (val: string) => {
     setQueryInput(val);
     setErrorStatus(null);
+    await refreshElectionData();
     const found = checkEligibility(val);
     setSearchedVoter(found);
     setHasSearched(true);
