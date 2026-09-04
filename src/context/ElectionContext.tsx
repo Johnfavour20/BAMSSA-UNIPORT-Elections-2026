@@ -74,6 +74,7 @@ const STORAGE_KEYS = {
   AUDIT_LOGS: 'bamssa_audit_logs_2026',
   CURRENT_VOTER: 'bamssa_current_voter_2026',
   ADMIN_AUTH: 'bamssa_admin_auth_2026',
+  ADMIN_SESSION: 'bamssa_admin_session_2026',
   DEPT_STATS: 'bamssa_dept_stats_2026',
 };
 
@@ -102,11 +103,20 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
-  const [currentVoter, setCurrentVoter] = useState<Voter | null>(null);
+  const [currentVoter, setCurrentVoter] = useState<Voter | null>(() => {
+    const storedVoter = localStorage.getItem(STORAGE_KEYS.CURRENT_VOTER);
+    if (!storedVoter) return null;
+    try {
+      return JSON.parse(storedVoter) as Voter;
+    } catch {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_VOTER);
+      return null;
+    }
+  });
   const [voterSession, setVoterSession] = useState<string | null>(null);
 
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
-  const [adminSession, setAdminSession] = useState<string | null>(null);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true');
+  const [adminSession, setAdminSession] = useState<string | null>(() => localStorage.getItem(STORAGE_KEYS.ADMIN_SESSION));
   const [adminName, setAdminName] = useState('Administrator');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminAvatarUrl, setAdminAvatarUrl] = useState<string | null>(null);
@@ -114,11 +124,6 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const [departmentStats, setDepartmentStats] = useState<Record<BMSDepartment, { eligible: number; accredited: number; voted: number }>>(EMPTY_DEPT_STATS);
   const [commissionMembers, setCommissionMembers] = useState<CommissionMember[]>([]);
-
-  useEffect(() => {
-    const storedKeys = Object.keys(localStorage).filter((key) => key.startsWith('bamssa_'));
-    storedKeys.forEach((key) => localStorage.removeItem(key));
-  }, []);
 
   useEffect(() => {
     if (currentVoter) {
@@ -130,7 +135,12 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, String(isAdminLoggedIn));
-  }, [isAdminLoggedIn]);
+    if (adminSession) {
+      localStorage.setItem(STORAGE_KEYS.ADMIN_SESSION, adminSession);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_SESSION);
+    }
+  }, [isAdminLoggedIn, adminSession]);
 
   const refreshElectionData = async () => {
     const requestId = ++refreshRequestId.current;
@@ -140,11 +150,6 @@ export const ElectionProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
       if (!response.ok) {
         setStatusState('STANDBY');
-        setPositions([]);
-        setCandidates([]);
-        setVoters([]);
-        setAuditLogs([]);
-        setDepartmentStats(EMPTY_DEPT_STATS());
         return;
       }
 
